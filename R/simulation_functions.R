@@ -1,0 +1,450 @@
+## This script holds functions used by the community assembly of mutualists model (CAMM)
+
+
+### Functions for Initializing Simulation ###
+
+# A function that generates a random bipartite graph between sets A and B
+# under the following constraints:
+# 	S_a = size of A
+# 	S_b = size of B
+# 	N_L = number of edges
+#	topology = 'one2one', 'one2many', 'many2many'
+# Returns a S_a x S_b binary matrix
+
+make_topo = function(S_a, S_b, N_L, topology){
+	# Catch errors
+	if(N_L < S_a | N_L < S_b) stop('Cannot find partners for all mutualists when N_L < S_a or S_b')
+	if(topology=='one2one' & S_a!=S_b) stop('Cannot form one-to-one topology when S_a != S_b')
+	if(topology=='one2one' & S_a!=N_L) stop('Cannot form one-to-one topology when S_a != N_L')
+	if(topology=='one2many' & N_L <= S_b) stop('Cannot form one-to-many topology when N_L <= S_b')
+	if(topology!='many2many' & N_L > S_a) stop('Topology must be many-to-many if N_L > S_a')
+	if(N_L > S_a*S_b) stop(paste('Cannot form', N_L, 'associations with', S_a,'and', S_b, 'partners'))
+
+	# Make empty association matrix
+	topo = matrix(0, nrow=S_a, ncol=S_b)	
+
+	# Choose one partner for each mutualist 
+	partners_a = sample(S_a, S_a, replace=F)
+	partners_b = sample(S_b, S_b, replace=F)
+
+	# If topology is many2many add extra links for mutualist a
+	if(topology=='many2many') partners_a = c(partners_a, sample(S_a, N_L-S_a, replace=T))
+
+	# If topology is one2many or many2many add extra linkes for mutualist b
+	if(topology %in% c('one2many','many2many')) partners_b = c(partners_b, sample(S_b, N_L-S_b, replace=T))
+
+	# Shuffle order
+	partners_a = sample(partners_a, replace=F)
+	partners_b = sample(partners_b, replace=F)
+	
+
+	# Add links to network
+	for(i in 1:N_L){
+		topo[partners_a[i],partners_b[i]] = 1
+	}
+
+	# If there are duplicated links add more random links until at N_L.
+	add_links = N_L - sum(topo)
+	while(add_links > 0){
+		add_a = sample(S_a, add_links)
+		add_b = sample(S_b, add_links)
+		for(i in 1:add_links){
+			topo[add_a[i], add_b[i]] = 1
+		}
+		add_links = N_L - sum(topo)
+	}
+
+	topo
+}
+
+# A function that labels each edge of a bipartite graph with a unique integer
+#	topo = a binary matrix with 1 indicating association
+# Returns a matrix with the same structure but with 1 replaced by integer labels
+
+name_topo = function(topo){
+	topo_labeled = topo
+	N_L = sum(topo_labeled==1)
+	topo_labeled[topo_labeled==1] = 1:N_L
+
+	topo_labeled
+}
+
+
+# A function that generate 2 random environmental variables for:
+# 	N_C = number of sites
+#	rho_z = correlation between variables
+# Returns an N_C x 2 matrix of values drawn from a multivariate gaussian distribution with mean 0 and std deviation 1.
+library(mvtnorm)
+make_sites = function(N_C, rho_z){
+	sd = c(1,1)
+	mu = c(0,0)
+
+	# Define covariance matrix
+	S = matrix(c(sd[1],rho_z,rho_z,sd[2]), nrow=2, ncol=2)
+
+	# Generate correlated gaussian rv using mvtnorm package
+	sites = rmvnorm(mean=mu, sig=S, n=N_C)
+	
+	# Return sites
+	sites
+}
+
+
+# A function that generates an initial set of communities
+# Currently generates empty communities
+#	N_C = number of communities
+#	N = number of individuals in each community
+#	N_S = number of potential species (associations)
+
+make_comm = function(N_C, N, N_S){
+	comm = matrix(0, nrow=N_C, ncol=N)
+	comm
+}
+
+# A function that generates a random community for the purpose of testing the simulation
+#	N_C = number of communities
+#	N = number of individuals in each community
+#	N_S = number of potential species
+
+rand_comm = function(N_C, N, N_S){
+	comm = matrix(sample(0:N_S, N_C*N, replace=T), N_C, N)	
+}
+
+
+
+# A function that generates random 2D gaussian niches.
+# Niche optima (mu) are drawn from a uniform distribution and niche width (sigma) from a gamma distribution
+#	S = number of species
+#	nicheparms = a list of parameters controlling the shape of the distribution from which niches are sampled
+#		mu = a vector of length 2 with the maximum niche optima
+#		rho = the correlation between the niche optima
+#		sigma = a vector of length 2 with the means of the gamma distributions
+#		alpha = a vector of length 2 with the shape parameter of the gamma distributions
+#		r = the correlation between niche widths
+
+make_niches = function(N_S, nicheparms){
+	
+	# Generate niche optima as 2 correlated gaussian variables using mvtnorm packages
+	S = matrix(c(1,nicheparms$rho,nicheparms$rho,1),2,2)
+	mus_norm = rmvnorm(mean=c(0,0), sig=S, n=N_S)
+	
+	# Transform to uniform on (0,1)
+	U = pnorm(mus_norm)
+
+	# Transform to uniform on interval defined by nicheparms
+	mu1 = qunif(U[,1], -nicheparms$mu[1], nicheparms$mu[1])
+	mu2 = qunif(U[,2], -nicheparms$mu[2], nicheparms$mu[2])
+
+	# Generate niche breadths as 2 correlated gaussian variables
+	S = matrix(c(1, nicheparms$r, nicheparms$r, 1),2,2)
+	sigmas_norm = rmvnorm(mean=c(0,0), sig=S, n=N_S)
+
+	# Transform to uniform on (0,1)
+	U = pnorm(sigmas_norm)	
+	
+	# Transform to gamma with parameters defined by nicheparms
+	theta = nicheparms$sigma/nicheparms$alpha # gamma distribution mean = scale*shape
+	sig1 = qgamma(U[,1], shape=nicheparms$alpha[1], scale=theta[1])
+	sig2 = qgamma(U[,2], shape=nicheparms$alpha[2], scale=theta[2])
+
+	# Return array of niches
+	niches = array(c(mu1, sig1, mu2, sig2), dim=c(N_S, 2, 2), dimnames=list(1:N_S, c('mu','sigma'), 1:2))
+	niches
+}
+
+# A function that generates a global speciesl abundance distribution.
+# Species abundances may be correlated with niche optima or niche breadth or mutualist breadth.
+# S = number of species
+# distribution = list of parameters describing the functional form of the SAD
+# condition = vector of quantities with which abundance should be correlated
+# rho = strength of rank-order correlation between condition and abundance
+
+make_gsad = function(S, distribution, condition=NA, rho=NA){
+	require(poweRlaw)
+	require(sads)
+	require(permute)
+
+	if(distribution$type=='power'){
+		# p1 = alpha
+		abuns = rpldis(S, 1, distribution$p1)
+	}
+	if(distribution$type=='logseries'){
+		N = 1000000
+		
+		# p1 = N/alpha
+		alpha = N / distribution$p1
+
+		# Find the n below wchi for which 99.9% of species abundances occur.
+		n = qls(0.999, N, alpha)
+		
+		abuns = sample(1:n, S, prob=dls(1:n, N, alpha), replace=T)		
+	}
+	if(distribution$type=='lognormal'){	
+		# p1 = mean, p2 = sd
+		abuns = rlnorm(S, distribution$p1, distribution$p2)
+	}
+	if(distributions$type=='poisson'){
+		# p1 = lambda
+		abuns = rpois(S, distributions$p1)
+	}
+
+	if(!is.na(condition)){
+
+		if(S != length(condition) ) stop('Number of species much match number of elements in condition')
+
+		tol=0.01
+		ntries = 1000
+
+		c_rank = rank(condition)
+		a_rank = rank(abuns)
+
+		cor_func = function(x) cor(condition, abuns[x], method='spearman')
+		use_order = 1:S
+		this_rho = cor_func(use_order)
+				
+		n = 0
+		while((abs(rho-this_rho) > tol) & (n < ntries)){
+			n = n + 1
+			swap = sample(S, 2, replace=F)
+			new_order = use_order
+			new_order[swap[1]] = use_order[swap[2]]
+			new_order[swap[2]] = use_order[swap[1]]
+			use_order = new_order
+			this_rho = cor_func(use_order)
+		}
+
+		abuns = abuns[use_order]
+		if(abs(rho-this_rho) > tol) stop(paste('Unable to correlate abundances and condition at rho=',rho,'\nConsider changing tolerance'))
+	}
+	
+	abuns	
+}
+
+
+### Functions for Running Simulation ###
+
+# A function that surveys which mutualist partners are present in a community
+#	comm = matrix indicating which association is present in each position of a community
+#	topo_names = bipartite mutualist network with integers labeling associations
+#	partner = integer indicating whether this is for mutualist 'a' (1) or 'b' (2)
+
+calc_pool = function(comm, topo_names, partner){
+	# Find number of communities and species
+	N_C = nrow(comm)
+	N_S = dim(topo_names)[partner]
+
+	# For each row of comm (representing a community) find the associations present and find the partners present
+	pool = matrix(0, nrow=N_C, ncol=N_S)
+	for(i in 1:N_C){
+
+		# Find the associations present
+		assocs = unique(comm[i,])
+		assocs = assocs[assocs!=0]
+
+		# Find the partners present
+		for(x in assocs){
+			j = which(topo_names==x, arr.ind=T)[,partner]
+
+			# Assign 1 for presence in community i
+			pool[i,j] = 1
+		}
+	}
+
+	# Return partner pool
+	pool
+}
+
+
+# A function that causes random mortality of mutualists in a community. Mutualists involved in an association cannot die.
+#	comm = matrix indicating which association is present in each position of a community
+#	topo_names = bipartite mutualist network with integers labeling associations
+#	pool = site X mutualist binary matrix indicating which mutualist species are present
+# 	mortality = probability that an unassociated mutualist dies
+#	partner = integer indicated which partner this applies to
+die = function(comm, topo_names, pool, mortality, partner){
+	
+	# Find pool of mutualists that are not in an association and can die
+	comm_pool = calc_pool(comm, topo_names, partner)
+	not_associated = which(pool!=comm_pool)
+
+	# For each unassociated partner in each community do random mortality
+	survive = runif(length(not_associated)) > mortality
+	pool[not_associated] = pool[not_associated]*survive
+
+	# Return new pool
+	pool
+}
+
+# A function that causes random dispersal of mutualists into a community.
+# For now, colonization events are assumed to be identically and independently distributed.
+#	sites = a 2 column matrix with the environmental conditions at each site
+#	niches = a 2 column matrix giving niche optima and breadths for each mutualist species
+#	pool = site X mutualist binary matrix indicating which mutualist species are present
+
+disperse = function(sites, niches, pool){
+	
+	# Find number of communities and species
+	N_C = nrow(pool)
+	N_S = ncol(pool)
+
+	# For each species and each site calculate the probability of establishment based on joint gaussian niches on each environmental variable
+	probs = matrix(0,N_C, N_S)	
+
+	# https://github.com/ahhurlbert/species-energy-simulation/blob/master/code/senc_sim_fun.r
+	for(i in 1:N_C){
+	for(j in 1:N_S){
+		p1 = 2*pnorm(sites[i,1], mean=niches[j,'mu',1], sd=niches[j,'sigma',1], lower.tail=sites[i,1] < niches[j,'mu',1])
+		p2 = 2*pnorm(sites[i,2], mean=niches[j,'mu',2], sd=niches[j,'sigma',2], lower.tail=sites[i,2] < niches[j,'mu',2])
+
+		probs[i,j] = p1*p2
+	}
+	}
+
+	# Generate random dispersal
+	rands = runif(N_C*N_S) 
+	emmigrants = rands <= probs
+	
+	# Add emmigrants to existing pool
+	pool = pool + emmigrants > 0
+	pool = matrix(as.numeric(pool), N_C, N_S)
+
+	# Return new pool of partners
+	pool	
+}
+
+
+# A function that calculates the transition probability matrix for each site
+# Currently species cannot displace one another
+#	sites = a 2 column matrix with the environmental conditions at each site
+#	niches_a = a 2 column matrix giving niche optima and breadths for each mutualist species a
+#	niches_b = a 2 column matrix giving niche optima and breadths for each mutualist species b
+#	topo_names = topo_names = bipartite mutualist network with integers labeling associations
+#	poolA = site X mutualist binary matrix indicating which mutualist species 'a' are present
+#	poolB = site X mutualist binary matrix indicating which mutualist species 'b' are present
+#	mort_rate =  probability that an association dies
+#	assoc_prob = an N_C x N_L matrix giving the probability that an association forms in a given environment if both partners are present
+
+calc_probs = function(sites, niches_a, niches_b, topo_names, poolA, poolB, mort_rate, assoc_probs){
+	# Calculate number of associations and communities
+	S_a = nrow(topo_names)
+	S_b = ncol(topo_names)
+	N_L = max(topo_names)
+	N_C = nrow(sites)
+
+	# Create empty array that holds transition matrices for each site
+	Tarr = array(NA, dim=c(N_L+1, N_L+1, N_C), dimnames=list(0:N_L, 0:N_L, 1:N_C))
+
+	# An N_C x N_L matrix indicated whether both partners are present in each community
+	both_present = sapply(1:N_L, function(x){
+		partners = which(topo_names==x, arr.ind=T)
+		poolA[,partners[1]]*poolB[,partners[2]]
+	})
+
+	# Calculate probabilities of establishment 0 -> i
+	establish = both_present*assoc_probs 
+	no_establish = apply(establish, 1, function(p) prod(1-p)) # probability that no species establishes each site
+	# Scale each P(0 -> i) so that rows sum to 1. A species has P=establish only if it is the only species that can establish. 
+	establish = establish/ifelse(rowSums(establish)>0, rowSums(establish),1)*(1-no_establish)# scale establishment probabilities so that 0 
+	Tarr[1,,] = t(cbind(no_establish, establish))
+	
+	# Add probability of death
+	# For now, constant for any established species
+	Tarr[2:(N_L+1),1,] = mort_rate	
+	
+	# For each species add transition probabilities
+	for(i in 1:N_L){
+		# Probability of competitive displacement
+		# For now, no competitive displacement
+		# With competition, entries should be the product of:
+			# probability that the competitor can establish 
+			# a (environmentally dependent) competitive  ability coefficient
+			# scaled to sum=1 if sum > 1
+		compete = matrix(0, N_C, N_L-1)
+		colnames(compete) = (1:N_L)[1:N_L != i]
+		compete = (1-Tarr[i+1,1,])*compete # Multiply competitive probabilities by P(i survives)
+
+		# Probability of remaining
+		remain = 1 - Tarr[i+1,1,]- rowSums(compete)
+
+		Tarr[i+1,i+1,] = remain
+		Tarr[i+1, colnames(compete),] = t(compete)		
+
+	}
+	# Check that rows sum to 1
+	if(sum(round(apply(Tarr, c(1,3), sum),10)!=1)>0) stop('Transition matrix rows do not sum to 1')
+
+	# Return transition array
+	Tarr
+}
+
+
+# A function that randomly transitions a place in a community based on transition probabilities
+#	probs = transition probability vector
+
+transition = function(probs){
+	as.numeric(sample(names(probs), 1, prob=probs))
+}
+
+
+
+
+### Functions for visualizing simulations ###
+
+# A function that plots the probability density functions of niches used in a simulation
+#	niches = an S x 2 x 2 array giving mu and sigma parameters of the gaussian distribution for 2 environmental variables and S species
+# 	grad = a 2 x 2 matrix giving the length of each environmental gradient
+#	add_env = an optional matrix of environmental values at sites
+plot_niches = function(niches, grad, add_env){
+
+	par(mfrow=c(1,2))
+	
+	# Find number of species
+	N_S = dim(niches)[1]
+
+	# Choose colors for each species
+	cols = colorRampPalette(c('#90ABFC','#000000'))(N_S)
+	cols = cols[rank(niches[,'mu',1])]
+	
+	# Make plot for env var 1
+	plot(c(0,0), xlim=grad[,1], ylim=c(0,1), xlab='Env1', ylab='P', type='n', las=1)
+
+	for(i in 1:N_S){
+		niche_func = function(x) 2*pnorm(x, niches[i,'mu',1], niches[i,'sigma',1], lower.tail=x < niches[i,'mu',1])
+		xvals = seq(grad[1,1],grad[2,1], length.out=100)
+		yvals = sapply(xvals, niche_func)		
+		lines(xvals, yvals, lwd=2, col=cols[i])
+	}
+
+	niche_func(seq(-3,3,1))
+
+	if(!is.null(add_env)) points(add_env[,1], rep(0, nrow(add_env)), pch=3, col=2)
+
+	# Make plot for env var 2
+	plot(c(0,0), xlim=grad[,2], ylim=c(0,1), xlab='Env2', ylab='P', type='n', las=1)
+
+	for(i in 1:dim(niches)[1]){
+		niche_func = function(x) 2*pnorm(x, niches[i,'mu',2], niches[i,'sigma',2], lower.tail=x < niches[i,'mu',2])
+		xvals = seq(grad[1,2],grad[2,2], length.out=100)
+		yvals = sapply(xvals, niche_func)		
+		lines(xvals, yvals, lwd=2, col=cols[i])
+	}
+
+	if(!is.null(add_env)) points(add_env[,2], rep(0, nrow(add_env)), pch=3, col=2)
+}
+
+# A function that plots richness of each partner through time
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

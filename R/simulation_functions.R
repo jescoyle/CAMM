@@ -519,7 +519,34 @@ calc_envcorr = function(comm, topo_names, env, metric, binary){
 }
 
 
-	
+# A function that calculates all community summary statistics
+#	comm = an N_C x N matrix of species present at each site
+#	topo_names = matrix describing mutualistic netiwork and numbering each partner
+calc_commstats = function(comm, topo_names){
+
+	# Calculate richness
+	S_species = calc_rich(comm, topo_names, 'species')
+	S_a = calc_rich(comm, topo_names, 'a')
+	S_b = calc_rich(comm, topo_names, 'b')
+
+	# Calculate total abundance
+	N = calc_occ(comm)
+
+	# Return datafram
+	data.frame(S_species, S_a, S_b, N)
+}
+
+
+# A function that calculates interval-based scale reduction factor (from Brooks and Gelman 1998, DOI:10.1080/10618600.1998.10474787)
+# THIS MAY NOT WORK WELL FOR DISCRETE QUANTITIES. MAY WANT TO DEFINE SOMETHING MORE EXACT BASED ON BINOMIAL DISTRIBUTION
+calc_Rhat = function(x, alpha){
+	within_chain = apply(x, 2, function(xi) diff(quantile(xi, c((1-alpha)/2, alpha + (1-alpha)/2))))
+	all_chains = diff(quantile(x, c((1-alpha)/2, alpha + (1-alpha)/2)))
+	R_hat = all_chains / mean(within_chain)
+
+	R_hat
+}
+
 
 
 

@@ -163,7 +163,13 @@ make_gsad = function(S, distribution, condition=NA, rho=NA){
 	require(poweRlaw)
 	require(sads)
 	require(permute)
-
+	
+	if(distribution$type=='same'){
+		abuns = rep(1, S)
+	}
+	if(distribution$type=='uniform'){
+		abuns = runif(S)
+	}
 	if(distribution$type=='power'){
 		# p1 = alpha
 		abuns = rpldis(S, 1, distribution$p1)
@@ -174,7 +180,7 @@ make_gsad = function(S, distribution, condition=NA, rho=NA){
 		# p1 = N/alpha
 		alpha = N / distribution$p1
 
-		# Find the n below wchi for which 99.9% of species abundances occur.
+		# Find the n below which 99.9% of species abundances occur.
 		n = qls(0.999, N, alpha)
 		
 		abuns = sample(1:n, S, prob=dls(1:n, N, alpha), replace=T)		
@@ -183,17 +189,23 @@ make_gsad = function(S, distribution, condition=NA, rho=NA){
 		# p1 = mean, p2 = sd
 		abuns = rlnorm(S, distribution$p1, distribution$p2)
 	}
-	if(distributions$type=='poisson'){
+	if(distribution$type=='poisson'){
 		# p1 = lambda
-		abuns = rpois(S, distributions$p1)
+		abuns = rpois(S, distribution$p1)+1
 	}
 
+	# THIS IS NOT VERY ROBUST AND SHOULD PROBABLY BE EDITED FOR BETTER ERROR HANDLING
+	# MAY WANT TO RE-DRAW ABUNDANCES AFTER ALGORITHM FAILURE RATHER THAN IMMEDIATELY SENDING STOP ERROR MESSAGE
 	if(!is.na(condition)){
 
 		if(S != length(condition) ) stop('Number of species much match number of elements in condition')
 
+		# The algorithm will swap the order of abundances until either
+		#  the ranked correlation is within tol of the given rho
+		# OR
+		#  it has tried ntries swaps
 		tol=0.01
-		ntries = 1000
+		ntries = 10000
 
 		c_rank = rank(condition)
 		a_rank = rank(abuns)
@@ -220,8 +232,19 @@ make_gsad = function(S, distribution, condition=NA, rho=NA){
 	abuns	
 }
 
-
 ### Functions for Running Simulation ###
+
+# A function that calculates the probability of survival in environment x given niche parameters
+# If x is a vector, probabilities are multiplied.
+#	x = vector of environmental values
+#	mu = vector of niche optima
+#	sigma = vector of niche breadths
+niche_func = function(x, mu, sigma){
+	N = length(x)
+	pvals = sapply(1:N, function(i) 1/exp((x[i]-mu[i])^2/(2*sigma[i]^2)))
+
+	prod(pvals)
+}
 
 # A function that surveys which mutualist partners are present in a community
 #	comm = matrix indicating which association is present in each position of a community
@@ -276,12 +299,12 @@ die = function(comm, topo_names, pool, mortality, partner){
 }
 
 # A function that causes random dispersal of mutualists into a community.
-# For now, colonization events are assumed to be identically and independently distributed.
+# For now, colonization events independent with probability proportional to the global species abundance distribution for each partner.
 #	sites = a 2 column matrix with the environmental conditions at each site
 #	niches = a 2 column matrix giving niche optima and breadths for each mutualist species
 #	pool = site X mutualist binary matrix indicating which mutualist species are present
 
-disperse = function(sites, niches, pool){
+disperse = function(sites, niches, pool, gsad){
 	
 	# Find number of communities and species
 	N_C = nrow(pool)
@@ -290,15 +313,11 @@ disperse = function(sites, niches, pool){
 	# For each species and each site calculate the probability of establishment based on joint gaussian niches on each environmental variable
 	probs = matrix(0,N_C, N_S)	
 
-	# https://github.com/ahhurlbert/species-energy-simulation/blob/master/code/senc_sim_fun.r
 	for(i in 1:N_C){
 	for(j in 1:N_S){
-		p1 = 2*pnorm(sites[i,1], mean=niches[j,'mu',1], sd=niches[j,'sigma',1], lower.tail=sites[i,1] < niches[j,'mu',1])
-		p2 = 2*pnorm(sites[i,2], mean=niches[j,'mu',2], sd=niches[j,'sigma',2], lower.tail=sites[i,2] < niches[j,'mu',2])
-
-		probs[i,j] = p1*p2
-	}
-	}
+		p = niche_func(sites[i,], niches[j,'mu',], niches[j,'sigma',])
+		probs[i,j] = 1 - dbinom(0, gsad[j], p) # Probability of at least one propagule establishing with propagule pressure equal to global abundance
+	}}
 
 	# Generate random dispersal
 	rands = runif(N_C*N_S) 
@@ -409,13 +428,10 @@ plot_niches = function(niches, grad, add_env){
 	plot(c(0,0), xlim=grad[,1], ylim=c(0,1), xlab='Env1', ylab='P', type='n', las=1)
 
 	for(i in 1:N_S){
-		niche_func = function(x) 2*pnorm(x, niches[i,'mu',1], niches[i,'sigma',1], lower.tail=x < niches[i,'mu',1])
 		xvals = seq(grad[1,1],grad[2,1], length.out=100)
-		yvals = sapply(xvals, niche_func)		
+		yvals = sapply(xvals, function(x) niche_func(x, niches[i,'mu',1], niches[i,'sigma',1]))		
 		lines(xvals, yvals, lwd=2, col=cols[i])
 	}
-
-	niche_func(seq(-3,3,1))
 
 	if(!is.null(add_env)) points(add_env[,1], rep(0, nrow(add_env)), pch=3, col=2)
 
@@ -423,16 +439,54 @@ plot_niches = function(niches, grad, add_env){
 	plot(c(0,0), xlim=grad[,2], ylim=c(0,1), xlab='Env2', ylab='P', type='n', las=1)
 
 	for(i in 1:dim(niches)[1]){
-		niche_func = function(x) 2*pnorm(x, niches[i,'mu',2], niches[i,'sigma',2], lower.tail=x < niches[i,'mu',2])
 		xvals = seq(grad[1,2],grad[2,2], length.out=100)
-		yvals = sapply(xvals, niche_func)		
+		yvals = sapply(xvals, function(x) niche_func(x, niches[i,'mu',2], niches[i,'sigma',2]))	
 		lines(xvals, yvals, lwd=2, col=cols[i])
 	}
 
 	if(!is.null(add_env)) points(add_env[,2], rep(0, nrow(add_env)), pch=3, col=2)
 }
 
-# A function that plots richness of each partner through time
+# A function that plots the mutualist interaction network
+#	topo = a matrix indicating the strength of interaction between mutualists
+#	orderby = 'degree': ordered from most to least connected, 'name': ordered numerically by name
+plot_topo = function(topo, orderby='degree', use_col='#000000', lwd=2){
+	if(orderby=='degree'){
+		# Calculate degree of each partner
+		deg_a = rowSums(topo)
+		deg_b = colSums(topo)
+		
+		# Order partners by degree
+		ord_a = order(deg_a, decreasing=T)
+		ord_b = order(deg_b, decreasing=T)
+	}
+
+	if(orderby=='name'){
+		ord_a = 1:nrow(topo)
+		ord_b = 1:ncol(topo)
+	}
+	
+	# Define node locations
+	pts_a = expand.grid(-1, -1*ord_a)
+	pts_b = expand.grid(1, -1*ord_b)
+
+	# Set up plot
+	plot(rbind(pts_a, pts_b), type='n', axes=F, xlab='', ylab='', xlim=c(-1.5, 1.5), ylim=c(-max(dim(topo))-.5, 1))
+
+	# Add labels
+	text(-1, 0, labels='A')
+	text(pts_a, labels=1:nrow(topo), pos=2)
+	text(1, 0, labels='B')
+	text(pts_b, labels=1:ncol(topo), pos=4)
+	
+	# Plot all links between pairs of potential partners
+	for(i in 1:nrow(topo)){
+	for(j in 1:ncol(topo)){
+		shade = format(as.hexmode(floor(topo[i,j]*255)), width=2)
+		segments(pts_a[i,1], pts_a[i,2], pts_b[j,1], pts_b[j,2], col=paste(use_col, shade, sep=''), lwd=lwd)
+	}}
+
+}
 
 
 

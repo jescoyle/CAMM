@@ -1,6 +1,7 @@
 ## This script defines state variables used to run the community assembly of mutualists model (CAMM)
 
 
+
 ## Define mutualist names
 a_name = 'myco' # The primary partner or host
 b_name = 'photo' # The secondary partner or symbiont
@@ -37,6 +38,16 @@ alpha_b1 = 10 # shape parameter of gamma distribution of niche breadths for mutu
 alpha_b2 = 10 # shape parameter of gamma distribution of niche breadths for mutualist b for environmental variable 2
 r_b = 0 # covariance of niche breadths of 2 environmental variables for mutualist b: negative -> tradeoffs
 
+## Parameters controling global abundance distribution (differential dispersal)
+# Shape of the SAD
+gsad_dist_a = list(type='poisson', p1=1)
+gsad_dist_b = list(type='poisson', p1=1)
+
+# Whether global abundance should be correlated with niche breadth ('breadth'), number of partners ('links'), or not correlated ('none')
+gsad_cond_a = list(type='none') #list(type='breadth', rho=.7)
+gsad_cond_b = list(type='none') #list(type='breadth', rho=.7)
+
+
 # Lists of parameters for each mutualist
 nicheparms_a = list(mu = c(mu_a1, mu_a2), rho = rho_a, sigma = c(sigma_a1, sigma_a2), alpha = c(alpha_a1, alpha_a2), r=r_a)
 nicheparms_b = list(mu = c(mu_b1, mu_b2), rho = rho_b, sigma = c(sigma_b1, sigma_b2), alpha = c(alpha_b1, alpha_b2), r=r_b)
@@ -61,7 +72,10 @@ mort_rate_a = 10 # mortality rate of unassociated mutualist a relative to associ
 mort_rate_b = 1 # mortality rate of unassociated mutualist b relative to association
 
 ## Parameters controling simulation
-reps = 200 # Number of time steps, MAY CHANGE THIS TO RUN UNTIL EQUILIBRIUM
+# Run simulation for set number of time steps ('fixed') or until set number of chains converge ('converge')
+sim_mode = 'fixed' 
+reps = 200 # Number of time steps
+nchains = 3 # Number of replicate simulation runs from which to check convergence
 
 
 

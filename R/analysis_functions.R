@@ -1,70 +1,86 @@
 ## This script contains functions for visualizing, summarizing and analyzing simulation results
 
-## CURRENTLY CODE IS NOT WRITTEN AS FUNCTIONS
+
  
-par(mfrow=c(5,1))
-par(mar=c(4,4,1,1))
-for(i in 1:5){
-occupancy = colSums(comm_records[i,,]>0)
-plot(occupancy, type='l', ylim=c(0,N))
-abline(h=N, col=2)
-}
 
-par(mfrow=c(5,1))
-par(mar=c(4,4,1,1))
-for(i in 1:5){
-richness = apply(comm_records[i,,], 2, function(x) length(unique(x)[unique(x)!=0]))
-plot(richness, type='l', ylim=c(0,N_L))
-abline(h=N_L, col=2)
-}
+### Functions for visualizing simulations ###
 
-# Presence of each partner
-use_col = colorRampPalette(c('#90ABFC','#000000'))(S_a)
-par(mfrow=c(5,1))
-par(mar=c(4,4,1,1))
-for(i in 1:5){
-	plot(0,0, xlim=c(1,dim(comm_records)[3]), ylim=c(0,1), las=1, type='n', ylab=paste('Site',i), xlab='')
-for(j in 1:S_a){
-	lines(poolA_records[i,j,], col=use_col[j])
-}
-}
+# A function that plots the probability density functions of niches used in a simulation
+#	niches = an S x 2 x 2 array giving mu and sigma parameters of the gaussian distribution for 2 environmental variables and S species
+# 	grad = a 2 x 2 matrix giving the length of each environmental gradient
+#	add_env = an optional matrix of environmental values at sites
+plot_niches = function(niches, grad, add_env){
 
-# Abundance spread of each species for a given site
-use_col = colorRampPalette(c('#90ABFC','#000000'))(N_L)
-par(mfrow=c(N_C,1))
-for(i in 1:N_C){	
-	plot(0,0, xlim=c(1,dim(comm_records)[3]), ylim=c(0,N), las=1, type='n', ylab=paste('Site',i), xlab='')
-	counts = apply(comm_records[i,,], 2, function(x) table(factor(x, 1:10)))
-	cum_counts = sapply(2:(N_L), function(i) colSums(counts[1:i,]))
-	cum_counts = rbind(counts[1,], t(cum_counts))
-	for(j in 1:S_a){
-		lines(cum_counts[j,], col=use_col[j])
-	}
-}
-
-
-use_col = colorRampPalette(c('#90ABFC','#000000'))(S_b)
-par(mfrow=c(N_C,1))
-for(i in 1:N_C){	
-	plot(0,0, xlim=c(1,dim(comm_records)[3]), ylim=c(0,N), las=1, type='n', ylab=paste('Site',i), xlab='')
+	par(mfrow=c(1,2))
 	
-	counts = apply(comm_records[i,,], 2, function(x){
-		table(factor(sapply(x, function(xi) ifelse(xi==0, 0, which(topo_names==xi, arr.ind=T)[2])), 1:S_b))
-	})
-	cum_counts = sapply(2:(S_b), function(i) colSums(counts[1:i,]))
-	cum_counts = rbind(counts[1,], t(cum_counts))
-	for(j in 1:S_b){
-		lines(cum_counts[j,], col=use_col[j])
+	# Find number of species
+	N_S = dim(niches)[1]
+
+	# Choose colors for each species
+	cols = colorRampPalette(c('#90ABFC','#000000'))(N_S)
+	cols = cols[rank(niches[,'mu',1])]
+	
+	# Make plot for env var 1
+	plot(c(0,0), xlim=grad[,1], ylim=c(0,1), xlab='Env1', ylab='P', type='n', las=1)
+
+	for(i in 1:N_S){
+		xvals = seq(grad[1,1],grad[2,1], length.out=100)
+		yvals = sapply(xvals, function(x) niche_func(x, niches[i,'mu',1], niches[i,'sigma',1]))		
+		lines(xvals, yvals, lwd=2, col=cols[i])
 	}
+
+	if(!is.null(add_env)) points(add_env[,1], rep(0, nrow(add_env)), pch=3, col=2)
+
+	# Make plot for env var 2
+	plot(c(0,0), xlim=grad[,2], ylim=c(0,1), xlab='Env2', ylab='P', type='n', las=1)
+
+	for(i in 1:dim(niches)[1]){
+		xvals = seq(grad[1,2],grad[2,2], length.out=100)
+		yvals = sapply(xvals, function(x) niche_func(x, niches[i,'mu',2], niches[i,'sigma',2]))	
+		lines(xvals, yvals, lwd=2, col=cols[i])
+	}
+
+	if(!is.null(add_env)) points(add_env[,2], rep(0, nrow(add_env)), pch=3, col=2)
 }
 
-use_col = colorRampPalette(c('#90ABFC','#000000'))(S_b)
-par(mfrow=c(5,1))
-par(mar=c(4,4,1,1))
-for(i in 1:5){
-	plot(0,0, xlim=c(1,dim(comm_records)[3]), ylim=c(0,1), las=1, type='n', ylab=paste('Site',i), xlab='')
-for(j in 1:S_b){
-	lines(poolB_records[i,j,], col=use_col[j])
-}
+# A function that plots the mutualist interaction network
+#	topo = a matrix indicating the strength of interaction between mutualists
+#	orderby = 'degree': ordered from most to least connected, 'name': ordered numerically by name
+plot_topo = function(topo, orderby='degree', use_col='#000000', lwd=2){
+	if(orderby=='degree'){
+		# Calculate degree of each partner
+		deg_a = rowSums(topo)
+		deg_b = colSums(topo)
+		
+		# Order partners by degree
+		ord_a = order(deg_a, decreasing=T)
+		ord_b = order(deg_b, decreasing=T)
+	}
+
+	if(orderby=='name'){
+		ord_a = 1:nrow(topo)
+		ord_b = 1:ncol(topo)
+	}
+	
+	# Define node locations
+	pts_a = expand.grid(-1, -1*ord_a)
+	pts_b = expand.grid(1, -1*ord_b)
+
+	# Set up plot
+	plot(rbind(pts_a, pts_b), type='n', axes=F, xlab='', ylab='', xlim=c(-1.5, 1.5), ylim=c(-max(dim(topo))-.5, 1))
+
+	# Add labels
+	text(-1, 0, labels='A')
+	text(pts_a, labels=1:nrow(topo), pos=2)
+	text(1, 0, labels='B')
+	text(pts_b, labels=1:ncol(topo), pos=4)
+	
+	# Plot all links between pairs of potential partners
+	for(i in 1:nrow(topo)){
+	for(j in 1:ncol(topo)){
+		shade = format(as.hexmode(floor(topo[i,j]*255)), width=2)
+		segments(pts_a[i,1], pts_a[i,2], pts_b[j,1], pts_b[j,2], col=paste(use_col, shade, sep=''), lwd=lwd)
+	}}
+
 }
 

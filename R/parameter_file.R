@@ -7,11 +7,11 @@ a_name = 'myco' # The primary partner or host
 b_name = 'photo' # The secondary partner or symbiont
 
 ## Define number of taxa for mutualists a and b
-S_a = 10
-S_b = 2
+S_a = 15
+S_b = 4
 
 ## Define number and size of communities
-N_C = 5 # number of sampled communities
+N_C = 50 # number of sampled communities
 N = 100 # number of individuals in a single community
 
 ## Parameters controling environmental variation
@@ -55,7 +55,7 @@ nicheparms_b = list(mu = c(mu_b1, mu_b2), rho = rho_b, sigma = c(sigma_b1, sigma
 ## Parameters controling mutualistic network
 
 # Topology
-N_L = 10 # number of links: must be >= S_a, if > then must be topology = many2many'
+N_L = S_a # number of links: must be >= S_a, if > then must be topology = many2many'
 topology = 'one2many' # links from mutualist a to mutualist b: 'one2one','one2many','many2many'
 omega = 1 # a scaler that determines whether mutualism is obligate (1) or facultative (>= 0)
 

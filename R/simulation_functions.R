@@ -1,5 +1,5 @@
 ## This script holds functions used by the community assembly of mutualists model (CAMM)
-
+library(vegan) # vegdist
 
 ### Functions for Initializing Simulation ###
 
@@ -62,11 +62,11 @@ make_topo = function(S_a, S_b, N_L, topology){
 # Returns a matrix with the same structure but with 1 replaced by integer labels
 
 name_topo = function(topo){
-	topo_labeled = topo
+	topo_labeled = t(topo)
 	N_L = sum(topo_labeled==1)
 	topo_labeled[topo_labeled==1] = 1:N_L
 
-	topo_labeled
+	t(topo_labeled)
 }
 
 
@@ -405,88 +405,126 @@ transition = function(probs){
 }
 
 
+### Functions for checking status of simulation ###
 
+# A function that calculates species abundances for all sites
+#	comm = an N_C x N matrix of species present at each site
+#	topo_names = matrix describing mutualistic netiwork and numbering each partner
+#	type = 'species', 'a', 'b' : which partner should be tabulated	
 
-### Functions for visualizing simulations ###
-
-# A function that plots the probability density functions of niches used in a simulation
-#	niches = an S x 2 x 2 array giving mu and sigma parameters of the gaussian distribution for 2 environmental variables and S species
-# 	grad = a 2 x 2 matrix giving the length of each environmental gradient
-#	add_env = an optional matrix of environmental values at sites
-plot_niches = function(niches, grad, add_env){
-
-	par(mfrow=c(1,2))
+calc_sa = function(comm, topo_names, type='species'){
+	if(type=='species'){
+		counts = apply(comm, 1, function(x) table(factor(x, 1:max(topo_names))))
+	}
 	
-	# Find number of species
-	N_S = dim(niches)[1]
-
-	# Choose colors for each species
-	cols = colorRampPalette(c('#90ABFC','#000000'))(N_S)
-	cols = cols[rank(niches[,'mu',1])]
-	
-	# Make plot for env var 1
-	plot(c(0,0), xlim=grad[,1], ylim=c(0,1), xlab='Env1', ylab='P', type='n', las=1)
-
-	for(i in 1:N_S){
-		xvals = seq(grad[1,1],grad[2,1], length.out=100)
-		yvals = sapply(xvals, function(x) niche_func(x, niches[i,'mu',1], niches[i,'sigma',1]))		
-		lines(xvals, yvals, lwd=2, col=cols[i])
+	if(type=='a'){
+		counts = apply(comm, 1, function(x){
+			table(factor(sapply(x, function(xi) ifelse(xi==0, 0, which(topo_names==xi, arr.ind=T)[1])), 1:nrow(topo_names)))
+		})
 	}
 
-	if(!is.null(add_env)) points(add_env[,1], rep(0, nrow(add_env)), pch=3, col=2)
-
-	# Make plot for env var 2
-	plot(c(0,0), xlim=grad[,2], ylim=c(0,1), xlab='Env2', ylab='P', type='n', las=1)
-
-	for(i in 1:dim(niches)[1]){
-		xvals = seq(grad[1,2],grad[2,2], length.out=100)
-		yvals = sapply(xvals, function(x) niche_func(x, niches[i,'mu',2], niches[i,'sigma',2]))	
-		lines(xvals, yvals, lwd=2, col=cols[i])
+	if(type=='b'){
+		counts = apply(comm, 1, function(x){
+			table(factor(sapply(x, function(xi) ifelse(xi==0, 0, which(topo_names==xi, arr.ind=T)[2])), 1:ncol(topo_names)))
+		})
 	}
 
-	if(!is.null(add_env)) points(add_env[,2], rep(0, nrow(add_env)), pch=3, col=2)
+	t(counts)
 }
 
-# A function that plots the mutualist interaction network
-#	topo = a matrix indicating the strength of interaction between mutualists
-#	orderby = 'degree': ordered from most to least connected, 'name': ordered numerically by name
-plot_topo = function(topo, orderby='degree', use_col='#000000', lwd=2){
-	if(orderby=='degree'){
-		# Calculate degree of each partner
-		deg_a = rowSums(topo)
-		deg_b = colSums(topo)
+# A function that calculates species richness for all sites
+#	comm = an N_C x N matrix of species present at each site
+#	topo_names = matrix describing mutualistic netiwork and numbering each partner
+#	type = 'species', 'a', 'b' : which partner should be tabulated		
+calc_rich = function(comm, topo_names, type){
+	sa = calc_sa(comm, topo_names, type)
+	apply(sa, 1, function(x) sum(x>0))
+}
+
+# A function that calculates the number of spaces occupied in each site
+# 	comm = an N_C x N matrix of species present at each site
+calc_occ = function(comm){
+	apply(comm, 1, function(x) sum(x>0))
+}
+
+# A function that calculates the compositional dissimilarity between all sites
+# Standardization by total abundance is currently not implemented but could be easily added using vegan's decostand
+#	comm = an N_C x N matrix of species present at each site
+#	topo_names = matrix describing mutualistic netiwork and numbering each partner
+#	type = 'species', 'a', 'b' : which partner should be tabulated
+# 	metric = any dissimilarity method allowed by vegdist function in vegan 
+#	binary = convert community matrix to presence/absence?	
+calc_diss = function(comm, topo_names, type, metric, binary=F){
+	comm_mat = calc_sa(comm, topo_names, type)
+	if(binary) comm_mat = comm_mat > 0
+	vegdist(comm_mat, method=metric)
+}
+
+# A function that calculates the correspondence between community and environmental variation
+# Uses RDA on Hellinger-transformed species abundances
+#	comm = an N_C x N matrix of species present at each site
+#	topo_names = matrix describing mutualistic netiwork and numbering each partner
+#	type = 'species', 'a', 'b' : which partner should be tabulated
+#	env = matrix of environmental variables across sites (in same order as comm)
+#	binary = convert community matrix to presence/absence?	
+calc_rda = function(comm, topo_names, type, env, binary=F){
+	# Calculate community matrix of species abudances
+	comm_mat = calc_sa(comm, topo_names, type)
+
+	# Convert to presence/absence if indicated
+	if(binary) comm_mat = comm_mat > 0
+	
+	# Transform abundances
+	comm_std = decostand(comm_mat, 'hellinger')
+
+	# Conduct constrained ordination
+	ord = rda(comm_std, env)
+
+	# Return the adjusted R-square
+	RsquareAdj(ord)$adj.r.squared
+}
+
+# A function that calculates all community-environment correlation statistics
+#	comm = an N_C x N matrix of species present at each site
+#	topo_names = matrix describing mutualistic netiwork and numbering each partner
+# 	metric = any dissimilarity method allowed by vegdist function in vegan 
+#	binary = vector of logical indicated whether community matrix should be converted to presence/absence?
+calc_envcorr = function(comm, topo_names, env, metric, binary){
+	# Count the number of environmental axes
+	Nenv = ifelse(is.null(dim(env)), 1, ncol(env))
+
+	# Define array to hold statistics
+	corr_mat = array(NA, dim=c(3, Nenv, length(metric)+1, length(binary)), 
+		dimnames=list(community=c('species','a','b'), env=1:Nenv, measure=c('rda', metric), binary=binary))
+
+	for(k in binary){
+	for(type in c('species','a','b')){
+	for(i in 1:Nenv){
+		# Get environmental axis
+		if(Nenv==1){ X = env } else { X = env[,i]}
+
+		# Calculate RDA
+		corr_mat[type, i, 'rda', as.character(k)] = calc_rda(comm, topo_names, type, X, k)
 		
-		# Order partners by degree
-		ord_a = order(deg_a, decreasing=T)
-		ord_b = order(deg_b, decreasing=T)
-	}
+		# Calculate correlation for each dissimilarity metric
+		for(j in metric){
+			comm_diss = calc_diss(comm, topo_names, type, j, k)
+			env_dist = dist(X)
+			corr_mat[type, i, j, as.character(k)] = cor(comm_diss, env_dist)
+		}
 
-	if(orderby=='name'){
-		ord_a = 1:nrow(topo)
-		ord_b = 1:ncol(topo)
-	}
+	}}}
 	
-	# Define node locations
-	pts_a = expand.grid(-1, -1*ord_a)
-	pts_b = expand.grid(1, -1*ord_b)
-
-	# Set up plot
-	plot(rbind(pts_a, pts_b), type='n', axes=F, xlab='', ylab='', xlim=c(-1.5, 1.5), ylim=c(-max(dim(topo))-.5, 1))
-
-	# Add labels
-	text(-1, 0, labels='A')
-	text(pts_a, labels=1:nrow(topo), pos=2)
-	text(1, 0, labels='B')
-	text(pts_b, labels=1:ncol(topo), pos=4)
-	
-	# Plot all links between pairs of potential partners
-	for(i in 1:nrow(topo)){
-	for(j in 1:ncol(topo)){
-		shade = format(as.hexmode(floor(topo[i,j]*255)), width=2)
-		segments(pts_a[i,1], pts_a[i,2], pts_b[j,1], pts_b[j,2], col=paste(use_col, shade, sep=''), lwd=lwd)
-	}}
-
+	corr_mat
 }
+
+
+	
+
+
+
+
+
 
 
 

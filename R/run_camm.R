@@ -1,6 +1,7 @@
 ## This script runs the community assembly of mutualists model (CAMM)
 
-library(abind)
+library(dgof) # ks.test for discrete distributions
+library(abind) # for growing arrays during simulation run
 
 ## Set options, load parameter values and simulation functions
 working_dir = 'C:/Users/jrcoyle/Documents/UNC/Projects/CAMM'
@@ -99,7 +100,6 @@ for(step in 1:reps){
 
 	# Calculate transition matrices for each site
 	T_mat = calc_probs(sites, niches_a, niches_b, topo_names, poolA, poolB, mort_rate, assoc_probs) # array of square matrices of transition probabilities from one association to another
-	Tmat_records[,,,step] = T_mat
 
 	# Identify current state of each space and transition based on random numbers
 	new_comm = matrix(NA, nrow=nrow(comm), ncol = ncol(comm))
@@ -134,25 +134,30 @@ if(sim_mode=='converge'){
 comm_arr = array(comm, dim=c(nrow(comm), ncol(comm), nchains))
 poolA_arr = array(poolA, dim=c(nrow(poolA), ncol(poolA), nchains))
 poolB_arr = array(poolB, dim=c(nrow(poolB), ncol(poolB), nchains))
+Tmat = calc_probs(sites, niches_a, niches_b, topo_names, poolA, poolB, mort_rate, assoc_probs)
+Tmat_arr = array(Tmat, dim=c(dim(Tmat), nchains))
 
 # Generate empty array to hold changes in community and add initial community
-comm_records = array(NA, c(N_C, N, reps+1, nchains)) 
-comm_records[,,1,] = comm_arr
-poolA_records = array(NA, c(N_C, S_a, reps+1, nchains)) 
-poolA_records[,,1,] = poolA_arr
-poolB_records = array(NA, c(N_C, S_b, reps+1, nchains))
-poolB_records[,,1,] = poolB_arr
-Tmat_records = array(NA, c(N_C, N_L+1, N_L+1, reps+1, nchains))
+comm_records = array(comm_arr, dim=c(dim(comm_arr), 1)) 
+poolA_records = array(poolA_arr, dim=c(dim(poolA_arr),1)) 
+poolB_records = array(poolB_arr, dim=c(dim(poolB_arr),1))
+Tmat_records = array(Tmat_arr, dim=c(dim(Tmat_arr),1))
 
 ## Run simulation until convergence
-window_size = 50 # Number of iterations to run before calculating convergence criteria
+window_size = 50 # Number of iterations to run before re-calculating convergence criteria
 burnin = 100
+Rhat_tol = 0.01 # Tolerance for R_hat statistic to be considered converged
+
+
+# Set initial counters
+converged = F
 step = 1
 
-# Make vector to hold convergence flags
+# COMMUNITIES ARE NOT CONVERGING UNDER THESE CRITERIA- MAY WANT TO RECONSIDER
+while(!converged){
+	print(paste('Step =', step))
 
-while((CONVERGENCE CRITERION NOT MET)&(step > window_size)){
-	for(step in 101:200){
+	# Do one step through the simulation
 	for(k in 1:nchains){
 		comm = comm_arr[,,k]
 		poolA = poolA_arr[,,k]
@@ -168,7 +173,7 @@ while((CONVERGENCE CRITERION NOT MET)&(step > window_size)){
 
 		# Calculate transition matrices for each site
 		T_mat = calc_probs(sites, niches_a, niches_b, topo_names, poolA, poolB, mort_rate, assoc_probs) # array of square matrices of transition probabilities from one association to another
-		Tmat_records[,,,step, k] = T_mat
+		Tmat_arr[,,,k] = T_mat
 
 		# Identify current state of each space and transition based on random numbers
 		new_comm = matrix(NA, nrow=nrow(comm), ncol = ncol(comm))
@@ -182,30 +187,66 @@ while((CONVERGENCE CRITERION NOT MET)&(step > window_size)){
 		comm_arr[,,k] = comm
 		poolA_arr[,,k] = poolA
 		poolB_arr[,,k] = poolB
-		comm_records[,,step+1,k] = comm
-		poolA_records[,,step+1,k] = poolA
-		poolB_records[,,step+1,k] = poolB
 	}
-	}
-	# Calculate convergence criteria
+	
+	# Save communities from this step
+	Tmat_records = abind(Tmat_records, Tmat_arr)
+	comm_records = abind(comm_records, comm_arr)
+	poolA_records = abind(poolA_records, poolA_arr)
+	poolB_records = abind(poolB_records, poolB_arr)
+	
+	# Calculate convergence criteria if past burnin and at correct re-test interval
 	if((step %% window_size == 0)&(step > burnin)){
 		# Determine observations to use in calculation of R_hat
 		n_obs = floor(length((burnin+1):step)/2)
 		use_obs = (step-n_obs+1) : step
 
-		# Calculate R_hat for species richness
+		# Calculate community statistics for each chain and each community
 		commstats = array(NA, dim=c(n_obs, nchains, N_C, 4), 
 			dimnames=list(step=use_obs, chain=1:nchains, comm = 1:N_C, statistic=c('S_species','S_a','S_b','N')))
 		for(n in use_obs){
-		for(k in 1:dim(comm_records)[4]){	
-			commstats[as.character(n),k,,] = as.matrix(calc_commstats(comm_records[,,n,k], topo_names))
+		for(k in 1:nchains){	
+			commstats[as.character(n),k,,] = as.matrix(calc_commstats(comm_records[,,k,n], topo_names))
 		}}	
-
 		
-
+		# For each community statistic, use K-S test to determine whether each chain is sampling from empirical distribution function of all chains mixed
+		rich_flags = sapply(dimnames(commstats)$statistic, function(y){
+			sapply(1:N_C, function(i){
+				pvals = sapply(1:nchains, function(k) ks.test(commstats[,k,i,y],ecdf(commstats[,,i,y]))$p.value)
+				prod(pvals > 0.95)				
+			})
+		}) > 0
 		
-
-		# COMPARE COMPOSITION~ENV CORRELATIONS?
+		print(paste('Number of obs =', n_obs))
+		print('Community Statistics Convergence:')
+		print(colSums(rich_flags)/nrow(rich_flags))
+	
+		# Calculate community composition~env correlation for each chain
+		corrstats = array(NA, dim=c(n_obs, nchains, 3, ncol(sites)), 
+			dimnames=list(step=use_obs, chain=1:nchains, community=c('species','a','b'), env=1:ncol(sites)))
+		for(n in use_obs){
+		for(k in 1:nchains){
+			corrstats[as.character(n), k, , ] = calc_envcorr(comm_records[,,k,n], topo_names, sites, c(), binary=F)
+		}}
+		
+		# Calculate R_hat among chains
+		corr_flags = abs(sapply(dimnames(corrstats)$community, function(y){
+			sapply(1:ncol(sites), function(x){
+				calc_Rhat(corrstats[,,y,x], alpha=.95)
+			})
+		})-1) < Rhat_tol
+		
+		print('Community~Env Correlation Convergence:')
+		print(corr_flags)
+	
+		# Test whether all flags are TRUE
+		converged = prod(c(corr_flags, rich_flags))>0
+		
+		# WORKING HERE
+		# Plot convergence criteria
+	
+		
+		# LOOK INTO BINOMIAL DISSIMILARITY IN VEGDIST FOR COMPARING COMMUNITIES ACROSS CHAINS
 
 	}
 	step = step + 1

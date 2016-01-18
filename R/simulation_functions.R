@@ -539,6 +539,8 @@ calc_commstats = function(comm, topo_names){
 
 # A function that calculates interval-based scale reduction factor (from Brooks and Gelman 1998, DOI:10.1080/10618600.1998.10474787)
 # THIS MAY NOT WORK WELL FOR DISCRETE QUANTITIES. MAY WANT TO DEFINE SOMETHING MORE EXACT BASED ON BINOMIAL DISTRIBUTION
+#	x = matrix whose columns are independent chains and rows are realizations of the statistic to be compared
+#	alpha = probability level for interval used to compare empirical distributions
 calc_Rhat = function(x, alpha){
 	within_chain = apply(x, 2, function(xi) diff(quantile(xi, c((1-alpha)/2, alpha + (1-alpha)/2))))
 	all_chains = diff(quantile(x, c((1-alpha)/2, alpha + (1-alpha)/2)))

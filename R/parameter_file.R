@@ -1,17 +1,18 @@
 ## This script defines state variables used to run the community assembly of mutualists model (CAMM)
 
-
+## Name simulation run
+runID = 'testCONV1'
 
 ## Define mutualist names
 a_name = 'myco' # The primary partner or host
 b_name = 'photo' # The secondary partner or symbiont
 
 ## Define number of taxa for mutualists a and b
-S_a = 15
-S_b = 4
+S_a = 5
+S_b = 2
 
 ## Define number and size of communities
-N_C = 50 # number of sampled communities
+N_C = 20 # number of sampled communities
 N = 100 # number of individuals in a single community
 
 ## Parameters controling environmental variation
@@ -40,8 +41,8 @@ r_b = 0 # covariance of niche breadths of 2 environmental variables for mutualis
 
 ## Parameters controling global abundance distribution (differential dispersal)
 # Shape of the SAD
-gsad_dist_a = list(type='poisson', p1=1)
-gsad_dist_b = list(type='poisson', p1=1)
+gsad_dist_a = list(type='same', p1=1)
+gsad_dist_b = list(type='same', p1=1)
 
 # Whether global abundance should be correlated with niche breadth ('breadth'), number of partners ('links'), or not correlated ('none')
 gsad_cond_a = list(type='none') #list(type='breadth', rho=.7)
@@ -73,7 +74,7 @@ mort_rate_b = 1 # mortality rate of unassociated mutualist b relative to associa
 
 ## Parameters controling simulation
 # Run simulation for set number of time steps ('fixed') or until set number of chains converge ('converge')
-sim_mode = 'fixed' 
+sim_mode = 'converge' 
 reps = 200 # Number of time steps
 nchains = 3 # Number of replicate simulation runs from which to check convergence
 

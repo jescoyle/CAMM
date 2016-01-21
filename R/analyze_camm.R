@@ -6,14 +6,35 @@ fig_dir = 'C:/Users/jrcoyle/Documents/UNC/Projects/CAMM/Figures/'
 # Load functions
 code_dir = 'C:/Users/jrcoyle/Documents/UNC/Projects/CAMM/GitHub/R/'
 source(paste(code_dir,'simulation_functions.R', sep=''))
+source(paste(code_dir,'analysis_functions.R', sep=''))
 
 # Load results
 results_dir = 'C:/Users/jrcoyle/Documents/UNC/Projects/CAMM/Runs/'
-runID = 'testCONV2'
+runID = 'testCONV3'
 
 load(paste(results_dir, 'sim_results_',runID,'.RData', sep=''))
 load(paste(results_dir, 'sim_object_',runID,'.RData', sep=''))
 source(paste(results_dir, 'parameter_file_',runID,'.R', sep=''))
+
+### Plot initial parameters
+
+# Topology
+svg(paste(fig_dir, runID, '_topology.svg', sep=''), height=4, width=4)
+par(mar=c(0,0,0,0))
+plot_topo(topo)
+dev.off()
+
+# Niches
+svg(paste(fig_dir, runID, '_nichesA.svg', sep=''), height=4, width=8)
+par(mar=c(4,4,0,0))
+plot_niches(niches_a, grad=matrix(c(-3, 3, -3, 3), nrow=2), add_env=sites)
+dev.off()
+
+svg(paste(fig_dir, runID, '_nichesB.svg', sep=''), height=4, width=8)
+par(mar=c(4,4,0,0))
+plot_niches(niches_b, grad=matrix(c(-3, 3, -3, 3), nrow=2), add_env=sites)
+dev.off()
+
 
 ### Code for simulations run for fixed number of time steps ###
 par(mfrow=c(5,1))
@@ -113,7 +134,8 @@ dev.off()
 
 # Compare richness ~ env correlations
 # Note: we don't really expect correlations here.
-thin=20
+thin=50
+use_obs = seq(2,dim(comm_records)[4],thin)
 use_col = c('black','red','blue')
 
 pdf(paste(fig_dir, runID, '_rich_envcorr.pdf', sep=''), height=5, width=6)
@@ -123,17 +145,18 @@ for(x in 1:2){
 for(y in c('a','b')){
 	plot(0,0, type='n', xlim=c(0, dim(comm_records)[4]), ylim=c(-1,1), xlab='', ylab=paste('Richness',y,'~','Env',x), las=1)
 	corr = sapply(1:nchains, function(k){
-		sapply(seq(2,dim(comm_records)[4],thin), function(i){
+		sapply(use_obs, function(i){
 			richness = calc_rich(comm_records[,,k,i], topo_names, y)
 			cor(richness, sites[,x])
 		})
 	})
-	for(k in 1:nchains) lines(seq(2,dim(comm_records)[4], thin), corr[,k], lwd=2, col=use_col[k])
+	for(k in 1:nchains) lines(use_obs, corr[,k], lwd=2, col=use_col[k])
 }}
 dev.off()
 
 # Compare species composition ~ env correlations
-thin=50
+thin=20
+use_obs = seq(1,dim(comm_records)[4],thin)
 use_col = c('black','red','blue')
 
 pdf(paste(fig_dir, runID, '_envRDA.pdf', sep=''), height=5, width=6)
@@ -143,14 +166,13 @@ for(x in 1:2){
 for(y in c('a','b')){
 	plot(0,0, type='n', xlim=c(0, dim(comm_records)[4]), ylim=c(0,1), xlab='', ylab=paste('Mutualist',y,'~','Env',x), las=1)
 	corr = sapply(1:nchains, function(k){
-		sapply(seq(1,dim(comm_records)[4],thin), function(i){
+		sapply(use_obs, function(i){
 			calc_rda(comm_records[,,k,i], topo_names, y, sites[,x], binary=F)
 		})
 	})
-	for(k in 1:nchains) lines(seq(1,dim(comm_records)[4],thin), corr[,k], lwd=2, col=use_col[k])
+	for(k in 1:nchains) lines(use_obs, corr[,k], lwd=2, col=use_col[k])
 }}
 dev.off()
-
 
 pdf(paste(fig_dir, runID, '_envRDA_presence.pdf', sep=''), height=5, width=6)
 par(mfrow=c(2,2))
@@ -159,11 +181,11 @@ for(x in 1:2){
 for(y in c('a','b')){
 	plot(0,0, type='n', xlim=c(0, dim(comm_records)[4]), ylim=c(0,1), xlab='', ylab=paste('Mutualist',y,'~','Env',x), las=1)
 	corr = sapply(1:nchains, function(k){
-		sapply(seq(1,dim(comm_records)[4],thin), function(i){
+		sapply(use_obs, function(i){
 			calc_rda(comm_records[,,k,i], topo_names, y, sites[,x], binary=T)
 		})
 	})
-	for(k in 1:nchains) lines(seq(1,dim(comm_records)[4],thin), corr[,k], lwd=2, col=use_col[k])
+	for(k in 1:nchains) lines(use_obs, corr[,k], lwd=2, col=use_col[k])
 }}
 dev.off()
 

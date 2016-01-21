@@ -480,8 +480,9 @@ calc_rda = function(comm, topo_names, type, env, binary=F){
 	# Conduct constrained ordination
 	ord = rda(comm_std, env)
 
-	# Return the adjusted R-square
-	RsquareAdj(ord)$adj.r.squared
+	# Return the R-square
+	#RsquareAdj(ord)$adj.r.squared
+	RsquareAdj(ord)$r.squared
 }
 
 # A function that calculates all community-environment correlation statistics

@@ -77,6 +77,9 @@ for(j in 1:N_L){
 	assoc_probs[i,j] = assoc_prob_func(env, n_a, n_b)
 }}
 
+# Save community parameters
+save(topo, topo_names, sites, niches_a, niches_b, gsad_a, gsad_b, assoc_probs, file=paste('sim_object_', runID, '.RData', sep=''))
+
 
 ## A simulation of Markov process: dispersal implicit, rates independent for both mutualists
 
@@ -153,7 +156,7 @@ Tmat_records = array(Tmat_arr, dim=c(dim(Tmat_arr),1))
 window_size = 50 # Number of iterations to run before re-calculating convergence criteria
 burnin = 100
 thin = 1
-Rhat_tol = 0.05 # Tolerance for R_hat statistic to be considered converged
+Rhat_tol = 0.1 # Tolerance for R_hat statistic to be considered converged
 
 # Set initial counters
 converged = F

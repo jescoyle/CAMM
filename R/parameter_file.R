@@ -1,15 +1,15 @@
 ## This script defines state variables used to run the community assembly of mutualists model (CAMM)
 
 ## Name simulation run
-runID = 'testCONV1'
+runID = 'testCONV3'
 
 ## Define mutualist names
 a_name = 'myco' # The primary partner or host
 b_name = 'photo' # The secondary partner or symbiont
 
 ## Define number of taxa for mutualists a and b
-S_a = 5
-S_b = 2
+S_a = 20
+S_b = 4
 
 ## Define number and size of communities
 N_C = 20 # number of sampled communities
@@ -76,7 +76,7 @@ mort_rate_b = 1 # mortality rate of unassociated mutualist b relative to associa
 # Run simulation for set number of time steps ('fixed') or until set number of chains converge ('converge')
 sim_mode = 'converge' 
 reps = 200 # Number of time steps
-nchains = 3 # Number of replicate simulation runs from which to check convergence
+nchains = 4 # Number of replicate simulation runs from which to check convergence
 
 
 

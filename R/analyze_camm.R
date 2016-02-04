@@ -10,7 +10,7 @@ source(paste(code_dir,'analysis_functions.R', sep=''))
 
 # Load results
 results_dir = 'C:/Users/jrcoyle/Documents/UNC/Projects/CAMM/Runs/'
-runID = 'testCONV3'
+runID = 'testCONV2'
 
 load(paste(results_dir, 'sim_results_',runID,'.RData', sep=''))
 load(paste(results_dir, 'sim_object_',runID,'.RData', sep=''))
@@ -107,7 +107,7 @@ for(j in 1:S_b){
 ### Code for simulations run until convergences (e.g. multiple chains) ###
 
 ## Compare simulation runs
-thin=20
+thin=100
 
 use_col = c('black','red','blue')
 par(ask=T)
@@ -155,7 +155,7 @@ for(y in c('a','b')){
 dev.off()
 
 # Compare species composition ~ env correlations
-thin=20
+thin=100
 use_obs = seq(1,dim(comm_records)[4],thin)
 use_col = c('black','red','blue')
 

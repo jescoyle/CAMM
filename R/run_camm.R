@@ -4,8 +4,8 @@ library(dgof) # ks.test for discrete distributions
 library(abind) # for growing arrays during simulation run
 
 ## Set options, load parameter values and simulation functions
-#working_dir = 'C:/Users/jrcoyle/Documents/UNC/Projects/CAMM'
-#code_dir = 'C:/Users/jrcoyle/Documents/UNC/Projects/CAMM/GitHub/R/'
+working_dir = 'C:/Users/jrcoyle/Documents/UNC/Projects/CAMM'
+code_dir = 'C:/Users/jrcoyle/Documents/UNC/Projects/CAMM/GitHub/R/'
 
 # When running on cluster:
 working_dir = './Results/'
@@ -58,13 +58,15 @@ if(gsad_cond_b$type=='none'){
 
 # Plot niches for visualization
 # plot_niches(niche_array, matrix of x-lims, site_env)
-#plot_niches(niches_a, matrix(c(-3,3,-3,3), 2, 2), add_env=sites)
-#plot_niches(niches_b, matrix(c(-3,3,-3,3), 2, 2), add_env=sites)
+plot_niches(niches_a, matrix(c(-3,3,-3,3), 2, 2), add_env=sites)
+plot_niches(niches_b, matrix(c(-3,3,-3,3), 2, 2), add_env=sites)
 
 # Plot topology for visualization
 #plot_topo(topo, orderby='degree')
 
 # Calculate N_C x N_L matrix of association probabilities at each site
+# These govern the probability that partner A will establish 
+#  given that its mutualist B is present and weighted by the strength of mutualism (omega)
 assoc_probs = matrix(0, N_C, N_L)
 for(i in 1:N_C){
 for(j in 1:N_L){

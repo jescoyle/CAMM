@@ -343,7 +343,7 @@ disperse = function(sites, niches, pool, gsad){
 #	mort_rate =  probability that an association dies
 #	assoc_prob = an N_C x N_L matrix giving the probability that an association forms in a given environment if both partners are present
 
-calc_probs = function(sites, niches_a, niches_b, topo_names, poolA, poolB, mort_rate, assoc_probs){
+calc_probs = function(sites, niches_a, niches_b, topo_names, poolA, poolB, mort_rate, assoc_probs, omega){
 	# Calculate number of associations and communities
 	S_a = nrow(topo_names)
 	S_b = ncol(topo_names)
@@ -353,15 +353,24 @@ calc_probs = function(sites, niches_a, niches_b, topo_names, poolA, poolB, mort_
 	# Create empty array that holds transition matrices for each site
 	Tarr = array(NA, dim=c(N_L+1, N_L+1, N_C), dimnames=list(0:N_L, 0:N_L, 1:N_C))
 
-	# An N_C x N_L matrix indicated whether both partners are present in each community
-	both_present = sapply(1:N_L, function(x){
+	# A 2 x N_C x N_L matrix indicating whether partner A or B is present in each community
+	AB_present = sapply(1:N_L, function(x){
 		partners = which(topo_names==x, arr.ind=T)
-		poolA[,partners[1]]*poolB[,partners[2]]
-	})
+		rbind(poolA[,partners[1]],poolB[,partners[2]])
+	}, simplify='array')	
+
 
 	# Calculate probabilities of establishment 0 -> i
-	establish = both_present*assoc_probs 
-	no_establish = apply(establish, 1, function(p) prod(1-p)) # probability that no species establishes each site
+	establish = apply(AB_present, c(2,3), function(x){
+		# If partner A is absent P = 0
+		# Otherwise, if partner B is absent, P = 1-omega
+		# Or, if partner B is also present, P = 1
+		ifelse(x[1]==0, 0, ifelse(x[2]==0, 1-omega, 1))
+	})*assoc_probs 
+	
+	# Calculate probability that no species establishes
+	no_establish = apply(establish, 1, function(p) prod(1-p))
+
 	# Scale each P(0 -> i) so that rows sum to 1. A species has P=establish only if it is the only species that can establish. 
 	establish = establish/ifelse(rowSums(establish)>0, rowSums(establish),1)*(1-no_establish)# scale establishment probabilities so that 0 
 	Tarr[1,,] = t(cbind(no_establish, establish))

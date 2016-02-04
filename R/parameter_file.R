@@ -58,7 +58,12 @@ nicheparms_b = list(mu = c(mu_b1, mu_b2), rho = rho_b, sigma = c(sigma_b1, sigma
 # Topology
 N_L = S_a # number of links: must be >= S_a, if > then must be topology = many2many'
 topology = 'one2many' # links from mutualist a to mutualist b: 'one2one','one2many','many2many'
-omega = 1 # a scaler that determines whether mutualism is obligate (1) or facultative (>= 0)
+
+# Strength of mutualism
+# Range from 0 (no mutualism) to 1 (obligate mutualism)
+# Currently affects the probability of establishment when partner A is present and B is not
+# P(establish| A & !B) = (1 - omega)*P(association)
+omega = 1 
 
 # Environmental dependence of association
 # 	a function that calculates the probability of association given environmental conditions at a site and optimal niches of mutualists

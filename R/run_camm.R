@@ -17,4 +17,6 @@ source(paste(code_dir,'simulation_functions.R', sep=''))
 setwd(working_dir)
 
 
+run_camm_N('./GitHub/R/', './GitHub/R/parameter_file.R', nruns=2, nchains=10, nparallel=2,
+	sim_parms, simID='testrun', save_start=F) 
 

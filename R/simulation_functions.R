@@ -233,12 +233,13 @@ make_gsad = function(S, distribution, condition=NA, rho=NA){
 }
 
 # A function that initializes a simulation run with a given set of parameters
+# If parm_file is missing, then paramters are taken from the environment where the function is called
 # parm_file = text file with parameter values
 # save_start = flag indicating whether niches and topology should be saved
 # runID = text string indicating how initial settings should be saved
-initialize_camm = function(parm_file, save_start = F, runID=NA){
+initialize_camm = function(parm_file=NA, save_start = F, runID=NA){
 	# Read in parameter values
-	source(parm_file)
+	if(!is.na(parm_file)) source(parm_file)
 	
 	# Instantiate communities and mutualistic network
 	topo = make_topo(S_a, S_b, N_L, topology) # S_a x S_b matrix of association probabilities
@@ -484,14 +485,29 @@ transition = function(probs){
 }
 
 # A function for running a simulation that has already been initialized
-# Must be run in the environment that contains the simulation objects
+# Can be run in the environment that contains the simulation objects or these objects can be passed in a list called metacomm
+# Note: other parameter (mort_rate, omega) are taken from the environment where the function is called
 # Run simulation for set number of time steps ('fixed') or until set number of chains converge ('converge')
 # metacomm = named list describing a metacommunity (such as returned by initialize_camm function)
 #	must contain: sites, comm, poolA, poolB, niches_a, niches_b, topo, topo_names, assoc_probs, gsad_a, gsad_b
 # sim_mode = 'converge' or 'fixed'
 # reps = If mode is 'fixed', must supply number of time steps
 # nchains = If mode is 'converge', mush supply number of chains (replicate simulation runs used to check convergence)
-run_camm = function(metacomm, sim_mode, reps=NA, nchains=NA){
+run_camm = function(sim_mode, reps=NA, nchains=NA, metacomm=NULL){
+	if(length(metacomm)>0){
+		comm = metacomm$comm
+		poolA = metacomm$poolA
+		poolB = metacomm$poolB
+		sites = metacomm$sites
+		assoc_probs = metacomm$assoc_probs
+		gsad_a = metacomm$gsad_a
+		gsad_b = metacomm$gsad_b
+		niches_a = metacomm$niches_a
+		niches_b = metacomm$niches_b
+		topo = metacomm$topo
+		topo_names = metacomm$topo_names	
+	}
+
 	if(sim_mode=='fixed'){
 	
 	# Generate empty array to hold changes in community and add initial community
@@ -501,7 +517,7 @@ run_camm = function(metacomm, sim_mode, reps=NA, nchains=NA){
 	poolA_records[,,1] = poolA
 	poolB_records = array(NA, c(N_C, S_b, reps+1))
 	poolB_records[,,1] = poolB
-	Tmat_records = array(NA, c(N_C, N_L+1, N_L+1, reps+1))
+	Tmat_records = array(NA, c(N_C, N_L+1, N_L+1, reps))
 
 	# Run simulation
 	for(step in 1:reps){
@@ -514,7 +530,7 @@ run_camm = function(metacomm, sim_mode, reps=NA, nchains=NA){
 		poolB = disperse(sites, niches_b, poolB, gsad_b)
 	
 		# Calculate transition matrices for each site
-		T_mat = calc_probs(sites, niches_a, niches_b, topo_names, poolA, poolB, mort_rate, assoc_probs) # array of square matrices of transition probabilities from one association to another
+		T_mat = calc_probs(sites, niches_a, niches_b, topo_names, poolA, poolB, mort_rate, assoc_probs, omega) # array of square matrices of transition probabilities from one association to another
 
 		# Identify current state of each space and transition based on random numbers
 		new_comm = matrix(NA, nrow=nrow(comm), ncol = ncol(comm))
@@ -578,7 +594,7 @@ run_camm = function(metacomm, sim_mode, reps=NA, nchains=NA){
 			poolB = disperse(sites, niches_b, poolB, gsad_b)
 
 			# Calculate transition matrices for each site
-			T_mat = calc_probs(sites, niches_a, niches_b, topo_names, poolA, poolB, mort_rate, assoc_probs) # array of square matrices of transition probabilities from one association to another
+			T_mat = calc_probs(sites, niches_a, niches_b, topo_names, poolA, poolB, mort_rate, assoc_probs, omega) # array of square matrices of transition probabilities from one association to another
 			Tmat_arr[,,,k] = T_mat
 
 			# Identify current state of each space and transition based on random numbers

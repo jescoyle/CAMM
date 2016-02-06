@@ -1,5 +1,49 @@
 ## This script holds functions to control the community assembly of mutualists model
 
+# A function that writes a parameter file from a named list of parameters to a given directory
+# Only works for parameters that are vectors of numerics or characters, lists with one level, and functions
+# parm_list = a named list of parameters to write
+# file_name = a string for the parameter filename
+# file_dir = a string for the directory where to write the file
+write_parms = function(parm_list, file_name, file_dir){
+	make_newline = function(varname, value){
+		if(length(value)==1){
+			if(is.numeric(value)) new_line = paste(varname, value, sep='=')
+			if(is.character(value)) new_line = paste0(varname, "='", value, "'")
+		} else {
+			if(is.numeric(value)) new_line = paste0(varname, '=c(', paste(value, collapse=','), ')')
+			if(is.character(value)) new_line = paste0(varname, '=c(', paste0("'", value, "'", collapse=','), ')')
+		}
+		new_line
+	}
+
+	this_file = file(paste0(file_dir, file_name, '.txt'), open='w')
+	for(i in 1:length(parm_list)){
+		varname = names(parm_list)[i]
+		value = parm_list[[i]]
+	
+		if(class(value)=='function'){
+			new_line = c(paste0(varname,'='), deparse(value))	
+		} else {	
+
+		if(class(value)=='list'){
+			line_list = paste(sapply(1:length(value), function(j){
+				subvalue = value[[j]]
+				make_newline(names(value)[j], subvalue)
+			}), collapse=',')
+			new_line = paste0(varname, '=list(', line_list, ')')
+		} else {
+			new_line = make_newline(varname, value)
+		}}
+				
+		writeLines(new_line, this_file)
+	}
+
+	close(this_file)	
+}
+
+
+
 
 # A function that starts multiple runs of a simulation
 # sim_dir = a directory containing simulations_functions.R
@@ -11,7 +55,7 @@
 #	components are: sim_mode and reps or nchains (depending on sim_mode)
 # simID = string that identifies this set of simulations runs
 # save_start = flag indicating whether each initial set of niches and topologies should be saved
-run_camm_N = function(sim_dir, parm_file, nruns, nchains, nparallel=1, sim_parms, simID, save_start=F, save_start=F){
+run_camm_N = function(sim_dir, parm_file, nruns, nchains, nparallel=1, sim_parms, simID, save_start=F, save_sim=F){
 	runs = paste0(simID, 1:nruns)
 
 	if(nparallel > 1){
@@ -42,7 +86,7 @@ run_camm_N = function(sim_dir, parm_file, nruns, nchains, nparallel=1, sim_parms
 			})
 
 			# Save output
-			if(save_sim) save.image(paste(runs[j], 'results.RData', sep='_'))
+			if(save_sim) save(metacomm, end_metacomms, parm_file, sim_parms, nruns, nchains, file=paste(runs[j], 'results.RData', sep='_'))
 			
 			# Define objects
 			topo_names = metacomm$topo_names
@@ -121,7 +165,7 @@ run_camm_N = function(sim_dir, parm_file, nruns, nchains, nparallel=1, sim_parms
 # results = a list of simulation results returns by run_camm_N
 # what = a string indicating which community chacteristic should be summarized
 # type = a strong indicating whether statistics should be computed for 'species', 'a', or 'b'
-summarize_camm = function(results, what, type){
+summarize_camm = function(results, what, type=NA){
 	# Richness in each community
 	if(what=='S'){
 		get_var = paste('S',type,sep='_')

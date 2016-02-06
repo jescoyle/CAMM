@@ -63,7 +63,7 @@ topology = 'one2many' # links from mutualist a to mutualist b: 'one2one','one2ma
 # Range from 0 (no mutualism) to 1 (obligate mutualism)
 # Currently affects the probability of establishment when partner A is present and B is not
 # P(establish| A & !B) = (1 - omega)*P(association)
-omega = 1 
+omega = .5 
 
 # Environmental dependence of association
 # 	a function that calculates the probability of association given environmental conditions at a site and optimal niches of mutualists
@@ -77,11 +77,6 @@ mort_rate = 0.05 # mortality rate of associations: COULD CHANGE TO VARY AMONG AS
 mort_rate_a = 10 # mortality rate of unassociated mutualist a relative to association
 mort_rate_b = 1 # mortality rate of unassociated mutualist b relative to association
 
-## Parameters controling simulation
-# Run simulation for set number of time steps ('fixed') or until set number of chains converge ('converge')
-sim_mode = 'converge' 
-reps = 200 # Number of time steps
-nchains = 4 # Number of replicate simulation runs from which to check convergence
 
 
 

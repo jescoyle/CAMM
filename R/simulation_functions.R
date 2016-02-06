@@ -295,7 +295,7 @@ initialize_camm = function(parm_file=NA, save_start = F, runID=NA){
 	}}
 
 	# Save community parameters
-	if(save_start) save(topo, topo_names, sites, niches_a, niches_b, gsad_a, gsad_b, assoc_probs, file=paste('sim_object_', runID, '.RData', sep=''))
+	if(save_start) save(topo, topo_names, sites, niches_a, niches_b, gsad_a, gsad_b, assoc_probs, file=paste(runID, 'simobject.RData', sep='_'))
 	
 	# Return initial metacommunity
 	metacomm = list(topo=topo, topo_names=topo_names, niches_a=niches_a, niches_b=niches_b, 

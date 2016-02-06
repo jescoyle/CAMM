@@ -39,7 +39,53 @@ write_parms = function(parm_list, file_name, file_dir){
 		writeLines(new_line, this_file)
 	}
 
+	# Create lists of niche parameters
+	writeLines('nicheparms_a = list(mu = c(mu_a1, mu_a2), rho = rho_a, sigma = c(sigma_a1, sigma_a2), alpha = c(alpha_a1, alpha_a2), r=r_a)', this_file)
+	writeLines('nicheparms_b = list(mu = c(mu_b1, mu_b2), rho = rho_b, sigma = c(sigma_b1, sigma_b2), alpha = c(alpha_b1, alpha_b2), r=r_b)', this_file)
+
 	close(this_file)	
+}
+
+# A function to make a list of parameters for writing to a file from a given environment
+# This function needs to be updates whenever new parameters are coded into the simulation
+make_parmlist = function(e=parent.frame()){
+	list(
+		runID = e$runID,
+		a_name = e$a_name, 
+		b_name = e$b_name,
+		S_a = e$S_a,
+		S_b = e$S_b,
+		N_C = e$N_C,
+		N = e$N,
+		rho_z = e$rho_z, 
+		mu_a1 = e$mu_a1,
+		mu_a2 = e$mu_a2,
+		rho_a = e$rho_a,
+		mu_b1 = e$mu_b1,
+		mu_b2 = e$mu_b2,
+		rho_b = e$rho_b, 
+		sigma_a1 = e$sigma_a1,
+		sigma_a2 = e$sigma_a2,
+		alpha_a1 = e$alpha_a1,
+		alpha_a2 = e$alpha_a2, 
+		r_a = e$r_a,
+		sigma_b1 = e$sigma_b1, 
+		sigma_b2 = e$sigma_b2,
+		alpha_b1 = e$alpha_b1,
+		alpha_b2 = e$alpha_b2,
+		r_b = e$r_b,	
+		gsad_dist_a = e$gsad_dist_a,
+		gsad_dist_b = e$gsad_dist_b,
+		gsad_cond_a = e$gsad_cond_a,
+		gsad_cond_b = e$gsad_cond_b,
+		N_L = e$N_L,
+		topology = e$topology,
+		omega = e$omega,
+		assoc_prob_func = e$assoc_prob_func,
+		mort_rate = e$mort_rate,
+		mort_rate_a = e$mort_rate_a,
+		mort_rate_b = e$mort_rate_b
+	)
 }
 
 

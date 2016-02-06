@@ -237,7 +237,7 @@ make_gsad = function(S, distribution, condition=NA, rho=NA){
 # parm_file = text file with parameter values
 # save_start = flag indicating whether niches and topology should be saved
 # runID = text string indicating how initial settings should be saved
-initialize_camm = function(parm_file=NA, save_start = F, runID=NA){
+initialize_camm = function(parm_file=NA, save_start = F, runID=NA, save_dir='./'){
 	# Read in parameter values
 	if(!is.na(parm_file)) source(parm_file)
 	
@@ -295,7 +295,7 @@ initialize_camm = function(parm_file=NA, save_start = F, runID=NA){
 	}}
 
 	# Save community parameters
-	if(save_start) save(topo, topo_names, sites, niches_a, niches_b, gsad_a, gsad_b, assoc_probs, file=paste(runID, 'simobject.RData', sep='_'))
+	if(save_start) save(topo, topo_names, sites, niches_a, niches_b, gsad_a, gsad_b, assoc_probs, file=paste0(save_dir, runID, '_simobject.RData'))
 	
 	# Return initial metacommunity
 	metacomm = list(topo=topo, topo_names=topo_names, niches_a=niches_a, niches_b=niches_b, 

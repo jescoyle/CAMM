@@ -47,7 +47,7 @@ write_parms = function(parm_list, file_name, file_dir){
 }
 
 # A function to make a list of parameters for writing to a file from a given environment
-# This function needs to be updates whenever new parameters are coded into the simulation
+# This function needs to be updated whenever new parameters are coded into the simulation
 make_parmlist = function(e=parent.frame()){
 	list(
 		runID = e$runID,
@@ -101,22 +101,22 @@ make_parmlist = function(e=parent.frame()){
 #	components are: sim_mode and reps or nchains (depending on sim_mode)
 # simID = string that identifies this set of simulations runs
 # save_start = flag indicating whether each initial set of niches and topologies should be saved
-run_camm_N = function(sim_dir, parm_file, nruns, nchains, nparallel=1, sim_parms, simID, save_start=F, save_sim=F){
-	runs = paste0(simID, 1:nruns)
-
+run_camm_N = function(sim_dir, parm_file, nruns, nchains, nparallel=1, sim_parms, simID, save_start=F, save_sim=F, save_dir='./'){
+	runs = paste(simID, 1:nruns, sep='_')
+	
 	if(nparallel > 1){
 		require(parallel)
 		cluster = makeCluster(nparallel)	
-	
+		
 		# Send required functions to each node
-		clusterExport(cluster, c('runs','nchains','sim_dir','parm_file','sim_parms','simID','save_start','save_sim'))
+		clusterExport(cluster, c('runs','nchains','sim_dir','parm_file','sim_parms','simID','save_start','save_sim','save_dir'), envir=environment())
 		clusterEvalQ(cluster, source(paste0(sim_dir, 'simulation_functions.R')))
 		clusterEvalQ(cluster, source(parm_file))
-
+		
 		# Initialize CAMM
-		metacomm_N = parLapply(cluster, 1:nruns, function(j) initialize_camm(parm_file, save_start, runID=runs[j]))
-		clusterExport(cluster, 'metacomm_N')		
-
+		metacomm_N = parLapply(cluster, 1:nruns, function(j) initialize_camm(parm_file, save_start, runID=runs[j], save_dir))
+		clusterExport(cluster, 'metacomm_N', envir=environment())		
+		
 		# Run and Summarize CAMM
 		sim_results = parLapply(cluster, 1:nruns, function(j){
 			metacomm = metacomm_N[[j]]			
@@ -132,7 +132,7 @@ run_camm_N = function(sim_dir, parm_file, nruns, nchains, nparallel=1, sim_parms
 			})
 
 			# Save output
-			if(save_sim) save(metacomm, end_metacomms, parm_file, sim_parms, nruns, nchains, file=paste(runs[j], 'results.RData', sep='_'))
+			if(save_sim) save(metacomm, end_metacomms, parm_file, sim_parms, nruns, nchains, file=paste0(save_dir, runs[j], '_results.RData'))
 			
 			# Define objects
 			topo_names = metacomm$topo_names
@@ -160,7 +160,7 @@ run_camm_N = function(sim_dir, parm_file, nruns, nchains, nparallel=1, sim_parms
 	} else {
 
 		# Initialize CAMM
-		metacomm_N = lapply(runs, function(x) initialize_camm(parm_file, save_start, runID=x))
+		metacomm_N = lapply(runs, function(x) initialize_camm(parm_file, save_start, runID=x, save_dir))
 		
 		# Run and Summarize CAMM
 		sim_results = lapply(1:nruns, function(j){
@@ -177,7 +177,7 @@ run_camm_N = function(sim_dir, parm_file, nruns, nchains, nparallel=1, sim_parms
 			})
 
 			# Save output
-			if(save_sim) save.image(paste(runs[j], 'results.RData', sep='_'))
+			if(save_sim) save.image(paste0(save_dir, runs[j], '_results.RData'))
 			
 			# Define objects
 			topo_names = metacomm$topo_names
@@ -216,18 +216,18 @@ summarize_camm = function(results, what, type=NA){
 	if(what=='S'){
 		get_var = paste('S',type,sep='_')
 		richness = sapply(results, function(x) x[[1]][,,get_var], simplify='array')
-		return_stats = apply(richness, c(1,2), function(x) c(mean=mean(x), var=var(x), quantile(x, c(0.025, 0.5, 0.975))))
+		return_stats = apply(richness, c(1,2), function(x) c(mean=mean(x, na.rm=T), var=var(x, na.rm=T), quantile(x, c(0.025, 0.5, 0.975), na.rm=T)))
 	}
 
 	if(what=='N'){
 		abun = sapply(results, function(x) x[[1]][,,'N'], simplify='array')
-		return_stats = apply(abun, c(1,2), function(x) c(mean=mean(x), var=var(x), quantile(x, c(0.025, 0.5, 0.975))))
+		return_stats = apply(abun, c(1,2), function(x) c(mean=mean(x, na.rm=T), var=var(x, na.rm=T), quantile(x, c(0.025, 0.5, 0.975), na.rm=T)))
 	}
 
 	if(what=='cor'){
 		corr_mat = sapply(results, function(x) x[[2]][,type,,,], simplify='array')
 		maxD = length(dim(corr_mat))
-		return_stats = apply(corr_mat, 1:(maxD-1), function(x) c(mean=mean(x), var=var(x), quantile(x, c(0.025, 0.5, 0.975))))
+		return_stats = apply(corr_mat, 1:(maxD-1), function(x) c(mean=mean(x, na.rm=T), var=var(x, na.rm=T), quantile(x, c(0.025, 0.5, 0.975), na.rm=T)))
 	}
 
 	return_stats

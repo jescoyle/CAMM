@@ -1,22 +1,22 @@
 ## This script defines state variables used to run the community assembly of mutualists model (CAMM)
 
 ## Name simulation run
-runID = 'testCONV3'
+runID = 'base'
 
 ## Define mutualist names
 a_name = 'myco' # The primary partner or host
 b_name = 'photo' # The secondary partner or symbiont
 
 ## Define number of taxa for mutualists a and b
-S_a = 20
-S_b = 4
+S_a = 30
+S_b = 10
 
 ## Define number and size of communities
 N_C = 20 # number of sampled communities
 N = 100 # number of individuals in a single community
 
 ## Parameters controling environmental variation
-rho_z = .2 # correlation of two environmental variables across sites
+rho_z = 0 # correlation of two environmental variables across sites
 
 ## Parameters controling niches
 # Niche optima - drawn from a uniform distribution
@@ -48,7 +48,6 @@ gsad_dist_b = list(type='same', p1=1)
 gsad_cond_a = list(type='none') #list(type='breadth', rho=.7)
 gsad_cond_b = list(type='none') #list(type='breadth', rho=.7)
 
-
 # Lists of parameters for each mutualist
 nicheparms_a = list(mu = c(mu_a1, mu_a2), rho = rho_a, sigma = c(sigma_a1, sigma_a2), alpha = c(alpha_a1, alpha_a2), r=r_a)
 nicheparms_b = list(mu = c(mu_b1, mu_b2), rho = rho_b, sigma = c(sigma_b1, sigma_b2), alpha = c(alpha_b1, alpha_b2), r=r_b)
@@ -63,7 +62,7 @@ topology = 'one2many' # links from mutualist a to mutualist b: 'one2one','one2ma
 # Range from 0 (no mutualism) to 1 (obligate mutualism)
 # Currently affects the probability of establishment when partner A is present and B is not
 # P(establish| A & !B) = (1 - omega)*P(association)
-omega = .5 
+omega = 0 
 
 # Environmental dependence of association
 # 	a function that calculates the probability of association given environmental conditions at a site and optimal niches of mutualists
@@ -74,7 +73,7 @@ assoc_prob_func = function(env, niche_a, niche_b){
 
 # Benefits of association
 mort_rate = 0.05 # mortality rate of associations: COULD CHANGE TO VARY AMONG ASSOCIATIONS
-mort_rate_a = 10 # mortality rate of unassociated mutualist a relative to association
+mort_rate_a = 1 # mortality rate of unassociated mutualist a relative to association
 mort_rate_b = 1 # mortality rate of unassociated mutualist b relative to association
 
 

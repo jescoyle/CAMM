@@ -9,6 +9,7 @@ library(reshape) # melt()
 # directory with simulation scripts : defaults to current directory
 # directory in which to save results : defaults to './Results'
 args = commandArgs(trailingOnly=T)
+print(args)
 
 # Set directories
 parm_dir = ifelse(is.na(args[2]), './', args[2])
@@ -24,13 +25,13 @@ source(paste0(sim_dir, 'control_functions.R'))
 file_list = list.files(parm_dir, '^p_')
 
 # Set number of cores
-ncores = args[1]
+ncores = as.numeric(args[1])
 
 # Define options for simulation
-nruns = 4 # 1000 # Number of distinct starts
-nchains = 3 # 100 # Number of replicate simulations starting from the same initial metacommunity
+nruns = 100 # 1000 # Number of distinct starts
+nchains = 10 # 100 # Number of replicate simulations starting from the same initial metacommunity
 sim_mode = 'fixed' # Stopping rule: stop after nreps timesteps
-reps = 100 # 5000 # Number of timesteps until stop
+reps = 1000 # 5000 # Number of timesteps until stop
 sim_parms = list(sim_mode=sim_mode, reps=reps)
 
 # Run set of simulations on each parameter

@@ -1,12 +1,81 @@
-## This script is used to analyze a simulation run
+## This script is used to analyze a simulation runs
+
+options(stringsAsFactors=F)
+library(reshape2)
 
 # Directory for saving figures
 fig_dir = 'C:/Users/jrcoyle/Documents/UNC/Projects/CAMM/Figures/'
 
+# Location of results
+results_dir = 'C:/Users/jrcoyle/Documents/UNC/Projects/CAMM/'
+
 # Load functions
 code_dir = 'C:/Users/jrcoyle/Documents/UNC/Projects/CAMM/GitHub/R/'
-source(paste(code_dir,'simulation_functions.R', sep=''))
+#source(paste(code_dir,'simulation_functions.R', sep=''))
 source(paste(code_dir,'analysis_functions.R', sep=''))
+
+## Check which results are done
+done = read.table('results_saved.txt', header=F)
+
+parms_done = unique(gsub('_[0-9]+_results.RData', '', done$V1))
+parms_done_df = data.frame(t(sapply(parms_done, get_parms)))
+
+parms_done_df$runs_done = sapply(parms_done, function(x) length(grep(x, done$V1)))
+
+
+### Analyze multiple runs across a set of parameters ###
+
+## Run incrementing over stregth of mutualism (omega = o) and relative mortality of unassociated mutualists (mort_rate_a = mra, mort_rate_b = mrb)
+
+# Get list of community richness and abundance summaries
+comm_filelist = list.files(results_dir, 'comm_summary.csv')
+
+# Go through files and append together into a data frame
+comm_summary = data.frame()
+for(f in comm_filelist){
+	this_data = read.csv(paste0(results_dir, f))
+	
+	# Extract run name
+	runID = gsub('_comm_summary.csv', '', f)
+
+	# Extract parameter values
+	parm_vals = get_parms(runID)
+
+	# Bind values to data
+	this_data = cbind(t(parm_vals), this_data)
+
+	# Add to growing data frame
+	comm_summary = rbind(comm_summary, this_data)
+}
+
+# Get list of community richness and abundance summaries
+cor_filelist = list.files(results_dir, 'cor_summary.csv')
+
+# Go through files and append together into a data frame
+cor_summary = data.frame()
+for(f in cor_filelist){
+	this_data = read.csv(paste0(results_dir, f))
+	
+	# Extract run name
+	runID = gsub('_cor_summary.csv', '', f)
+
+	# Extract parameter values
+	parm_vals = get_parms(runID)
+
+	# Bind values to data
+	this_data = cbind(t(parm_vals), this_data)
+
+	# Add to growing data frame
+	cor_summary = rbind(cor_summary, this_data)
+}
+
+
+
+
+
+
+
+### Analyze a single run ###
 
 # Load results
 results_dir = 'C:/Users/jrcoyle/Documents/UNC/Projects/CAMM/Runs/'

@@ -1,6 +1,22 @@
 ## This script contains functions for visualizing, summarizing and analyzing simulation results
 
 
+### Functions for compiling multiple simulation runs ###
+
+# A function that extracts parameter values from a runID
+#	runID = a string in the filename that gives the parameters
+#	assoc_str = character pairing a parameter name with its value
+#	sep_str = character separating different parameter-value pairs
+get_parms = function(runID, assoc_str='-', sep_str='_'){
+	parm_pairs = sapply(strsplit(runID, sep_str), function(x) strsplit(x, assoc_str))
+	
+	vals = sapply(parm_pairs, function(x) as.numeric(x[2]))
+	names(vals) = sapply(parm_pairs, function(x) x[1])
+
+	vals
+}
+
+
  
 
 ### Functions for visualizing simulations ###

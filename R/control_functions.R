@@ -131,27 +131,26 @@ run_camm_N = function(sim_dir, parm_file, nruns, nchains, nparallel=1, sim_parms
 					poolB=this_run$poolB[,,sim_parms$reps+1])
 			})
 
-			# Save output
-			if(save_sim) save(metacomm, end_metacomms, parm_file, sim_parms, nruns, nchains, file=paste0(save_dir, runs[j], '_results.RData'))
-			
 			# Define objects
 			topo_names = metacomm$topo_names
 			sites = metacomm$sites
 	
-			# Calculate richness and abundance
-			rich_stats = sapply(end_metacomms['comm',], function(comm) calc_commstats(comm, topo_names), simplify='array')
-			rich_stats = sapply(rownames(rich_stats), function(type) apply(simplify2array(rich_stats[type,]), 1, function(x) c(mean(x), var(x))), simplify='array') 
-			dimnames(rich_stats)[[1]] = c('mean','var')
-			dimnames(rich_stats)[[2]] = 1:N_C
-			# Returns array with [mean/var, community, richness/abundance]
-
+			# Calculate mean community richness and abundance
+			rich_summary = sapply(end_metacomms['comm',], function(comm) calc_commstats(comm, topo_names), simplify='array')
+			comm_means = sapply(rownames(rich_summary), function(type) apply(simplify2array(rich_summary[type,]), 2, mean))
+			rich_stats = apply(comm_means, 2, function(x) c(mean(x), var(x))) 
+			rownames(rich_stats) = c('mean','var')
+			
 			# Calculate environmental correlations
 			# CURRENTLY USES PRES/ABSENCE, NOT ABUNDANCE
 			corr_stats = sapply(end_metacomms['comm',], function(comm) calc_envcorr(comm, topo_names, sites, 'jaccard', binary=T), simplify='array')
 			corr_stats = apply(corr_stats, 1:4, function(vals) c(mean(vals), var(vals)))	
 			dimnames(corr_stats)[[1]] = c('mean','var')
-			# Returns array with [mean/var, type, env, rda/jaccard, binary]
+			# Returns array with [mean/var, type, env, S/N/rda/jaccard, binary]
 
+			# Save output
+			if(save_sim) save(rich_stats, corr_stats, metacomm, end_metacomms, parm_file, sim_parms, nruns, nchains, file=paste0(save_dir, runs[j], '_results.RData'))
+		
 			list(rich_stats, corr_stats)	
 		})
 	
@@ -176,19 +175,15 @@ run_camm_N = function(sim_dir, parm_file, nruns, nchains, nparallel=1, sim_parms
 					poolB=this_run$poolB[,,sim_parms$reps+1])
 			})
 
-			# Save output
-			if(save_sim) save.image(paste0(save_dir, runs[j], '_results.RData'))
-			
 			# Define objects
 			topo_names = metacomm$topo_names
 			sites = metacomm$sites
 	
-			# Calculate richness and abundance
-			rich_stats = sapply(end_metacomms['comm',], function(comm) calc_commstats(comm, topo_names), simplify='array')
-			rich_stats = sapply(rownames(rich_stats), function(type) apply(simplify2array(rich_stats[type,]), 1, function(x) c(mean(x), var(x))), simplify='array') 
-			dimnames(rich_stats)[[1]] = c('mean','var')
-			dimnames(rich_stats)[[2]] = 1:N_C
-			# Returns array with [mean/var, community, richness/abundance]
+			# Calculate mean community richness and abundance
+			rich_summary = sapply(end_metacomms['comm',], function(comm) calc_commstats(comm, topo_names), simplify='array')
+			comm_means = sapply(rownames(rich_summary), function(type) apply(simplify2array(rich_summary[type,]), 2, mean))
+			rich_stats = apply(comm_means, 2, function(x) c(mean(x), var(x))) 
+			rownames(rich_stats) = c('mean','var')
 
 			# Calculate environmental correlations
 			# CURRENTLY USES PRES/ABSENCE, NOT ABUNDANCE
@@ -196,6 +191,9 @@ run_camm_N = function(sim_dir, parm_file, nruns, nchains, nparallel=1, sim_parms
 			corr_stats = apply(corr_stats, 1:4, function(vals) c(mean(vals), var(vals)))	
 			dimnames(corr_stats)[[1]] = c('mean','var')
 			# Returns array with [mean/var, type, env, rda/jaccard, binary]
+		
+			# Save output
+			if(save_sim) save.image(paste0(save_dir, runs[j], '_results.RData'))
 
 			list(rich_stats, corr_stats)	
 		})
@@ -210,7 +208,7 @@ run_camm_N = function(sim_dir, parm_file, nruns, nchains, nparallel=1, sim_parms
 # Returns an array with the mean, variance, median, and 95th percentile intervals as the 1st dimension
 # results = a list of simulation results returns by run_camm_N
 # what = a string indicating which community chacteristic should be summarized
-# type = a strong indicating whether statistics should be computed for 'species', 'a', or 'b'
+# type = a string indicating whether statistics should be computed for 'species', 'a', or 'b'
 summarize_camm = function(results, what, type=NA){
 	# Richness in each community
 	if(what=='S'){

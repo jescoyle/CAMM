@@ -7,7 +7,7 @@ library(reshape2)
 fig_dir = 'C:/Users/jrcoyle/Documents/UNC/Projects/CAMM/Figures/'
 
 # Location of results
-results_dir = 'C:/Users/jrcoyle/Documents/UNC/Projects/CAMM/'
+results_dir = 'C:/Users/jrcoyle/Documents/UNC/Projects/CAMM/Runs/Summaries_1/'
 
 # Load functions
 code_dir = 'C:/Users/jrcoyle/Documents/UNC/Projects/CAMM/GitHub/R/'
@@ -15,13 +15,11 @@ code_dir = 'C:/Users/jrcoyle/Documents/UNC/Projects/CAMM/GitHub/R/'
 source(paste(code_dir,'analysis_functions.R', sep=''))
 
 ## Check which results are done
-done = read.table('results_saved.txt', header=F)
+done = read.table('done.txt', header=F)
 
 parms_done = unique(gsub('_[0-9]+_results.RData', '', done$V1))
 parms_done_df = data.frame(t(sapply(parms_done, get_parms)))
-
-parms_done_df$runs_done = sapply(parms_done, function(x) length(grep(x, done$V1)))
-
+parms_done_df$runs_done = sapply(parms_done, function(x) length(grep(paste0(x, '_[0-9]+_results.RData'), done$V1)))
 
 ### Analyze multiple runs across a set of parameters ###
 
@@ -62,6 +60,9 @@ for(f in cor_filelist){
 	# Extract parameter values
 	parm_vals = get_parms(runID)
 
+	# Get environmental values for each site
+
+
 	# Bind values to data
 	this_data = cbind(t(parm_vals), this_data)
 
@@ -69,9 +70,172 @@ for(f in cor_filelist){
 	cor_summary = rbind(cor_summary, this_data)
 }
 
+## Plot correlations between mutualist communities and environment
+## error bars show 95th percentile from 100 different starts
+library(lattice)
+
+a_pch = c(16, 1)
+b_pch = c(15, 0)
+jit_fact = 0.008
+jit_a = -1*c(3*jit_fact/2, jit_fact/2)
+jit_b = c(jit_fact/2, 3*jit_fact/2)
+
+# RDA within chain mean
+plot_data = subset(cor_summary, measure=='rda' & summary=='mean')
+means = subset(plot_data, stat=='mean')
+low95s = subset(plot_data, stat=='2.5%')
+up95s = subset(plot_data, stat=='97.5%')
+
+pdf(paste0(fig_dir, 'mutualism_strength_vs_mort_rates_RDAmean.pdf'), height=7, width=9)
+xyplot(cor_a ~ o | mrb + mra, groups = env, data=means, ylim = c(-.1,1),
+	scales=list(alternating=1), xlab='Strength of mutalism (omega)', ylab=expression(RDA~~R^2),
+	panel=function(x, y, subscripts, groups){
+		panel.segments(x+jit_a[groups], low95s$cor_a[subscripts], x+jit_a[groups], up95s$cor_a[subscripts])
+		panel.segments(x+jit_b[groups], low95s$cor_b[subscripts], x+jit_b[groups], up95s$cor_b[subscripts])
+		panel.xyplot(x+jit_a[groups], y, pch=a_pch[groups], col=1)
+		panel.xyplot(x+jit_b[groups], means$cor_b[subscripts], pch=b_pch[groups], col=1)
+	}, 
+	strip = strip.custom(strip.names=T, strip.levels=T, sep='=', 
+		bg='transparent', var.name=expression(m[a],m[b]), fg='transparent'),
+	key=list(space='right', points=list(pch=c(a_pch, b_pch)), 
+		text=list(expression(A*" ~ "*E[1],A*" ~ "*E[2],B*" ~ "*E[1],B*" ~ "*E[2])))
+)
+dev.off()
+
+# RDA within chain variance (within 10 chains)
+plot_data = subset(cor_summary, measure=='rda' & summary=='var')
+means = subset(plot_data, stat=='mean')
+low95s = subset(plot_data, stat=='2.5%')
+up95s = subset(plot_data, stat=='97.5%')
+
+pdf(paste0(fig_dir, 'mutualism_strength_vs_mort_rates_RDAvar.pdf'), height=7, width=9)
+xyplot(cor_a ~ o | mrb + mra, groups = env, data=means, ylim=c(-0.001, .02),
+	scales=list(alternating=1), xlab='Strength of mutalism (omega)', ylab=expression(RDA~~R^2),
+	panel=function(x, y, subscripts, groups){
+		panel.segments(x+jit_a[groups], low95s$cor_a[subscripts], x+jit_a[groups], up95s$cor_a[subscripts])
+		panel.segments(x+jit_b[groups], low95s$cor_b[subscripts], x+jit_b[groups], up95s$cor_b[subscripts])
+		panel.xyplot(x+jit_a[groups], y, pch=a_pch[groups], col=1)
+		panel.xyplot(x+jit_b[groups], means$cor_b[subscripts], pch=b_pch[groups], col=1)
+	}, 
+	strip = strip.custom(strip.names=T, strip.levels=T, sep='=', 
+		bg='transparent', var.name=expression(m[a],m[b]), fg='transparent'),
+	key=list(space='right', points=list(pch=c(a_pch, b_pch)), 
+		text=list(expression(A*" ~ "*E[1],A*" ~ "*E[2],B*" ~ "*E[1],B*" ~ "*E[2])))
+)
+dev.off()
+
+# Jaccard within chain mean
+plot_data = subset(cor_summary, measure=='jaccard' & summary=='mean')
+means = subset(plot_data, stat=='mean')
+low95s = subset(plot_data, stat=='2.5%')
+up95s = subset(plot_data, stat=='97.5%')
+
+pdf(paste0(fig_dir, 'mutualism_strength_vs_mort_rates_Jaccardmean.pdf'), height=7, width=9)
+xyplot(cor_a ~ o | mrb + mra, groups = env, data=means, ylim=c(-1,1),
+	scales=list(alternating=1), xlab='Strength of mutalism (omega)', ylab='Jaccard Similarity ~ Env',
+	panel=function(x, y, subscripts, groups){
+		panel.abline(h=0, col='grey')
+		panel.segments(x+jit_a[groups], low95s$cor_a[subscripts], x+jit_a[groups], up95s$cor_a[subscripts])
+		panel.segments(x+jit_b[groups], low95s$cor_b[subscripts], x+jit_b[groups], up95s$cor_b[subscripts])
+		panel.xyplot(x+jit_a[groups], y, pch=a_pch[groups], col=1)
+		panel.xyplot(x+jit_b[groups], means$cor_b[subscripts], pch=b_pch[groups], col=1)
+	}, 
+	strip = strip.custom(strip.names=T, strip.levels=T, sep='=', 
+		bg='transparent', var.name=expression(m[a],m[b]), fg='transparent'),
+	key=list(space='right', points=list(pch=c(a_pch, b_pch)), 
+		text=list(expression(A*" ~ "*E[1],A*" ~ "*E[2],B*" ~ "*E[1],B*" ~ "*E[2])))
+)
+dev.off()
+
+# Species richness and abundance
+# ACTUALLY THIS DOESN'T MAKE SENSE B/C COMMUNITIES ARE NOT EXPECTED TO HAVE THE SAME ENV ACROSS SIMULATIONS
+plot_data = subset(comm_summary, summary=='mean')
+plot_data = plot_data[order(plot_data$o),]
+means = subset(plot_data, stat=='mean')
+use_col = rainbow(20)
+
+xyplot(S_a ~ o | mrb + mra, groups = comm, data=means, type='l',ylim=c(0,30),
+	scales=list(alternating=1), xlab='Strength of mutalism (omega)', ylab=expression(S[A]),
+	strip = strip.custom(strip.names=T, strip.levels=T, sep='=', 
+		bg='transparent', var.name=expression(m[a],m[b]), fg='transparent')
+)
+
+xyplot(S_b ~ o | mrb + mra, groups = comm, data=means, type='l',ylim=c(0,10),
+	scales=list(alternating=1), xlab='Strength of mutalism (omega)', ylab=expression(S[A]),
+	strip = strip.custom(strip.names=T, strip.levels=T, sep='=', 
+		bg='transparent', var.name=expression(m[a],m[b]), fg='transparent')
+)
+
+xyplot(N ~ o | mrb + mra, groups = comm, data=means, type='l', ylim=c(0,100),
+	scales=list(alternating=1), xlab='Strength of mutalism (omega)', ylab=expression(S[A]),
+	strip = strip.custom(strip.names=T, strip.levels=T, sep='=', 
+		bg='transparent', var.name=expression(m[a],m[b]), fg='transparent')
+)
 
 
+## IT WOULD ALSO BE USEFUL TO EXAMINE THE SYMBIONT POOLS SEPARATELY
+## This section run in interactive mode on killdevil cluster to avoid transfering results files
 
+results_dir = './Results/'
+source('analysis_functions.R')
+
+
+# Get list of community richness and abundance summaries
+results_filelist = list.files(results_dir, 'results.RData')
+runs = unique(gsub('_[0-9]+_results.RData', '', results_filelist))
+
+
+# Go through files and append together into a data frame
+for(this_run in runs){
+	these_files = results_filelist[grep(paste0(this_run,'_[0-9]+'), results_filelist)]
+
+	poolA_summary = data.frame()
+	poolB_summary = data.frame()
+	
+	for(f in these_files){
+		load(paste0(results_dir, f))
+
+		poolA = end_metacomms['poolA',]
+		poolA = acast(melt(poolA), Var1 ~ Var2 ~ L1)
+
+		poolB = end_metacomms['poolB',]
+		poolB = acast(melt(poolB), Var1 ~ Var2 ~ L1)
+
+		A_probs = apply(poolA, c(1,2), function(x) sum(x)/nchains)
+		B_probs = apply(poolB, c(1,2), function(x) sum(x)/nchains)
+
+		A_probs = melt(A_probs)
+		B_probs = melt(B_probs)
+
+		# Extract run name
+		runID = gsub('_results.RData', '', f)
+
+		# Extract parameter values
+		parm_vals = get_parms(runID)
+
+		# Bind values to data
+		A_data = cbind(t(parm_vals[1:3]), names(parm_vals)[4], A_probs)
+		names(A_data)[4:7] = c('run','comm','species','prob')
+
+		B_data = cbind(t(parm_vals[1:3]), names(parm_vals)[4], B_probs)
+		names(B_data)[4:7] = c('run','comm','species','prob')
+
+		# Add to growing data frame
+		poolA_summary = rbind(poolA_summary, A_data)
+		poolB_summary = rbind(poolB_summary, B_data)
+
+	}
+
+	write.csv(poolA_summary, paste0(results_dir, this_run, '_poolA.csv'), row.names=F)
+	write.csv(poolB_summary, paste0(results_dir, this_run, '_poolB.csv'), row.names=F)
+
+	poolA_arr = acast(poolA_summary, comm~species~run, value.var='prob') 
+	poolB_arr = acast(poolB_summary, comm~species~run, value.var='prob')
+
+	poolA_stats = apply(poolA_arr, c(1,2), function(x) c(mean=mean(x, na.mrm=T), var=var(x, na.rm=T), quantile(x, c(0.025, 0.5, 0.975))))
+	poolB_stats = apply(poolB_arr, c(1,2), function(x) c(mean=mean(x, na.mrm=T), var=var(x, na.rm=T), quantile(x, c(0.025, 0.5, 0.975))))
+
+	# Calculate correlations and richness
 
 
 

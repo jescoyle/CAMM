@@ -42,18 +42,17 @@ for(f in file_list){
 	source(parm_file)
 
 	# Run CAMM
-	model_out = run_camm_N(sim_dir, parm_file, nruns, nchains, ncores, sim_parms, simID=runID, save_start=T, save_sim=T, save_dir=results_dir) 
+	model_out = run_camm_N(sim_dir, parm_file, nruns, nchains, ncores, sim_parms, simID=runID, save_start=F, save_sim=F, save_dir=results_dir) 
 		
 	# Analyze results
 	S_a = melt(summarize_camm(model_out, 'S', 'a'))
-	names(S_a) = c('stat','summary','comm','S_a')
+	names(S_a) = c('stat','summary','response','value')
 	S_b = melt(summarize_camm(model_out, 'S', 'b'))
-	names(S_b) = c('stat','summary','comm','S_b')
+	names(S_b) = c('stat','summary','response','value')
 	N_comm = melt(summarize_camm(model_out, 'N'))
-	names(N_comm) = c('stat','summary','comm','N')
-	comm_summary = merge(S_a, S_b)
-	comm_summary = merge(comm_summary, N_comm)
-	comm_summary = with(comm_summary, comm_summary[order(comm, summary, stat),])
+	names(N_comm) = c('stat','summary','response','value')
+	comm_summary = rbind(S_a, S_b, N_comm)
+	comm_summary = cast(comm_summary, summary + stat ~ response)
 	
 	cor_a = melt(summarize_camm(model_out, 'cor','a'))
 	names(cor_a) = c('stat','summary','env','measure','cor_a')

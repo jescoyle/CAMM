@@ -699,11 +699,27 @@ calc_rich = function(comm, topo_names, type){
 	apply(sa, 1, function(x) sum(x>0))
 }
 
+# A function that calculates species richness in the entire metacommunity 
+#	comm = an N_C x N matrix of species present at each site
+#	topo_names = matrix describing mutualistic netiwork and numbering each partner
+#	type = 'species', 'a', 'b' : which partner should be tabulated		
+calc_tot_rich = function(comm, topo_names, type){
+	sa = calc_sa(comm, topo_names, type)
+	sum(colSums(sa) > 0)
+}
+
 # A function that calculates the number of spaces occupied in each site
 # 	comm = an N_C x N matrix of species present at each site
 calc_occ = function(comm){
 	apply(comm, 1, function(x) sum(x>0))
 }
+
+# A function that calculates the total number of spaces occupied in the entire metacommunity
+# 	comm = an N_C x N matrix of species present at each site
+calc_tot_occ = function(comm){
+	sum(comm > 0)
+}
+
 
 # A function that calculates the compositional dissimilarity between all sites
 # Standardization by total abundance is currently not implemented but could be easily added using vegan's decostand
@@ -753,14 +769,22 @@ calc_envcorr = function(comm, topo_names, env, metric, binary){
 	Nenv = ifelse(is.null(dim(env)), 1, ncol(env))
 
 	# Define array to hold statistics
-	corr_mat = array(NA, dim=c(3, Nenv, length(metric)+1, length(binary)), 
-		dimnames=list(community=c('species','a','b'), env=1:Nenv, measure=c('rda', metric), binary=binary))
+	corr_mat = array(NA, dim=c(3, Nenv, length(metric)+3, length(binary)), 
+		dimnames=list(community=c('species','a','b'), env=1:Nenv, measure=c('S','N','rda', metric), binary=binary))
 
 	for(k in binary){
 	for(type in c('species','a','b')){
 	for(i in 1:Nenv){
 		# Get environmental axis
 		if(Nenv==1){ X = env } else { X = env[,i]}
+		
+		# Calculate correlation with species richness
+		# NOTE: DOES NOT IMPLEMENT ABUNDANCE-WEIGHTED SPECIES DIVERSITY, SAME CALCULATION FOR BINARY=T/F
+		corr_mat[type, i, 'S', k] = cor(X, calc_rich(comm, topo_names, type))
+
+		# Calculate correlation with abundance
+		# NOTE: THIS WILL BE THE SAME REGARDLESS OF TYPE OR BINARY
+		corr_mat[type, i, 'N', k] = cor(X, calc_occ(comm))
 
 		# Calculate RDA
 		corr_mat[type, i, 'rda', as.character(k)] = calc_rda(comm, topo_names, type, X, k)
@@ -787,12 +811,19 @@ calc_commstats = function(comm, topo_names){
 	S_species = calc_rich(comm, topo_names, 'species')
 	S_a = calc_rich(comm, topo_names, 'a')
 	S_b = calc_rich(comm, topo_names, 'b')
+	
+	# Calculate total richness
+	Stot_species = calc_tot_rich(comm, topo_names, 'species')
+	Stot_a = calc_tot_rich(comm, topo_names, 'a')
+	Stot_b = calc_tot_rich(comm, topo_names, 'b')
 
 	# Calculate total abundance
 	N = calc_occ(comm)
+	Ntot = calc_tot_occ(comm)
 
-	# Return datafram
-	data.frame(S_species, S_a, S_b, N)
+	# Return dataframe
+	# NOTE: tots will be the same across all communities
+	data.frame(S_species, Stot_species, S_a, Stot_a, S_b, Stot_b, N, Ntot)
 }
 
 

@@ -55,6 +55,25 @@ for(o in omega_vec){
 
 	for(i in 1:nrow(combos)){
 		topology = as.character(combos[i,1])
+		
+		if(topology=='one2one'){
+			S_a = 30
+			S_b = 30
+			N_L = 30
+		}
+		
+		if(topology=='one2many'){
+			S_a = 30
+			S_b = 10
+			N_L = 30
+		}
+
+		if(topology=='many2many'){
+			S_a = 30
+			S_b = 10
+			N_L = 60
+		}
+
 		envfilt = combos[i,2]
 	
 		if(envfilt=='opposite'){

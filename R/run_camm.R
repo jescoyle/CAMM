@@ -42,7 +42,7 @@ for(f in file_list){
 	source(parm_file)
 
 	# Run CAMM
-	model_out = run_camm_N(sim_dir, parm_file, nruns, nchains, ncores, sim_parms, simID=runID, save_start=F, save_sim=F, save_dir=results_dir) 
+	model_out = run_camm_N(sim_dir, parm_file, nruns, nchains, ncores, sim_parms, simID=runID, save_start=T, save_sim=T, save_dir=results_dir) 
 		
 	# Analyze results
 	S_a = melt(summarize_camm(model_out, 'S', 'a'))

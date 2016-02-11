@@ -73,8 +73,8 @@ assoc_prob_func = function(env, niche_a, niche_b){
 
 # Benefits of association
 mort_rate = 0.05 # mortality rate of associations: COULD CHANGE TO VARY AMONG ASSOCIATIONS
-mort_rate_a = 1 # mortality rate of unassociated mutualist a relative to association
-mort_rate_b = 1 # mortality rate of unassociated mutualist b relative to association
+mort_rate_a = 10 # mortality rate of unassociated mutualist a relative to association
+mort_rate_b = 10 # mortality rate of unassociated mutualist b relative to association
 
 
 

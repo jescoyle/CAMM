@@ -212,13 +212,13 @@ run_camm_N = function(sim_dir, parm_file, nruns, nchains, nparallel=1, sim_parms
 summarize_camm = function(results, what, type=NA){
 	# Richness in each community
 	if(what=='S'){
-		get_var = paste('S',type,sep='_')
-		richness = sapply(results, function(x) x[[1]][,,get_var], simplify='array')
+		get_vars = paste(c('S','Stot'),type,sep='_')
+		richness = sapply(results, function(x) x[[1]][,get_vars], simplify='array')
 		return_stats = apply(richness, c(1,2), function(x) c(mean=mean(x, na.rm=T), var=var(x, na.rm=T), quantile(x, c(0.025, 0.5, 0.975), na.rm=T)))
 	}
 
 	if(what=='N'){
-		abun = sapply(results, function(x) x[[1]][,,'N'], simplify='array')
+		abun = sapply(results, function(x) x[[1]][,c('N', 'Ntot')], simplify='array')
 		return_stats = apply(abun, c(1,2), function(x) c(mean=mean(x, na.rm=T), var=var(x, na.rm=T), quantile(x, c(0.025, 0.5, 0.975), na.rm=T)))
 	}
 

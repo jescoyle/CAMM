@@ -10,7 +10,8 @@
 get_parms = function(runID, assoc_str='-', sep_str='_'){
 	parm_pairs = sapply(strsplit(runID, sep_str), function(x) strsplit(x, assoc_str))
 	
-	vals = sapply(parm_pairs, function(x) as.numeric(x[2]))
+	vals = sapply(parm_pairs, function(x) x[2])
+	vals = as.data.frame(t(vals))
 	names(vals) = sapply(parm_pairs, function(x) x[1])
 
 	vals

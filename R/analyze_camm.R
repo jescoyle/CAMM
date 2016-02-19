@@ -2,12 +2,17 @@
 
 options(stringsAsFactors=F)
 library(reshape2)
+library(lattice) # Plots
+
+# Main directory
+working_dir = 'C:/Users/jrcoyle/Documents/UNC/Projects/CAMM/'
+setwd(working_dir)
 
 # Directory for saving figures
 fig_dir = 'C:/Users/jrcoyle/Documents/UNC/Projects/CAMM/Figures/'
 
 # Location of results
-results_dir = 'C:/Users/jrcoyle/Documents/UNC/Projects/CAMM/Runs/Summaries_1/'
+results_dir = 'C:/Users/jrcoyle/Documents/UNC/Projects/CAMM/Runs/Summaries_2/'
 
 # Load functions
 code_dir = 'C:/Users/jrcoyle/Documents/UNC/Projects/CAMM/GitHub/R/'
@@ -15,15 +20,15 @@ code_dir = 'C:/Users/jrcoyle/Documents/UNC/Projects/CAMM/GitHub/R/'
 source(paste(code_dir,'analysis_functions.R', sep=''))
 
 ## Check which results are done
-done = read.table('done.txt', header=F)
+done = read.table('obs_done.txt', header=F)
 
 parms_done = unique(gsub('_[0-9]+_results.RData', '', done$V1))
+parms_done = unique(gsub('_[0-9]+_simobject.RData', '', done$V1))
+
 parms_done_df = data.frame(t(sapply(parms_done, get_parms)))
 parms_done_df$runs_done = sapply(parms_done, function(x) length(grep(paste0(x, '_[0-9]+_results.RData'), done$V1)))
 
 ### Analyze multiple runs across a set of parameters ###
-
-## Run incrementing over stregth of mutualism (omega = o) and relative mortality of unassociated mutualists (mort_rate_a = mra, mort_rate_b = mrb)
 
 # Get list of community richness and abundance summaries
 comm_filelist = list.files(results_dir, 'comm_summary.csv')
@@ -39,11 +44,8 @@ for(f in comm_filelist){
 	# Extract parameter values
 	parm_vals = get_parms(runID)
 
-	# Load results
-
-
 	# Bind values to data
-	this_data = cbind(t(parm_vals), this_data)
+	this_data = cbind(parm_vals, this_data)
 
 	# Add to growing data frame
 	comm_summary = rbind(comm_summary, this_data)
@@ -63,19 +65,25 @@ for(f in cor_filelist){
 	# Extract parameter values
 	parm_vals = get_parms(runID)
 
-	# Get environmental values for each site
+	# Get environmental values for each site (RUN 1)
 
 
 	# Bind values to data
-	this_data = cbind(t(parm_vals), this_data)
+	this_data = cbind(parm_vals, this_data)
 
 	# Add to growing data frame
 	cor_summary = rbind(cor_summary, this_data)
 }
 
+
+## Run 1: incrementing over stregth of mutualism (omega = o) and relative mortality of unassociated mutualists (mort_rate_a = mra, mort_rate_b = mrb)
+
+cor_summary$o = as.numeric(cor_summary$o)
+cor_summary$mra = as.numeric(cor_summary$mra)
+cor_summary$mrb = as.numeric(cor_summary$mrb)
+
 ## Plot correlations between mutualist communities and environment
 ## error bars show 95th percentile from 100 different starts
-library(lattice)
 
 a_pch = c(16, 1)
 b_pch = c(15, 0)
@@ -239,6 +247,88 @@ for(this_run in runs){
 	poolB_stats = apply(poolB_arr, c(1,2), function(x) c(mean=mean(x, na.mrm=T), var=var(x, na.rm=T), quantile(x, c(0.025, 0.5, 0.975))))
 
 	# Calculate correlations and richness
+
+
+
+## Run 2: incrementing over stregth of mutualism (omega = o), topology (topo) and type of environmental filtering (envfilt)
+
+
+## Plot correlations between mutualist communities and environment
+## error bars show 95th percentile from 100 different starts
+
+cor_summary$o = as.numeric(cor_summary$o)
+cor_summary$topo = factor(cor_summary$topo, levels=c('one2one','one2many','many2many'))
+cor_summary$envfilt = factor(cor_summary$envfilt, levels=c('none','same','opposite','all'))
+
+a_pch = c(16, 1)
+b_pch = c(15, 0)
+jit_fact = 0.008
+jit_a = -1*c(3*jit_fact/2, jit_fact/2)
+jit_b = c(jit_fact/2, 3*jit_fact/2)
+
+# RDA within chain mean
+plot_data = subset(cor_summary, measure=='rda' & summary=='mean')
+means = subset(plot_data, stat=='mean')
+low95s = subset(plot_data, stat=='2.5%')
+up95s = subset(plot_data, stat=='97.5%')
+
+pdf(paste0(fig_dir, 'mutualism_strength_vs_topo&envfilt_RDAmean.pdf'), height=7, width=9)
+xyplot(cor_a ~ o | topo + envfilt, groups = env, data=means, ylim = c(-.1,1),
+	scales=list(alternating=1), xlab='Strength of mutalism (omega)', ylab=expression(RDA~~R^2),
+	panel=function(x, y, subscripts, groups){
+		panel.segments(x+jit_a[groups], low95s$cor_a[subscripts], x+jit_a[groups], up95s$cor_a[subscripts])
+		panel.segments(x+jit_b[groups], low95s$cor_b[subscripts], x+jit_b[groups], up95s$cor_b[subscripts])
+		panel.xyplot(x+jit_a[groups], y, pch=a_pch[groups], col=1)
+		panel.xyplot(x+jit_b[groups], means$cor_b[subscripts], pch=b_pch[groups], col=1)
+	}, 
+	strip = strip.custom(strip.names=T, strip.levels=T, sep='=', 
+		bg='transparent', var.name=c('topology','env filters'), fg='transparent'),
+	key=list(space='right', points=list(pch=c(a_pch, b_pch)), 
+		text=list(expression(A*" ~ "*E[1],A*" ~ "*E[2],B*" ~ "*E[1],B*" ~ "*E[2])))
+)
+dev.off()
+
+# Plot for only obligate mutualism
+plot_data = subset(cor_summary, measure=='rda' & summary=='mean' & o==1)
+means = subset(plot_data, stat=='mean')
+low95s = subset(plot_data, stat=='2.5%')
+up95s = subset(plot_data, stat=='97.5%')
+jit_fact = 0.1
+jit_a = -1*c(3*jit_fact/2, jit_fact/2)
+jit_b = c(jit_fact/2, 3*jit_fact/2)
+
+pdf(paste0(fig_dir, 'topo_vs_envfilt_RDAmean_o=1.pdf'), height=5, width=7.5)
+xyplot(cor_a ~ topo | envfilt, groups = env, data=means, ylim = c(-.1,1),
+	scales=list(alternating=1), xlab='Network Topology', ylab=expression(RDA~~R^2),
+	panel=function(x, y, subscripts, groups){
+		panel.segments(as.numeric(x)+jit_a[groups], low95s$cor_a[subscripts], as.numeric(x)+jit_a[groups], up95s$cor_a[subscripts])
+		panel.segments(as.numeric(x)+jit_b[groups], low95s$cor_b[subscripts], as.numeric(x)+jit_b[groups], up95s$cor_b[subscripts])
+		panel.xyplot(as.numeric(x)+jit_a[groups], y, pch=a_pch[groups], col=1)
+		panel.xyplot(as.numeric(x)+jit_b[groups], means$cor_b[subscripts], pch=b_pch[groups], col=1)
+	}, 
+	strip = strip.custom(strip.names=T, strip.levels=T, sep='=', 
+		bg='transparent', var.name=c('env filters'), fg='transparent'),
+	key=list(space='right', points=list(pch=c(a_pch, b_pch)), 
+		text=list(expression(A*" ~ "*E[1],A*" ~ "*E[2],B*" ~ "*E[1],B*" ~ "*E[2])))
+)
+dev.off()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

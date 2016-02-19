@@ -119,17 +119,20 @@ run_camm_N = function(sim_dir, parm_file, nruns, nchains, nparallel=1, sim_parms
 		
 		# Run and Summarize CAMM
 		sim_results = parLapply(cluster, 1:nruns, function(j){
+			print(paste('start', runs[j]))
 			metacomm = metacomm_N[[j]]			
 
 			end_metacomms = sapply(1:nchains, function(i){
 				# Run CAMM
-				this_run = run_camm(metacomm, sim_mode=sim_parms$sim_mode, reps=sim_parms$reps, nchains=sim_parms$nchains)
+				this_run = run_camm(metacomm=metacomm, sim_mode=sim_parms$sim_mode, reps=sim_parms$reps, nchains=nchains)
 
 				# Just output the last instance of each community
 				list(comm=this_run$comm[,,sim_parms$reps+1], 
 					poolA=this_run$poolA[,,sim_parms$reps+1],
 					poolB=this_run$poolB[,,sim_parms$reps+1])
+	
 			})
+			print(paste('done', runs[j]))
 
 			# Define objects
 			topo_names = metacomm$topo_names
@@ -148,6 +151,7 @@ run_camm_N = function(sim_dir, parm_file, nruns, nchains, nparallel=1, sim_parms
 			dimnames(corr_stats)[[1]] = c('mean','var')
 			# Returns array with [mean/var, type, env, S/N/rda/jaccard, binary]
 
+			print(paste('summarized', runs[j]))
 			# Save output
 			if(save_sim) save(rich_stats, corr_stats, metacomm, end_metacomms, parm_file, sim_parms, nruns, nchains, file=paste0(save_dir, runs[j], '_results.RData'))
 		

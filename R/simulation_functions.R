@@ -493,7 +493,7 @@ transition = function(probs){
 # sim_mode = 'converge' or 'fixed'
 # reps = If mode is 'fixed', must supply number of time steps
 # nchains = If mode is 'converge', mush supply number of chains (replicate simulation runs used to check convergence)
-run_camm = function(sim_mode, reps=NA, nchains=NA, metacomm=NULL){
+run_camm = function(metacomm=NULL, sim_mode, reps=NA, nchains=NA){
 	if(length(metacomm)>0){
 		comm = metacomm$comm
 		poolA = metacomm$poolA

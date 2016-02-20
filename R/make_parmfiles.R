@@ -5,7 +5,7 @@ setwd('./UNC/Projects/CAMM')
 
 # Set directories
 sim_dir = './GitHub/R/'
-parm_dir = './Parms/Parms_3/'
+parm_dir = './Parms/Parms_4/'
 
 
 # Read in base parameter file
@@ -193,6 +193,70 @@ for(i in breadth_vec){
 	plot_niches(niches_a, matrix(rep(c(-3,3),2), ncol=2))
 }
 
+
+
+### RUN 4 : run time ###
+topo_vec = c('one2one','one2many','many2many')
+filter_vec = c('opposite','same','none','all')
+combos = expand.grid(topo_vec, filter_vec)
+
+for(envfilt in filter_vec){
+	this_dir = paste0(parm_dir, envfilt, '/')
+	dir.create(this_dir)
+
+	for(topology in topo_vec){
+		if(topology=='one2one'){
+			S_a = 30
+			S_b = 30
+			N_L = 30
+		}
+			
+		if(topology=='one2many'){
+			S_a = 30
+			S_b = 10
+			N_L = 30
+		}
+
+		if(topology=='many2many'){
+			S_a = 30
+			S_b = 10
+			N_L = 60
+		}
+
+		if(envfilt=='opposite'){
+			sigma_a1 = 10
+			sigma_a2 = 0.5
+			sigma_b1 = 0.5
+			sigma_b2 = 10
+		}
+
+		if(envfilt=='same'){
+			sigma_a1 = 10
+			sigma_a2 = 0.5
+			sigma_b1 = 10
+			sigma_b2 = 0.5
+		}
+
+		if(envfilt=='none'){
+			sigma_a1 = 10
+			sigma_a2 = 10
+			sigma_b1 = 10
+			sigma_b2 = 10
+		}
+
+		if(envfilt=='all'){
+			sigma_a1 = 0.5
+			sigma_a2 = 0.5
+			sigma_b1 = 0.5
+			sigma_b2 = 0.5
+		}
+
+		runID = paste0('topo-',topology,'_envfilt-',envfilt)
+
+		parm_list = make_parmlist()
+		write_parms(parm_list, paste0('p_', runID), this_dir)
+	}
+}
 
 
 

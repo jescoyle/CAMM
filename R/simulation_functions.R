@@ -46,8 +46,8 @@ make_topo = function(S_a, S_b, N_L, topology){
 	# If there are duplicated links add more random links until at N_L.
 	add_links = N_L - sum(topo)
 	while(add_links > 0){
-		add_a = sample(S_a, add_links)
-		add_b = sample(S_b, add_links)
+		add_a = sample(S_a, add_links, replace=T)
+		add_b = sample(S_b, add_links, replace=T)
 		for(i in 1:add_links){
 			topo[add_a[i], add_b[i]] = 1
 		}
@@ -114,7 +114,7 @@ rand_comm = function(N_C, N, N_S){
 
 # A function that generates random 2D gaussian niches.
 # Niche optima (mu) are drawn from a uniform distribution and niche width (sigma) from a gamma distribution
-#	S = number of species
+#	N_S = number of species
 #	nicheparms = a list of parameters controlling the shape of the distribution from which niches are sampled
 #		mu = a vector of length 2 with the maximum niche optima
 #		rho = the correlation between the niche optima

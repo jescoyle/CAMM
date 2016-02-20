@@ -26,7 +26,7 @@ get_parms = function(runID, assoc_str='-', sep_str='_'){
 #	niches = an S x 2 x 2 array giving mu and sigma parameters of the gaussian distribution for 2 environmental variables and S species
 # 	grad = a 2 x 2 matrix giving the length of each environmental gradient
 #	add_env = an optional matrix of environmental values at sites
-plot_niches = function(niches, grad, add_env){
+plot_niches = function(niches, grad, add_env=NULL){
 
 	par(mfrow=c(1,2))
 	

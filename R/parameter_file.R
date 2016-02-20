@@ -62,7 +62,7 @@ topology = 'one2many' # links from mutualist a to mutualist b: 'one2one','one2ma
 # Range from 0 (no mutualism) to 1 (obligate mutualism)
 # Currently affects the probability of establishment when partner A is present and B is not
 # P(establish| A & !B) = (1 - omega)*P(association)
-omega = 0 
+omega = 1 
 
 # Environmental dependence of association
 # 	a function that calculates the probability of association given environmental conditions at a site and optimal niches of mutualists

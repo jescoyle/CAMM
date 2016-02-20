@@ -5,7 +5,7 @@ setwd('./UNC/Projects/CAMM')
 
 # Set directories
 sim_dir = './GitHub/R/'
-parm_dir = './Parms/'
+parm_dir = './Parms/Parms_3/'
 
 
 # Read in base parameter file
@@ -112,8 +112,86 @@ for(o in omega_vec){
 }
 
 
+## RUN 3 ##
 
+# Define parameter sets
+breadth_vec = c(0.25, 0.5, 1, 2, 4)
+topo_vec = c('one2one','one2many','many2many')
+filter_vec = c('opposite','same','none','all')
+combos = expand.grid(topo_vec, filter_vec)
+combos_sig = expand.grid(breadth_vec, breadth_vec)
 
+for(j in 1:nrow(combos_sig)){
+	sigmaA = combos_sig[j,1]
+	sigmaB = combos_sig[j,2]
+
+	this_dir = paste0(parm_dir,'sigA_', sigmaA, '-sigB_', sigmaB, '/')
+	dir.create(this_dir)
+
+	for(i in 1:nrow(combos)){
+		topology = as.character(combos[i,1])
+		
+		if(topology=='one2one'){
+			S_a = 30
+			S_b = 30
+			N_L = 30
+		}
+		
+		if(topology=='one2many'){
+			S_a = 30
+			S_b = 10
+			N_L = 30
+		}
+
+		if(topology=='many2many'){
+			S_a = 30
+			S_b = 10
+			N_L = 60
+		}
+
+		envfilt = combos[i,2]
+	
+		if(envfilt=='opposite'){
+			sigma_a1 = 8
+			sigma_a2 = sigmaA
+			sigma_b1 = sigmaB
+			sigma_b2 = 8
+		}
+
+		if(envfilt=='same'){
+			sigma_a1 = 8
+			sigma_a2 = sigmaA
+			sigma_b1 = 8
+			sigma_b2 = sigmaB
+		}
+
+		if(envfilt=='none'){
+			sigma_a1 = 8
+			sigma_a2 = 8
+			sigma_b1 = 8
+			sigma_b2 = 8
+		}
+
+		if(envfilt=='all'){
+			sigma_a1 = sigmaA
+			sigma_a2 = sigmaA
+			sigma_b1 = sigmaB
+			sigma_b2 = sigmaB
+		}
+
+		runID = paste0('sigA-', sigmaA, '_sigB-',sigmaB,'_topo-',topology,'_envfilt-',envfilt)
+
+		parm_list = make_parmlist()
+		write_parms(parm_list, paste0('p_', runID), this_dir)
+	}
+}
+
+for(i in breadth_vec){
+	windows()
+	nicheparms_a$sigma[1] = i
+	niches_a = make_niches(S_a, nicheparms_a)
+	plot_niches(niches_a, matrix(rep(c(-3,3),2), ncol=2))
+}
 
 
 

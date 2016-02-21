@@ -103,7 +103,7 @@ make_parmlist = function(e=parent.frame()){
 # save_start = flag indicating whether each initial set of niches and topologies should be saved
 run_camm_N = function(sim_dir, parm_file, nruns, nchains, nparallel=1, sim_parms, simID, save_start=F, save_sim=F, save_dir='./'){
 	runs = paste(simID, 1:nruns, sep='_')
-	
+
 	if(nparallel > 1){
 		require(parallel)
 		cluster = makeCluster(nparallel)	
@@ -124,9 +124,9 @@ run_camm_N = function(sim_dir, parm_file, nruns, nchains, nparallel=1, sim_parms
 
 			end_metacomms = sapply(1:nchains, function(i){
 				# Run CAMM
-				this_run = run_camm(metacomm=metacomm, sim_mode=sim_parms$sim_mode, reps=sim_parms$reps, nchains=nchains)
+				this_run = run_camm(metacomm=metacomm, sim_mode=sim_parms$sim_mode, reps=sim_parms$reps[length(sim_parms$reps)], nchains=nchains)
 
-				# Just output the last instance of each community
+				# Just output the instance of each community at each of the timepoints in reps
 				list(comm=this_run$comm[,,sim_parms$reps+1], 
 					poolA=this_run$poolA[,,sim_parms$reps+1],
 					poolB=this_run$poolB[,,sim_parms$reps+1])
@@ -139,18 +139,36 @@ run_camm_N = function(sim_dir, parm_file, nruns, nchains, nparallel=1, sim_parms
 			sites = metacomm$sites
 	
 			# Calculate mean community richness and abundance
-			rich_summary = sapply(end_metacomms['comm',], function(comm) calc_commstats(comm, topo_names), simplify='array')
-			comm_means = sapply(rownames(rich_summary), function(type) apply(simplify2array(rich_summary[type,]), 2, mean))
-			rich_stats = apply(comm_means, 2, function(x) c(mean(x), var(x))) 
-			rownames(rich_stats) = c('mean','var')
+			if(length(sim_parms$reps)==1){
+				rich_summary = sapply(end_metacomms['comm',], function(comm) calc_commstats(comm, topo_names), simplify='array')
+				comm_means = sapply(rownames(rich_summary), function(type) apply(simplify2array(rich_summary[type,]), 2, mean))
+				rich_stats = apply(comm_means, 2, function(x) c(mean(x), var(x))) 
+				rownames(rich_stats) = c('mean','var')
 			
-			# Calculate environmental correlations
-			# CURRENTLY USES PRES/ABSENCE, NOT ABUNDANCE
-			corr_stats = sapply(end_metacomms['comm',], function(comm) calc_envcorr(comm, topo_names, sites, 'jaccard', binary=T), simplify='array')
-			corr_stats = apply(corr_stats, 1:4, function(vals) c(mean(vals), var(vals)))	
-			dimnames(corr_stats)[[1]] = c('mean','var')
-			# Returns array with [mean/var, type, env, S/N/rda/jaccard, binary]
-
+				# Calculate environmental correlations
+				# CURRENTLY USES PRES/ABSENCE, NOT ABUNDANCE
+				corr_stats = sapply(end_metacomms['comm',], function(comm) calc_envcorr(comm, topo_names, sites, 'jaccard', binary=T), simplify='array')
+				corr_stats = apply(corr_stats, 1:4, function(vals) c(mean(vals), var(vals)))	
+				dimnames(corr_stats)[[1]] = c('mean','var')
+				# Returns array with [mean/var, type, env, S/N/rda/jaccard, binary]
+			} else {
+				rich_summary = sapply(end_metacomms['comm',], function(comms){
+					 apply(comms, 3, function(comm) calc_commstats(comm, topo_names))	
+				}, simplify='array')
+				comm_means = apply(rich_summary, c(1,2), function(x) colMeans(x[[1]]))
+				rich_stats = apply(comm_means, c(1,2), function(x) c(mean(x), var(x)))
+				dimnames(rich_stats)[[1]] = c('mean','var')
+				dimnames(rich_stats)[[3]] = paste0('T',sim_parms$reps)
+				
+				corr_stats = sapply(1:length(end_metacomms['comm',]), function(j){
+					comms = end_metacomms['comm',][[j]]
+					sapply(1:dim(comms)[3], function(i) calc_envcorr(comms[,,i], topo_names, sites, 'jaccard', binary=T), simplify='array')	
+				}, simplify='array')
+				corr_stats = apply(corr_stats, 1:5, function(vals) c(mean(vals), var(vals)))	
+				dimnames(corr_stats)[[1]] = c('mean','var')
+				dimnames(corr_stats)[[6]] = paste0('T',sim_parms$reps)
+			}
+			
 			print(paste('summarized', runs[j]))
 			# Save output
 			if(save_sim) save(rich_stats, corr_stats, metacomm, end_metacomms, parm_file, sim_parms, nruns, nchains, file=paste0(save_dir, runs[j], '_results.RData'))
@@ -171,7 +189,7 @@ run_camm_N = function(sim_dir, parm_file, nruns, nchains, nparallel=1, sim_parms
 
 			end_metacomms = sapply(1:nchains, function(i){
 				# Run CAMM
-				this_run = run_camm(metacomm, sim_mode=sim_parms$sim_mode, reps=sim_parms$reps, nchains=sim_parms$nchains)
+				this_run = run_camm(metacomm, sim_mode=sim_parms$sim_mode, reps=sim_parms$reps[length(sim_parms$reps)], nchains=sim_parms$nchains)
 		
 				# Just save the last instance of each community
 				list(comm=this_run$comm[,,sim_parms$reps+1], 
@@ -184,18 +202,36 @@ run_camm_N = function(sim_dir, parm_file, nruns, nchains, nparallel=1, sim_parms
 			sites = metacomm$sites
 	
 			# Calculate mean community richness and abundance
-			rich_summary = sapply(end_metacomms['comm',], function(comm) calc_commstats(comm, topo_names), simplify='array')
-			comm_means = sapply(rownames(rich_summary), function(type) apply(simplify2array(rich_summary[type,]), 2, mean))
-			rich_stats = apply(comm_means, 2, function(x) c(mean(x), var(x))) 
-			rownames(rich_stats) = c('mean','var')
-
-			# Calculate environmental correlations
-			# CURRENTLY USES PRES/ABSENCE, NOT ABUNDANCE
-			corr_stats = sapply(end_metacomms['comm',], function(comm) calc_envcorr(comm, topo_names, sites, 'jaccard', binary=T), simplify='array')
-			corr_stats = apply(corr_stats, 1:4, function(vals) c(mean(vals), var(vals)))	
-			dimnames(corr_stats)[[1]] = c('mean','var')
-			# Returns array with [mean/var, type, env, rda/jaccard, binary]
-		
+			if(length(sim_parms$reps)==1){
+				rich_summary = sapply(end_metacomms['comm',], function(comm) calc_commstats(comm, topo_names), simplify='array')
+				comm_means = sapply(rownames(rich_summary), function(type) apply(simplify2array(rich_summary[type,]), 2, mean))
+				rich_stats = apply(comm_means, 2, function(x) c(mean(x), var(x))) 
+				rownames(rich_stats) = c('mean','var')
+			
+				# Calculate environmental correlations
+				# CURRENTLY USES PRES/ABSENCE, NOT ABUNDANCE
+				corr_stats = sapply(end_metacomms['comm',], function(comm) calc_envcorr(comm, topo_names, sites, 'jaccard', binary=T), simplify='array')
+				corr_stats = apply(corr_stats, 1:4, function(vals) c(mean(vals), var(vals)))	
+				dimnames(corr_stats)[[1]] = c('mean','var')
+				# Returns array with [mean/var, type, env, S/N/rda/jaccard, binary]
+			} else {
+				rich_summary = sapply(end_metacomms['comm',], function(comms){
+					 apply(comms, 3, function(comm) calc_commstats(comm, topo_names))	
+				}, simplify='array')
+				comm_means = apply(rich_summary, c(1,2), function(x) colMeans(x[[1]]))
+				rich_stats = apply(comm_means, c(1,2), function(x) c(mean(x), var(x)))
+				dimnames(rich_stats)[[1]] = c('mean','var')
+				dimnames(rich_stats)[[3]] = paste0('T',sim_parms$reps)
+				
+				corr_stats = sapply(1:length(end_metacomms['comm',]), function(j){
+					comms = end_metacomms['comm',][[j]]
+					sapply(1:dim(comms)[3], function(i) calc_envcorr(comms[,,i], topo_names, sites, 'jaccard', binary=T), simplify='array')	
+				}, simplify='array')
+				corr_stats = apply(corr_stats, 1:5, function(vals) c(mean(vals), var(vals)))	
+				dimnames(corr_stats)[[1]] = c('mean','var')
+				dimnames(corr_stats)[[6]] = paste0('T',sim_parms$reps)
+			}
+			
 			# Save output
 			if(save_sim) save.image(paste0(save_dir, runs[j], '_results.RData'))
 
@@ -214,22 +250,52 @@ run_camm_N = function(sim_dir, parm_file, nruns, nchains, nparallel=1, sim_parms
 # what = a string indicating which community chacteristic should be summarized
 # type = a string indicating whether statistics should be computed for 'species', 'a', or 'b'
 summarize_camm = function(results, what, type=NA){
-	# Richness in each community
-	if(what=='S'){
-		get_vars = paste(c('S','Stot'),type,sep='_')
-		richness = sapply(results, function(x) x[[1]][,get_vars], simplify='array')
-		return_stats = apply(richness, c(1,2), function(x) c(mean=mean(x, na.rm=T), var=var(x, na.rm=T), quantile(x, c(0.025, 0.5, 0.975), na.rm=T)))
-	}
+	# Determine whether results have multiple time points
+	tp = length(dim(results[[1]][[1]]))==3
 
-	if(what=='N'){
-		abun = sapply(results, function(x) x[[1]][,c('N', 'Ntot')], simplify='array')
-		return_stats = apply(abun, c(1,2), function(x) c(mean=mean(x, na.rm=T), var=var(x, na.rm=T), quantile(x, c(0.025, 0.5, 0.975), na.rm=T)))
-	}
+	if(tp){
+		# Richness in each community
+		if(what=='S'){
+			get_vars = paste(c('S','Stot'),type,sep='_')
+			richness = sapply(results, function(x) x[[1]][,get_vars,], simplify='array')
+			return_stats = apply(richness, 1:3, function(x) c(mean=mean(x, na.rm=T), var=var(x, na.rm=T), quantile(x, c(0.025, 0.5, 0.975), na.rm=T)))
+			names(dimnames(return_stats)) = c('stat','summary','response','time')
+		}
+		
+		if(what=='N'){
+			abun = sapply(results, function(x) x[[1]][,c('N', 'Ntot'),], simplify='array')
+			return_stats = apply(abun, 1:3, function(x) c(mean=mean(x, na.rm=T), var=var(x, na.rm=T), quantile(x, c(0.025, 0.5, 0.975), na.rm=T)))
+			names(dimnames(return_stats)) = c('stat','summary','response','time')
+		}
+		
+		if(what=='cor'){
+			corr_mat = sapply(results, function(x) x[[2]][,type,,,,], simplify='array')
+			maxD = length(dim(corr_mat))
+			return_stats = apply(corr_mat, 1:(maxD-1), function(x) c(mean=mean(x, na.rm=T), var=var(x, na.rm=T), quantile(x, c(0.025, 0.5, 0.975), na.rm=T)))
+			names(dimnames(return_stats)) = c('stat','summary','env','measure','time')
+		}
+	} else {
+		# Richness in each community
+		if(what=='S'){
+			get_vars = paste(c('S','Stot'),type,sep='_')
+			richness = sapply(results, function(x) x[[1]][,get_vars], simplify='array')
+			return_stats = apply(richness, c(1,2), function(x) c(mean=mean(x, na.rm=T), var=var(x, na.rm=T), quantile(x, c(0.025, 0.5, 0.975), na.rm=T)))
+			names(dimnames(return_stats)) = c('stat','summary','response')
+		}
 
-	if(what=='cor'){
-		corr_mat = sapply(results, function(x) x[[2]][,type,,,], simplify='array')
-		maxD = length(dim(corr_mat))
-		return_stats = apply(corr_mat, 1:(maxD-1), function(x) c(mean=mean(x, na.rm=T), var=var(x, na.rm=T), quantile(x, c(0.025, 0.5, 0.975), na.rm=T)))
+
+		if(what=='N'){
+			abun = sapply(results, function(x) x[[1]][,c('N', 'Ntot')], simplify='array')
+			return_stats = apply(abun, c(1,2), function(x) c(mean=mean(x, na.rm=T), var=var(x, na.rm=T), quantile(x, c(0.025, 0.5, 0.975), na.rm=T)))
+			names(dimnames(return_stats)) = c('stat','summary','response')
+		}
+
+		if(what=='cor'){
+			corr_mat = sapply(results, function(x) x[[2]][,type,,,], simplify='array')
+			maxD = length(dim(corr_mat))
+			return_stats = apply(corr_mat, 1:(maxD-1), function(x) c(mean=mean(x, na.rm=T), var=var(x, na.rm=T), quantile(x, c(0.025, 0.5, 0.975), na.rm=T)))
+			names(dimnames(return_stats)) = c('stat','summary','env','measure')
+		}
 	}
 
 	return_stats

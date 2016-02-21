@@ -31,7 +31,7 @@ ncores = as.numeric(args[1])
 nruns = 100 # 1000 # Number of distinct starts
 nchains = 10 # 100 # Number of replicate simulations starting from the same initial metacommunity
 sim_mode = 'fixed' # Stopping rule: stop after reps timesteps
-rep_vec = c(2000, 4000, 8000)
+rep_vec = c(4000, 8000)
 
 # Run set of simulations on each parameter
 for(f in file_list){

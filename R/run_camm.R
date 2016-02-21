@@ -31,7 +31,7 @@ ncores = as.numeric(args[1])
 nruns = 100 # 1000 # Number of distinct starts
 nchains = 10 # 100 # Number of replicate simulations starting from the same initial metacommunity
 sim_mode = 'fixed' # Stopping rule: stop after nreps timesteps
-reps = 1000 # 5000 # Number of timesteps until stop
+reps = c(1000,2000,4000,8000) # 5000 # Number of timesteps until stop
 sim_parms = list(sim_mode=sim_mode, reps=reps)
 
 # Run set of simulations on each parameter
@@ -46,21 +46,17 @@ for(f in file_list){
 		
 	# Analyze results
 	S_a = melt(summarize_camm(model_out, 'S', 'a'))
-	names(S_a) = c('stat','summary','response','value')
 	S_b = melt(summarize_camm(model_out, 'S', 'b'))
-	names(S_b) = c('stat','summary','response','value')
 	N_comm = melt(summarize_camm(model_out, 'N'))
-	names(N_comm) = c('stat','summary','response','value')
 	comm_summary = rbind(S_a, S_b, N_comm)
-	comm_summary = cast(comm_summary, summary + stat ~ response)
+	comm_summary = cast(comm_summary, ... ~ response)
 	
 	cor_a = melt(summarize_camm(model_out, 'cor','a'))
-	names(cor_a) = c('stat','summary','env','measure','cor_a')
+	names(cor_a)[names(cor_a)=='value'] = 'cor_a'
 	cor_b = melt(summarize_camm(model_out, 'cor','b'))
-	names(cor_b) = c('stat','summary','env','measure','cor_b')
+	names(cor_b)[names(cor_b)=='value'] = 'cor_b'
 	cor_summary = merge(cor_a, cor_b)
-	cor_summary = with(cor_summary, cor_summary[order(env, measure, summary, stat),])
-
+	
 	write.csv(comm_summary, file=paste0(results_dir, runID, '_comm_summary.csv'), row.names=F)
 	write.csv(cor_summary, file=paste0(results_dir, runID, '_cor_summary.csv'), row.names=F)
 

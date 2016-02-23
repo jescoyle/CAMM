@@ -5,8 +5,9 @@ setwd('./UNC/Projects/CAMM')
 
 # Set directories
 sim_dir = './GitHub/R/'
-parm_dir = './Parms/Parms_4/'
+parm_dir = './Parms/Parms_5/'
 
+dir.create(parm_dir)
 
 # Read in base parameter file
 source(paste0(sim_dir, 'parameter_file.R'))
@@ -259,6 +260,58 @@ for(envfilt in filter_vec){
 }
 
 
+### RUN 5: species richness ###
+
+topo_vec = c('one2many','many2many')
+filter_vec = c('opposite','same')
+Sb_vec = 5*2^(0:3)
+skew_vec = c(1,2,3,5,10)
+combos = expand.grid(Sb_vec, topo_vec)
+links_vec = c(1.5, 2, 3, 5)
+
+for(skew in skew_vec){
+for(envfilt in filter_vec){
+	this_dir = paste0(parm_dir, envfilt, '-', skew, '/')
+	dir.create(this_dir)
+	
+	for(i in 1:nrow(combos)){
+		S_b = combos[i,1]
+		S_a = skew*S_b
+		topology = combos[i,2]
+
+		if(envfilt=='opposite'){
+			sigma_a1 = 10
+			sigma_a2 = 0.5
+			sigma_b1 = 0.5
+			sigma_b2 = 10
+		}
+
+		if(envfilt=='same'){
+			sigma_a1 = 10
+			sigma_a2 = 0.5
+			sigma_b1 = 10
+			sigma_b2 = 0.5
+		}
+					
+		if(topology=='one2many'){
+			N_L = S_a
+			runID = paste0('topo-',topology,'_envfilt-',envfilt,'_Sa-',S_a,'_Sb-',S_b,'_NL-',N_L)
+			parm_list = make_parmlist()
+			write_parms(parm_list, paste0('p_', runID), this_dir)
+		}
+
+		if(topology=='many2many'){
+			links_vec = floor(S_a*S_b*c(0.125,0.25,0.5,1))
+			links_vec = links_vec[links_vec>S_a]
+
+			for(N_L in links_vec){
+				runID = paste0('topo-',topology,'_envfilt-',envfilt,'_Sa-',S_a,'_Sb-',S_b,'_NL-',N_L)
+				parm_list = make_parmlist()
+				write_parms(parm_list, paste0('p_', runID), this_dir)
+			}
+		}
+	}
+}}
 
 
 

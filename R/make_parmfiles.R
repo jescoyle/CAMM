@@ -267,7 +267,7 @@ filter_vec = c('opposite','same')
 Sb_vec = 5*2^(0:3)
 skew_vec = c(1,2,3,5,10)
 combos = expand.grid(Sb_vec, topo_vec)
-links_vec = c(1.5, 2, 3, 5)
+
 
 for(skew in skew_vec){
 for(envfilt in filter_vec){
@@ -277,7 +277,7 @@ for(envfilt in filter_vec){
 	for(i in 1:nrow(combos)){
 		S_b = combos[i,1]
 		S_a = skew*S_b
-		topology = combos[i,2]
+		topology = as.character(combos[i,2])
 
 		if(envfilt=='opposite'){
 			sigma_a1 = 10
@@ -301,8 +301,8 @@ for(envfilt in filter_vec){
 		}
 
 		if(topology=='many2many'){
-			links_vec = floor(S_a*S_b*c(0.125,0.25,0.5,1))
-			links_vec = links_vec[links_vec>S_a]
+			links_vec = floor(S_a*c(1.25, 1.5, 2, 3))
+			links_vec = links_vec[(links_vec<=S_a*S_b)]
 
 			for(N_L in links_vec){
 				runID = paste0('topo-',topology,'_envfilt-',envfilt,'_Sa-',S_a,'_Sb-',S_b,'_NL-',N_L)

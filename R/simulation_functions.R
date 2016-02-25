@@ -1,5 +1,9 @@
 ## This script holds functions used by the community assembly of mutualists model (CAMM)
 library(vegan) # vegdist
+require(poweRlaw)
+require(sads)
+require(permute)
+require(MASS) # mvrnorm
 
 ### Functions for Initializing Simulation ###
 
@@ -74,7 +78,7 @@ name_topo = function(topo){
 # 	N_C = number of sites
 #	rho_z = correlation between variables
 # Returns an N_C x 2 matrix of values drawn from a multivariate gaussian distribution with mean 0 and std deviation 1.
-library(mvtnorm)
+
 make_sites = function(N_C, rho_z){
 	sd = c(1,1)
 	mu = c(0,0)
@@ -82,8 +86,8 @@ make_sites = function(N_C, rho_z){
 	# Define covariance matrix
 	S = matrix(c(sd[1],rho_z,rho_z,sd[2]), nrow=2, ncol=2)
 
-	# Generate correlated gaussian rv using mvtnorm package
-	sites = rmvnorm(mean=mu, sig=S, n=N_C)
+	# Generate correlated gaussian rv using MASS package
+	sites = mvrnorm(n=N_C, mu=mu, Sigma=S)
 	
 	# Return sites
 	sites
@@ -124,9 +128,9 @@ rand_comm = function(N_C, N, N_S){
 
 make_niches = function(N_S, nicheparms){
 	
-	# Generate niche optima as 2 correlated gaussian variables using mvtnorm packages
+	# Generate niche optima as 2 correlated gaussian variables using MASS package
 	S = matrix(c(1,nicheparms$rho,nicheparms$rho,1),2,2)
-	mus_norm = rmvnorm(mean=c(0,0), sig=S, n=N_S)
+	mus_norm = mvrnorm(n=N_S, mu=c(0,0), Sigma=S)
 	
 	# Transform to uniform on (0,1)
 	U = pnorm(mus_norm)
@@ -137,7 +141,7 @@ make_niches = function(N_S, nicheparms){
 
 	# Generate niche breadths as 2 correlated gaussian variables
 	S = matrix(c(1, nicheparms$r, nicheparms$r, 1),2,2)
-	sigmas_norm = rmvnorm(mean=c(0,0), sig=S, n=N_S)
+	sigmas_norm = mvrnorm(n=N_S, mu=c(0,0), Sigma=S)
 
 	# Transform to uniform on (0,1)
 	U = pnorm(sigmas_norm)	
@@ -160,9 +164,6 @@ make_niches = function(N_S, nicheparms){
 # rho = strength of rank-order correlation between condition and abundance
 
 make_gsad = function(S, distribution, condition=NA, rho=NA){
-	require(poweRlaw)
-	require(sads)
-	require(permute)
 	
 	if(distribution$type=='same'){
 		abuns = rep(1, S)

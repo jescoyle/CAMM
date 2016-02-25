@@ -106,7 +106,7 @@ run_camm_N = function(sim_dir, parm_file, nruns, nchains, nparallel=1, sim_parms
 
 	if(nparallel > 1){
 		require(parallel)
-		cluster = makeCluster(nparallel)	
+		cluster = makeCluster(nparallel, outfile=paste0(save_dir, runID, '.Rout'))	
 		
 		# Send required functions to each node
 		clusterExport(cluster, c('runs','nchains','sim_dir','parm_file','sim_parms','simID','save_start','save_sim','save_dir'), envir=environment())
@@ -115,7 +115,9 @@ run_camm_N = function(sim_dir, parm_file, nruns, nchains, nparallel=1, sim_parms
 		
 		# Initialize CAMM
 		metacomm_N = parLapply(cluster, 1:nruns, function(j) initialize_camm(parm_file, save_start, runID=runs[j], save_dir))
-		clusterExport(cluster, 'metacomm_N', envir=environment())		
+		clusterExport(cluster, 'metacomm_N', envir=environment())
+
+		if(save_start) save(metacomm_N, file=paste0(save_dir, simID, '_metacomms.RData'))		
 		
 		# Run and Summarize CAMM
 		sim_results = parLapply(cluster, 1:nruns, function(j){
@@ -132,8 +134,8 @@ run_camm_N = function(sim_dir, parm_file, nruns, nchains, nparallel=1, sim_parms
 					poolB=this_run$poolB[,,sim_parms$reps+1])
 	
 			})
-			print(paste('done', runs[j]))
-
+			if(save_sim) save(end_metacomms, file=paste0(save_dir, runs[j], '_metacomms-end.RData'))
+		
 			# Define objects
 			topo_names = metacomm$topo_names
 			sites = metacomm$sites

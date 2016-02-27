@@ -41,12 +41,10 @@ r_b = 0 # covariance of niche breadths of 2 environmental variables for mutualis
 
 ## Parameters controling global abundance distribution (differential dispersal)
 # Shape of the SAD
-gsad_dist_a = list(type='same', p1=1)
-gsad_dist_b = list(type='same', p1=1)
 
-# Whether global abundance should be correlated with niche breadth ('breadth'), number of partners ('links'), or not correlated ('none')
-gsad_cond_a = list(type='none') #list(type='breadth', rho=.7)
-gsad_cond_b = list(type='none') #list(type='breadth', rho=.7)
+gsad_dist_a = list(type='uniform', maxN = 2, P_maxN = 0.999, corr=matrix(0, nrow=2, ncol=2))
+gsad_dist_b = list(type='uniform', maxN = 2, P_maxN = 0.999, corr=matrix(0, nrow=2, ncol=2))
+
 
 # Lists of parameters for each mutualist
 nicheparms_a = list(mu = c(mu_a1, mu_a2), rho = rho_a, sigma = c(sigma_a1, sigma_a2), alpha = c(alpha_a1, alpha_a2), r=r_a)

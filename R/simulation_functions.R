@@ -156,14 +156,12 @@ make_niches = function(N_S, nicheparms){
 	niches
 }
 
-# A function that generates a global speciesl abundance distribution.
+# THIS FUNCTION SHOULD NOT BE USED ANY LONGER
+# A function that generates a global species abundance distribution.
 # Species abundances may be correlated with niche optima or niche breadth or mutualist breadth.
 # S = number of species
 # distribution = list of parameters describing the functional form of the SAD
-# condition = vector of quantities with which abundance should be correlated
-# rho = strength of rank-order correlation between condition and abundance
-
-make_gsad = function(S, distribution, condition=NA, rho=NA){
+make_gsad = function(S, distribution){
 	
 	if(distribution$type=='same'){
 		abuns = rep(1, S)
@@ -194,44 +192,151 @@ make_gsad = function(S, distribution, condition=NA, rho=NA){
 		# p1 = lambda
 		abuns = rpois(S, distribution$p1)+1
 	}
-
-	# THIS IS NOT VERY ROBUST AND SHOULD PROBABLY BE EDITED FOR BETTER ERROR HANDLING
-	# MAY WANT TO RE-DRAW ABUNDANCES AFTER ALGORITHM FAILURE RATHER THAN IMMEDIATELY SENDING STOP ERROR MESSAGE
-	if(!is.na(condition)){
-
-		if(S != length(condition) ) stop('Number of species much match number of elements in condition')
-
-		# The algorithm will swap the order of abundances until either
-		#  the ranked correlation is within tol of the given rho
-		# OR
-		#  it has tried ntries swaps
-		tol=0.01
-		ntries = 10000
-
-		c_rank = rank(condition)
-		a_rank = rank(abuns)
-
-		cor_func = function(x) cor(condition, abuns[x], method='spearman')
-		use_order = 1:S
-		this_rho = cor_func(use_order)
-				
-		n = 0
-		while((abs(rho-this_rho) > tol) & (n < ntries)){
-			n = n + 1
-			swap = sample(S, 2, replace=F)
-			new_order = use_order
-			new_order[swap[1]] = use_order[swap[2]]
-			new_order[swap[2]] = use_order[swap[1]]
-			use_order = new_order
-			this_rho = cor_func(use_order)
-		}
-
-		abuns = abuns[use_order]
-		if(abs(rho-this_rho) > tol) stop(paste('Unable to correlate abundances and condition at rho=',rho,'\nConsider changing tolerance'))
-	}
 	
 	abuns	
 }
+
+# A function that concurrently generates random 2D gaussian niches and a species abundance distribution that is correlated with niche parameters.
+# Niche optima (mu) are drawn from a uniform distribution and niche width (sigma) from a gamma distribution
+# NOTE: be careful with choice of covariances so that covariance matrix works (positive definite)
+#	N_S = number of species
+#	nicheparms = a list of parameters controlling the shape of the distribution from which niches are sampled
+#		mu = a vector of length 2 with the maximum niche optima
+#		rho = the correlation between the niche optima
+#		sigma = a vector of length 2 with the means of the gamma distributions
+#		alpha = a vector of length 2 with the shape parameter of the gamma distributions
+#		r = the correlation between niche widths
+# 	distribution = list of parameters describing the functional form of the SAD
+#		type = vector indicating the form of the SAD
+#		maxN = maximum abundance, used to find SAD parameters if not supplied
+#		P_maxN = probability of getting an abundance greater than maxN
+#		p1 = parameter controling the shape of the SAD (only certain types)
+#		p2 = parameter controling the shape of the SAD (only certain types)
+#		corr = matrix giving correlations between global abundance and niche means and breadths (rows are env axes)
+make_niches_gsad = function(N_S, nicheparms, distribution){
+
+	# Create correlation matrix for generating mus, sigmas, and abundances
+	S = diag(5)
+	rownames(S) = c('mu1','mu2','sig1','sig2','abun')
+	colnames(S) = c('mu1','mu2','sig1','sig2','abun')
+	S['mu1','mu2'] = nicheparms$rho
+	S['mu2','mu1'] = nicheparms$rho
+	S['sig1','sig2'] = nicheparms$r
+	S['sig2','sig1'] = nicheparms$r
+	S[c('mu1','mu2','sig1','sig2'),'abun'] = distribution$corr
+	S['abun', c('mu1','mu2','sig1','sig2')] = distribution$corr
+
+	# Generate normal random variables with the given correlation structure
+	x_norm = mvrnorm(n=N_S, mu=rep(0, 5), Sigma=S)
+
+	# Transform to uniform on (0,1)
+	U = pnorm(x_norm)
+
+	# Niche optima
+	# Transform to uniform on interval defined by nicheparms
+	mu1 = qunif(U[,'mu1'], -nicheparms$mu[1], nicheparms$mu[1])
+	mu2 = qunif(U[,'mu2'], -nicheparms$mu[2], nicheparms$mu[2])
+
+	# Niche breadth
+	# Transform to gamma with parameters defined by nicheparms
+	theta = nicheparms$sigma/nicheparms$alpha # gamma distribution mean = scale*shape
+	sig1 = qgamma(U[,'sig1'], shape=nicheparms$alpha[1], scale=theta[1])
+	sig2 = qgamma(U[,'sig2'], shape=nicheparms$alpha[2], scale=theta[2])
+
+	# Abundance
+	if(distribution$type=='same') abuns = rep(1, N_S)
+	
+	if(distribution$type=='uniform'){
+		if(is.null(distribution$maxN)){ 
+			use_p = distribution$p1
+		} else {
+			use_p = distribution$maxN
+		}
+		abuns = qunif(U[,'abun'], 1, use_p)
+	}
+		
+	if(distribution$type=='power'){
+		if(is.null(distribution$maxN)){
+			use_p = distribution$p1
+		} else {
+			use_p = 1/log(1/(distribution$maxN), base=distribution$P_maxN)
+		}
+		abuns = (1-U[,'abun'])^(-1/use_p)
+	}
+	if(distribution$type=='logseries'){
+		# p2 = N, p1 = Fisher's alpha
+		if(is.null(distribution$maxN)){
+			use_N = distribution$p2
+		} else {
+			use_N = 1
+			this_N = qls(1-distribution$P_maxN, use_N, distribution$p1)	
+			while(this_N < distribution$maxN){
+				use_N = use_N + 1
+				this_N = qls(1-distribution$P_maxN, use_N, distribution$p1)	
+			}
+			if(this_N > 10) use_N = use_N - 1
+
+		}
+		abuns = qls(U[,'abun'], N = use_N, alpha = distribution$p1)		
+	}
+	if(distribution$type=='lognormal'){
+		if(is.null(distribution$maxN)){
+			use_mean = distribution$p1
+			use_sd = distribution$p2
+		} else {
+			# Assume mean = 0
+			use_mean = 0
+			try_sig = 1
+			this_N = qlnorm(1-distribution$P_maxN, use_mean, try_sig)
+			i = 1
+			while(abs(distribution$maxN - this_N) > 0.5){
+				if(this_N > distribution$maxN){
+					try_sig = try_sig - try_sig/2
+					
+				} else {
+					try_sig = try_sig + try_sig/2
+				}
+				this_N = qlnorm(1-distribution$P_maxN, 0, try_sig)
+			}
+			use_sd = try_sig
+		}
+
+		# p1 = mean, p2 = sd
+		abuns = ceiling(qlnorm(U[,'abun'], use_mean, use_sd))
+	}
+	if(distribution$type=='poisson'){
+		# p1 = lambda
+		if(is.null(distribution$maxN)){
+			use_lamda = distribution$p1
+		} else {
+			use_maxN = distribution$maxN + 1
+			try_lamda = use_maxN:1
+			this_N = qpois(1-distribution$P_maxN, try_lamda)
+			N_diffs = this_N - use_maxN
+			i = 1
+			while(!(0 %in% N_diffs)){
+				new_start = which(abs(N_diffs)==min(abs(N_diffs)))
+				try_lamda = seq(try_lamda[new_start+1], try_lamda[new_start-1], 10^(-i))
+				this_N = qpois(1-distribution$P_maxN, try_lamda)
+				N_diffs = this_N - use_maxN
+				i = i + 1
+			}
+		
+			use_lamda = min(try_lamda[which(N_diffs==0)])
+		}
+
+		abuns = qpois(U[,'abun'], use_lamda)+1
+	}
+
+	# Discretize so that it can be used in dbinom in the disperse function
+	abuns = floor(abuns)
+	
+	# Return list of niches abuns gsad
+	niches = array(c(mu1, sig1, mu2, sig2), dim=c(N_S, 2, 2), dimnames=list(1:N_S, c('mu','sigma'), 1:2))
+	list(niches=niches, gsad=abuns)
+}
+
+
 
 # A function that initializes a simulation run with a given set of parameters
 # If parm_file is missing, then paramters are taken from the environment where the function is called

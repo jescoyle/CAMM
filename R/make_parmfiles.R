@@ -5,7 +5,7 @@ setwd('./UNC/Projects/CAMM')
 
 # Set directories
 sim_dir = './GitHub/R/'
-parm_dir = './Parms/Parms_5/'
+parm_dir = './Parms/Parms_6/'
 
 dir.create(parm_dir)
 
@@ -312,6 +312,71 @@ for(envfilt in filter_vec){
 		}
 	}
 }}
+
+
+### RUN 6: uneven species abundances that are correlated with env niches ###
+
+maxN_vec = 2^(1:5)
+r_vec = c(0.5, 0.9)
+envfilt_vec = c('opposite','same','none','all')
+a_corr = 0:2
+b_corr = 0:2
+
+combos_1 = expand.grid(maxN_vec, r_vec)
+combos_2 = expand.grid(envfilt_vec, a_corr, b_corr)
+combos_2 = combos_2[-(1:4),]
+
+for(i in 1:nrow(combos_1)){
+	maxN = combos_1[i,1]	
+	r = combos_1[i,2]
+	
+	this_dir = paste0(parm_dir, maxN, '-', r, '/')
+	dir.create(this_dir)
+
+	gsad_dist_a$maxN = maxN
+	gsad_dist_b$maxN = maxN
+
+	for(j in 1:nrow(combos_2)){
+		envfilt = as.character(combos_2[j, 1])
+		corrA = combos_2[j,2]
+		corrB = combos_2[j,3]	
+		
+		gsad_dist_a$corr[corrA,1] = r
+		gsad_dist_b$corr[corrB,1] = r
+		
+		if(envfilt=='opposite'){
+			sigma_a1 = 10
+			sigma_a2 = 0.5
+			sigma_b1 = 0.5
+			sigma_b2 = 10
+		}
+
+		if(envfilt=='same'){
+			sigma_a1 = 10
+			sigma_a2 = 0.5
+			sigma_b1 = 10
+			sigma_b2 = 0.5
+		}
+
+		if(envfilt=='none'){
+			sigma_a1 = 10
+			sigma_a2 = 10
+			sigma_b1 = 10
+			sigma_b2 = 10
+		}
+
+		if(envfilt=='all'){
+			sigma_a1 = 0.5
+			sigma_a2 = 0.5
+			sigma_b1 = 0.5
+			sigma_b2 = 0.5
+		}
+
+		runID = paste0('maxN-', maxN, '_r-', r, '_corrA-', corrA, '_corrB-', corrB, '_envfilt-',envfilt)
+		parm_list = make_parmlist()
+		write_parms(parm_list, paste0('p_', runID), this_dir)
+	}
+}
 
 
 

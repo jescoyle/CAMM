@@ -76,8 +76,6 @@ make_parmlist = function(e=parent.frame()){
 		r_b = e$r_b,	
 		gsad_dist_a = e$gsad_dist_a,
 		gsad_dist_b = e$gsad_dist_b,
-		gsad_cond_a = e$gsad_cond_a,
-		gsad_cond_b = e$gsad_cond_b,
 		N_L = e$N_L,
 		topology = e$topology,
 		omega = e$omega,

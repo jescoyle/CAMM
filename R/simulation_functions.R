@@ -329,7 +329,7 @@ make_niches_gsad = function(N_S, nicheparms, distribution){
 	}
 
 	# Discretize so that it can be used in dbinom in the disperse function
-	abuns = floor(abuns)
+	abuns = round(abuns, 0)
 	
 	# Return list of niches abuns gsad
 	niches = array(c(mu1, sig1, mu2, sig2), dim=c(N_S, 2, 2), dimnames=list(1:N_S, c('mu','sigma'), 1:2))
@@ -356,34 +356,12 @@ initialize_camm = function(parm_file=NA, save_start = F, runID=NA, save_dir='./'
 	poolB = calc_pool(comm, topo_names, 2) # N_C x S_b matrix of presence of mutualist b in communities based on associations present
 
 	# Generate random niches for each mutualist
-	niches_a = make_niches(S_a, nicheparms_a) # array of S_a x 2 matrix of niche optima and niche breadths (mu and sigma of normal distribution)
-	niches_b = make_niches(S_b, nicheparms_b)	# array of S_b x 2 matrix of niche optima and niche breadths (mu and sigma of normal distribution)
-
-	# Generate global species abundance distribution
-	# Define niche quality with which global abudance should be correlated
-	if(gsad_cond_a$type=='none'){
-		gsad_a = make_gsad(S_a, gsad_dist_a)
-	} else {
-		if(gsad_cond_a$type=='breadth'){
-			cond_a = apply(niches_a[,'sigma',], 1, prod)
-		}
-		if(gsad_cond_a$type=='links'){
-			cond_a = rowSums(topo)
-		}
-		gsad_a = make_gsad(S_a, gsad_dist_a, cond_a, gsad_cond_a$rho)
-	}
-
-	if(gsad_cond_b$type=='none'){
-		gsad_b = make_gsad(S_b, gsad_dist_b)
-	} else {
-		if(gsad_cond_b$type=='breadth'){
-			cond_b = apply(niches_b[,'sigma',], 1, prod)
-		}
-		if(gsad_cond_b$type=='links'){
-			cond_b = colSums(topo)
-		}
-		gsad_b = make_gsad(S_b, gsad_dist_b, cond_b, gsad_cond_b$rho)
-	}
+	niche_gsad_a = make_niches_gsad(S_a, nicheparms_a, gsad_dist_a)
+	niche_gsad_b = make_niches_gsad(S_b, nicheparms_b, gsad_dist_b)
+	niches_a = niche_gsad_a$niches # array of S_a x 2 matrix of niche optima and niche breadths (mu and sigma of normal distribution)
+	niches_b = niche_gsad_b$niches # array of S_b x 2 matrix of niche optima and niche breadths (mu and sigma of normal distribution)
+	gsad_a = niche_gsad_a$gsad
+	gsad_b = niche_gsad_b$gsad
 
 	# Calculate N_C x N_L matrix of association probabilities at each site
 	# These govern the probability that partner A will establish 
@@ -899,7 +877,7 @@ calc_envcorr = function(comm, topo_names, env, metric, binary){
 		for(j in metric){
 			comm_diss = calc_diss(comm, topo_names, type, j, k)
 			env_dist = dist(X)
-			corr_mat[type, i, j, as.character(k)] = cor(comm_diss, env_dist)
+			corr_mat[type, i, j, as.character(k)] = cor(comm_diss, env_dist, use='pairwise.complete.obs')
 		}
 
 	}}}

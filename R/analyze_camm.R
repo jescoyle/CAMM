@@ -12,7 +12,7 @@ setwd(working_dir)
 fig_dir = 'C:/Users/jrcoyle/Documents/UNC/Projects/CAMM/Figures/'
 
 # Location of results
-results_dir = 'C:/Users/jrcoyle/Documents/UNC/Projects/CAMM/Runs/Summaries_2/'
+results_dir = 'C:/Users/jrcoyle/Documents/UNC/Projects/CAMM/Runs/Summaries_3/'
 
 # Load functions
 code_dir = 'C:/Users/jrcoyle/Documents/UNC/Projects/CAMM/GitHub/R/'
@@ -65,9 +65,6 @@ for(f in cor_filelist){
 	# Extract parameter values
 	parm_vals = get_parms(runID)
 
-	# Get environmental values for each site (RUN 1)
-
-
 	# Bind values to data
 	this_data = cbind(parm_vals, this_data)
 
@@ -108,6 +105,33 @@ xyplot(cor_a ~ o | mrb + mra, groups = env, data=means, ylim = c(-.1,1),
 	}, 
 	strip = strip.custom(strip.names=T, strip.levels=T, sep='=', 
 		bg='transparent', var.name=expression(m[a],m[b]), fg='transparent'),
+	key=list(space='right', points=list(pch=c(a_pch, b_pch)), 
+		text=list(expression(A*" ~ "*E[1],A*" ~ "*E[2],B*" ~ "*E[1],B*" ~ "*E[2])))
+)
+dev.off()
+
+# Results from obligate mutualism only (omega=1)
+plot_data = subset(cor_summary, measure=='rda' & summary=='mean' & o==1)
+means = subset(plot_data, stat=='mean')
+low95s = subset(plot_data, stat=='2.5%')
+up95s = subset(plot_data, stat=='97.5%')
+jit_fact = .1
+jit_a = -1*c(3*jit_fact/2, jit_fact/2)
+jit_b = c(jit_fact/2, 3*jit_fact/2)
+
+pdf(paste0(fig_dir, 'obligate mutualism_mort_rates_RDAmean.pdf'), height=3, width=9)
+xyplot(cor_a ~ factor(mrb) | mra, groups = env, data=means, ylim = c(-.1,1),
+	scales=list(alternating=1), xlab='Relative mortality of unassociated mutualist B', ylab=expression(RDA~~R^2),
+	panel=function(x, y, subscripts, groups){
+		x = as.numeric(x)
+		y = as.numeric(y)
+		panel.segments(x+jit_a[groups], low95s$cor_a[subscripts], x+jit_a[groups], up95s$cor_a[subscripts])
+		panel.segments(x+jit_b[groups], low95s$cor_b[subscripts], x+jit_b[groups], up95s$cor_b[subscripts])
+		panel.xyplot(x+jit_a[groups], y, pch=a_pch[groups], col=1)
+		panel.xyplot(x+jit_b[groups], means$cor_b[subscripts], pch=b_pch[groups], col=1)
+	}, 
+	strip = strip.custom(strip.names=T, strip.levels=T, sep='=', 
+		bg='transparent', var.name=expression(m[a]), fg='transparent'),
 	key=list(space='right', points=list(pch=c(a_pch, b_pch)), 
 		text=list(expression(A*" ~ "*E[1],A*" ~ "*E[2],B*" ~ "*E[1],B*" ~ "*E[2])))
 )
@@ -184,8 +208,9 @@ xyplot(N ~ o | mrb + mra, groups = comm, data=means, type='l', ylim=c(0,100),
 )
 
 
-## IT WOULD ALSO BE USEFUL TO EXAMINE THE SYMBIONT POOLS SEPARATELY
+## IT MIGHT ALSO BE USEFUL TO EXAMINE THE SYMBIONT POOLS SEPARATELY
 ## This section run in interactive mode on killdevil cluster to avoid transfering results files
+## SECTION NOT DONE OR COMPLETE
 
 results_dir = './Results/'
 source('analysis_functions.R')
@@ -314,6 +339,128 @@ xyplot(cor_a ~ topo | envfilt, groups = env, data=means, ylim = c(-.1,1),
 dev.off()
 
 
+### Run 3: Incrementng over topology, direction and strength of env filtering and 
+
+# sigA : std dev of niche breadth for A
+# sigB : std dev of niche breadth for B
+# topo : type of topology
+# envfilt : none, opposite (A ~ 2, B ~ 1), same (A ~ 2, B ~ 2), all
+
+cor_summary$sigA = as.numeric(cor_summary$sigA)
+cor_summary$sigB = as.numeric(cor_summary$sigB)
+cor_summary$topo = factor(cor_summary$topo, levels = c('one2one','one2many','many2many'))
+cor_summary$envfilt = factor(cor_summary$envfilt, levels = c('none','same','opposite','all'))
+comm_summary$sigA = as.numeric(comm_summary$sigA)
+comm_summary$sigB = as.numeric(comm_summary$sigB)
+comm_summary$topo = factor(comm_summary$topo, levels = c('one2one','one2many','many2many'))
+comm_summary$envfilt = factor(comm_summary$envfilt, levels = c('none','same','opposite','all'))
+
+
+a_pch = c(16, 1)
+b_pch = c(15, 0)
+jit_fact = 0.15
+jit_a = -1*c(3*jit_fact/2, jit_fact/2)
+jit_b = c(jit_fact/2, 3*jit_fact/2)
+
+# RDA within chain mean
+
+pdf(paste0(fig_dir, 'envfilt_strength_by_type_RDAmean.pdf'), height=8.5, width=11)
+
+for(t in levels(cor_summary$topo)){
+
+plot_data = subset(cor_summary, measure=='rda' & summary=='mean' & topo==t)
+means = subset(plot_data, stat=='mean')
+low95s = subset(plot_data, stat=='2.5%')
+up95s = subset(plot_data, stat=='97.5%')
+
+print(
+xyplot(cor_a ~ factor(sigA) | sigB + envfilt, groups = env, data=means, ylim = c(-.1,1),
+	scales=list(alternating=1), xlab=expression(sigma[a]), ylab=expression(RDA~~R^2),main=paste('Topology =',t),
+	panel=function(x, y, subscripts, groups){
+		x = as.numeric(x)
+		panel.segments(x+jit_a[groups], low95s$cor_a[subscripts], x+jit_a[groups], up95s$cor_a[subscripts])
+		panel.segments(x+jit_b[groups], low95s$cor_b[subscripts], x+jit_b[groups], up95s$cor_b[subscripts])
+		panel.xyplot(x+jit_a[groups], y, pch=a_pch[groups], col=1)
+		panel.xyplot(x+jit_b[groups], means$cor_b[subscripts], pch=b_pch[groups], col=1)
+	}, 
+	strip = strip.custom(strip.names=T, strip.levels=T, sep='=', 
+		bg='transparent', var.name=expression(sigma[b], Filtering), fg='transparent'),
+	key=list(space='right', points=list(pch=c(a_pch, b_pch)), 
+		text=list(expression(A*" ~ "*E[1],A*" ~ "*E[2],B*" ~ "*E[1],B*" ~ "*E[2])))
+)
+)
+}
+dev.off()
+
+
+pdf(paste0(fig_dir, 'envfilt_strength_by_type_Smean_cor.pdf'), height=8.5, width=11)
+
+for(t in levels(cor_summary$topo)){
+
+plot_data = subset(cor_summary, measure=='S' & summary=='mean' & topo==t)
+means = subset(plot_data, stat=='mean')
+low95s = subset(plot_data, stat=='2.5%')
+up95s = subset(plot_data, stat=='97.5%')
+
+print(
+xyplot(cor_a ~ factor(sigA) | sigB + envfilt, groups = env, data=means, ylim = c(-1,1),
+	scales=list(alternating=1), xlab=expression(sigma[a]), ylab=expression(RDA~~R^2),main=paste('Topology =',t),
+	panel=function(x, y, subscripts, groups){
+		x = as.numeric(x)
+		panel.segments(x+jit_a[groups], low95s$cor_a[subscripts], x+jit_a[groups], up95s$cor_a[subscripts])
+		panel.segments(x+jit_b[groups], low95s$cor_b[subscripts], x+jit_b[groups], up95s$cor_b[subscripts])
+		panel.xyplot(x+jit_a[groups], y, pch=a_pch[groups], col=1)
+		panel.xyplot(x+jit_b[groups], means$cor_b[subscripts], pch=b_pch[groups], col=1)
+	}, 
+	strip = strip.custom(strip.names=T, strip.levels=T, sep='=', 
+		bg='transparent', var.name=expression(sigma[b], Filtering), fg='transparent'),
+	key=list(space='right', points=list(pch=c(a_pch, b_pch)), 
+		text=list(expression(A*" ~ "*E[1],A*" ~ "*E[2],B*" ~ "*E[1],B*" ~ "*E[2])))
+)
+)
+}
+dev.off()
+
+# Diversity and abundance changes?
+
+plot_data = subset(comm_summary, summary=='mean')
+means = subset(plot_data, stat=='mean')
+low95s = subset(plot_data, stat=='2.5%')
+up95s = subset(plot_data, stat=='97.5%')
+jit_fact = 0.18
+jit = c(-1, 0, 1)*jit_fact
+
+use_pch = c(0,1,2)
+
+# Might want to plot these as percentages of total possible S
+pdf(paste0(fig_dir, 'envfilt_strength_by_type_Sa_mean.pdf'), height=8.5, width=11)
+xyplot(S_a ~ factor(sigA) | sigB + envfilt, groups=topo, data=means, ylim=c(0,32),
+	scales=list(alternating=1), xlab=expression(sigma[a]), ylab=expression(Mean~~S[A]),
+	panel=function(x, y, subscripts, groups){
+		x = as.numeric(x)
+		panel.segments(x+jit, low95s$S_a[subscripts], x+jit, up95s$S_a[subscripts])
+		panel.xyplot(x+jit, y, pch=use_pch, col=1)
+	}, 
+	strip = strip.custom(strip.names=T, strip.levels=T, sep='=', 
+		bg='transparent', var.name=expression(sigma[b], Filtering), fg='transparent'),
+	key=list(space='right', points=list(pch=use_pch), 
+		text=list(levels(plot_data$topo)))
+)
+dev.off()
+pdf(paste0(fig_dir, 'envfilt_strength_by_type_Sb_mean.pdf'), height=8.5, width=11)
+xyplot(S_b ~ factor(sigA) | sigB + envfilt, groups=topo, data=means, ylim=c(0,32),
+	scales=list(alternating=1), xlab=expression(sigma[a]), ylab=expression(Mean~~S[B]),
+	panel=function(x, y, subscripts, groups){
+		x = as.numeric(x)
+		panel.segments(x+jit, low95s$S_b[subscripts], x+jit, up95s$S_b[subscripts])
+		panel.xyplot(x+jit, y, pch=use_pch, col=1)
+	}, 
+	strip = strip.custom(strip.names=T, strip.levels=T, sep='=', 
+		bg='transparent', var.name=expression(sigma[b], Filtering), fg='transparent'),
+	key=list(space='right', points=list(pch=use_pch), 
+		text=list(levels(plot_data$topo)))
+)
+dev.off()
 
 
 
@@ -324,14 +471,7 @@ dev.off()
 
 
 
-
-
-
-
-
-
-
-
+###########################################################################
 ### Analyze a single run ###
 
 # Load results

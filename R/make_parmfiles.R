@@ -337,6 +337,7 @@ for(i in 1:nrow(combos_1)){
 	gsad_dist_b$maxN = maxN
 
 	for(j in 1:nrow(combos_2)){
+		source(paste0(sim_dir, 'parameter_file.R'))
 		envfilt = as.character(combos_2[j, 1])
 		corrA = combos_2[j,2]
 		corrB = combos_2[j,3]	

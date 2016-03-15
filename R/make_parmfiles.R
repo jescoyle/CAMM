@@ -333,15 +333,15 @@ for(i in 1:nrow(combos_1)){
 	this_dir = paste0(parm_dir, maxN, '-', r, '/')
 	dir.create(this_dir)
 
-	gsad_dist_a$maxN = maxN
-	gsad_dist_b$maxN = maxN
-
 	for(j in 1:nrow(combos_2)){
 		source(paste0(sim_dir, 'parameter_file.R'))
+
 		envfilt = as.character(combos_2[j, 1])
 		corrA = combos_2[j,2]
 		corrB = combos_2[j,3]	
 		
+		gsad_dist_a$maxN = maxN
+		gsad_dist_b$maxN = maxN
 		gsad_dist_a$corr[corrA,1] = r
 		gsad_dist_b$corr[corrB,1] = r
 		
@@ -379,7 +379,48 @@ for(i in 1:nrow(combos_1)){
 	}
 }
 
+# Make parm file with uncorrelated gsad and niche optima
+for(maxN in maxN_vec){
+	this_dir = paste0(parm_dir, maxN, '-0/')
+	dir.create(this_dir)
+	
+	gsad_dist_a$maxN = maxN
+	gsad_dist_b$maxN = maxN
 
+	for(envfilt in envfilt_vec){
+		if(envfilt=='opposite'){
+			sigma_a1 = 10
+			sigma_a2 = 0.5
+			sigma_b1 = 0.5
+			sigma_b2 = 10
+		}
+
+		if(envfilt=='same'){
+			sigma_a1 = 10
+			sigma_a2 = 0.5
+			sigma_b1 = 10
+			sigma_b2 = 0.5
+		}
+
+		if(envfilt=='none'){
+			sigma_a1 = 10
+			sigma_a2 = 10
+			sigma_b1 = 10
+			sigma_b2 = 10
+		}
+
+		if(envfilt=='all'){
+			sigma_a1 = 0.5
+			sigma_a2 = 0.5
+			sigma_b1 = 0.5
+			sigma_b2 = 0.5
+		}
+	
+		runID = paste0('maxN-', maxN, '_r-0_corrA-0_corrB-0_envfilt-',envfilt)
+		parm_list = make_parmlist()
+		write_parms(parm_list, paste0('p_', runID), this_dir)
+	}
+}
 
 
 

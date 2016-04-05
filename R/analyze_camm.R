@@ -691,21 +691,25 @@ cor_summary$topo = factor(cor_summary$topo, levels = c('one2many','many2many'))
 cor_summary$envfilt = factor(cor_summary$envfilt, levels = c('same','opposite'))
 comm_summary$topo = factor(comm_summary$topo, levels = c('one2many','many2many'))
 comm_summary$envfilt = factor(comm_summary$envfilt, levels = c('same','opposite'))
-cor_summary$a2b = cor_summary$Sa / cor_summary$Sb
-cor_summary$NL2a = sapply(cor_summary$NL / cor_summary$Sa, match_NLratio)
-comm_summary$a2b = comm_summary$Sa / comm_summary$Sb
-comm_summary$NL2a = sapply(comm_summary$NL / comm_summary$Sa, match_NLratio)
 
-for(i in c('Sa','Sb','NL')){
-	cor_summary[,i] = as.numeric(cor_summary[,i])
-	comm_summary[,i] = as.numeric(comm_summary[,i])
+for(var in c('Sa','Sb','NL')){
+	cor_summary[,var] = as.numeric(cor_summary[,var])
+	comm_summary[,var] = as.numeric(comm_summary[,var])
 }
+
+cor_summary$a2b = cor_summary$Sa / cor_summary$Sb
+comm_summary$a2b = comm_summary$Sa / comm_summary$Sb
 
 NLratios = c(1.25,1.5,2,3)
 match_NLratio = function(x){
 	ds = abs(x - NLratios)
 	NLratios[ds==min(ds)]
 }
+
+cor_summary$NL2a = sapply(cor_summary$NL / cor_summary$Sa, match_NLratio)
+comm_summary$NL2a = sapply(comm_summary$NL / comm_summary$Sa, match_NLratio)
+
+
 
 plot_data = subset(cor_summary, topo=='one2many'&summary=='mean'&measure=='rda')
 plot_data$a2b = plot_data$Sa / plot_data$Sb
@@ -849,6 +853,13 @@ xyplot(means[,yvar] ~ NL2a | envfilt + Sa, groups = env, data=means, ylim = c(0,
 
 }}
 dev.off()
+
+
+#### RUN 6: Effect of changing global abundance distribution
+
+
+
+
 
 
 

@@ -12,12 +12,13 @@ setwd(working_dir)
 fig_dir = 'C:/Users/jrcoyle/Documents/UNC/Projects/CAMM/Figures/'
 
 # Location of results
-results_dir = 'C:/Users/jrcoyle/Documents/UNC/Projects/CAMM/Runs/Summaries_5/'
+results_dir = 'C:/Users/jrcoyle/Documents/UNC/Projects/CAMM/Runs/Summaries_6/'
 
 # Load functions
 code_dir = 'C:/Users/jrcoyle/Documents/UNC/Projects/CAMM/GitHub/R/'
 #source(paste(code_dir,'simulation_functions.R', sep=''))
 source(paste(code_dir,'analysis_functions.R', sep=''))
+source(paste(code_dir,'simulation_functions.R', sep=''))
 
 ## Check which results are done
 #done = read.table('obs_done.txt', header=F)
@@ -856,11 +857,244 @@ dev.off()
 
 
 #### RUN 6: Effect of changing global abundance distribution
+cor_summary$envfilt = factor(cor_summary$envfilt, levels = c('none','same','opposite','all'))
+comm_summary$envfilt = factor(comm_summary$envfilt, levels = c('none','same','opposite','all'))
+
+for(var in c('maxN','r','corrA','corrB')){
+	cor_summary[,var] = as.numeric(cor_summary[,var])
+	comm_summary[,var] = as.numeric(comm_summary[,var])
+}
 
 
+a_pch = c(16, 1)
+b_pch = c(15, 0)
+jit_fact = .03
+jit_a = -1*c(3*jit_fact/2, jit_fact/2)
+jit_b = c(jit_fact/2, 3*jit_fact/2)
 
 
+pdf(paste0(fig_dir, 'gsad_corr_RDAmean.pdf'), height=10, width=10)
+for(f in levels(cor_summary$envfilt)){
+for(n in 2^(1:5)){
 
+	plot_data = subset(cor_summary, envfilt==f&summary=='mean'&measure=='rda'&maxN==n)
+
+	means = subset(plot_data, stat=='mean')
+	low95s = subset(plot_data, stat=='2.5%')
+	up95s = subset(plot_data, stat=='97.5%')
+
+	print(
+	xyplot(cor_a ~ r | corrA + corrB, groups = env, data=means, ylim = c(0,1),
+		scales=list(alternating=1), xlab='r', ylab=expression(RDA~~R^2), main=paste('Max N =',n, ', Filtering =',f),
+		panel=function(x, y, subscripts, groups){
+			panel.segments(x+jit_a[groups[subscripts]], low95s$cor_a[subscripts], x+jit_a[groups[subscripts]], up95s$cor_a[subscripts])
+			panel.segments(x+jit_b[groups[subscripts]], low95s$cor_b[subscripts], x+jit_b[groups[subscripts]], up95s$cor_b[subscripts])
+			panel.xyplot(x+jit_a[groups[subscripts]], y, pch=a_pch[groups[subscripts]], col=1)
+			panel.xyplot(x+jit_b[groups[subscripts]], means$cor_b[subscripts], pch=b_pch[groups[subscripts]], col=1)
+		}, 
+		strip = strip.custom(strip.names=T, strip.levels=T, sep='=', 
+			bg='transparent', var.name=expression(Env[A],Env[B]), fg='transparent'),
+		key=list(space='right', points=list(pch=c(a_pch, b_pch)), 
+			text=list(expression(A*" ~ "*E[1],A*" ~ "*E[2],B*" ~ "*E[1],B*" ~ "*E[2])))
+	)
+	)
+}}
+
+dev.off()
+
+combos = expand.grid(corrA=0:2, corrB=0:2)
+jit_fact = .2
+jit_a = -1*c(3*jit_fact/2, jit_fact/2)
+jit_b = c(jit_fact/2, 3*jit_fact/2)
+
+pdf(paste0(fig_dir, 'gsad_corr_RDAmean_compare_maxN.pdf'), height=12, width=7)
+for(i in 1:nrow(combos)){
+
+	plot_data = subset(cor_summary, corrA==combos[i,1]&corrB==combos[i,2]&summary=='mean'&measure=='rda')
+
+	means = subset(plot_data, stat=='mean')
+	low95s = subset(plot_data, stat=='2.5%')
+	up95s = subset(plot_data, stat=='97.5%')
+
+	print(
+	xyplot(cor_a ~ maxN | r + envfilt, groups = env, data=means, ylim = c(0,1),
+		scales=list(alternating=1), xlab='Max N', ylab=expression(RDA~~R^2), main=paste('Env A =',combos[i,1], ', Env B =',combos[i,2]),
+		panel=function(x, y, subscripts, groups){
+			print(groups)
+			print(subscripts)
+			panel.segments(x+jit_a[groups[subscripts]], low95s$cor_a[subscripts], x+jit_a[groups[subscripts]], up95s$cor_a[subscripts])
+			panel.segments(x+jit_b[groups[subscripts]], low95s$cor_b[subscripts], x+jit_b[groups[subscripts]], up95s$cor_b[subscripts])
+			panel.xyplot(x+jit_a[groups[subscripts]], y, pch=a_pch[groups[subscripts]], col=1)
+			panel.xyplot(x+jit_b[groups[subscripts]], means$cor_b[subscripts], pch=b_pch[groups[subscripts]], col=1)
+		}, 
+		strip = strip.custom(strip.names=T, strip.levels=T, sep='=', 
+			bg='transparent', var.name=c('r','Filtering'), fg='transparent'),
+		key=list(space='right', points=list(pch=c(a_pch, b_pch)), 
+			text=list(expression(A*" ~ "*E[1],A*" ~ "*E[2],B*" ~ "*E[1],B*" ~ "*E[2])))
+	)
+	)
+
+}
+dev.off()
+
+# Effect on species richness correlation
+pdf(paste0(fig_dir, 'gsad_corr_Smean_compare_maxN.pdf'), height=12, width=7)
+for(i in 1:nrow(combos)){
+
+	plot_data = subset(cor_summary, corrA==combos[i,1]&corrB==combos[i,2]&summary=='mean'&measure=='S')
+
+	means = subset(plot_data, stat=='mean')
+	low95s = subset(plot_data, stat=='2.5%')
+	up95s = subset(plot_data, stat=='97.5%')
+
+	print(
+	xyplot(cor_a ~ maxN | r + envfilt, groups = env, data=means, ylim = c(-1,1),
+		scales=list(alternating=1), xlab='Max N', ylab='r', main=paste('Env A =',combos[i,1], ', Env B =',combos[i,2]),
+		panel=function(x, y, subscripts, groups){
+			panel.segments(x+jit_a[groups[subscripts]], low95s$cor_a[subscripts], x+jit_a[groups[subscripts]], up95s$cor_a[subscripts])
+			panel.segments(x+jit_b[groups[subscripts]], low95s$cor_b[subscripts], x+jit_b[groups[subscripts]], up95s$cor_b[subscripts])
+			panel.xyplot(x+jit_a[groups[subscripts]], y, pch=a_pch[groups[subscripts]], col=1)
+			panel.xyplot(x+jit_b[groups[subscripts]], means$cor_b[subscripts], pch=b_pch[groups[subscripts]], col=1)
+		}, 
+		strip = strip.custom(strip.names=T, strip.levels=T, sep='=', 
+			bg='transparent', var.name=c('r','Filtering'), fg='transparent'),
+		key=list(space='right', points=list(pch=c(a_pch, b_pch)), 
+			text=list(expression(S[A]*" ~ "*E[1],S[A]*" ~ "*E[2],S[B]*" ~ "*E[1],S[B]*" ~ "*E[2])))
+	)
+	)
+
+}
+dev.off()
+
+
+## Plot expected number of colonists for each set of parameters
+
+
+maxN_vec = 2^(1:5)
+r_vec = c(0, 0.5, 0.9)
+envfilt_vec = c('opposite','same','none','all')
+a_corr = 0:2
+b_corr = 0:2
+
+setwd(paste0(working_dir, 'Parms/Parms_6/'))
+parm_filelist = list.files(recursive=T)
+
+# Re-order file list for plotting
+runIDs = gsub('^[0-9]+-[0-9.]+/p_', '', parm_filelist)
+runIDs = gsub('.txt', '', runIDs)
+parm_vals = get_parms(runIDs[1])
+for(i in 2:length(runIDs)){
+	parm_vals = rbind(parm_vals, get_parms(runIDs[i]))
+}
+parm_vals$maxN = as.numeric(parm_vals$maxN)
+parm_vals$r = as.numeric(parm_vals$r)
+parm_vals$envfilt = factor(parm_vals$envfilt, levels=c('none','same','opposite','all'))
+parm_vals$f_order = 1:nrow(parm_vals)
+
+# Go through files and append together into a data frame
+
+col_summary = sapply(parm_filelist, function(f){
+	
+	# Load this set of parameters
+	source(f)
+	
+	# Generate random niches for each mutualist
+	niche_gsad_a = make_niches_gsad(S_a, nicheparms_a, gsad_dist_a)
+	niche_gsad_b = make_niches_gsad(S_b, nicheparms_b, gsad_dist_b)
+	niches_a = niche_gsad_a$niches # array of S_a x 2 matrix of niche optima and niche breadths (mu and sigma of normal distribution)
+	niches_b = niche_gsad_b$niches # array of S_b x 2 matrix of niche optima and niche breadths (mu and sigma of normal distribution)
+	gsad_a = niche_gsad_a$gsad
+	gsad_b = niche_gsad_b$gsad
+
+	# Calculate expected number of colonists
+	col_a = calc_colonists(niches_a, gsad_a, draw_plot=F)
+	col_b = calc_colonists(niches_b, gsad_b, draw_plot=F)
+
+	parm_vals = get_parms(runID)
+	
+	# Bind values to data
+	c(parm_vals, list(col_a=col_a, col_b=col_b))
+
+})
+col_df = data.frame(t(col_summary))
+rownames(col_df)=1:nrow(col_df)
+
+col_df$maxN = as.numeric(unlist(col_df$maxN))
+col_df$r = as.numeric(unlist(col_df$r))
+col_df$corrA = as.numeric(unlist(col_df$corrA))
+col_df$corrB = as.numeric(unlist(col_df$corrB))
+col_df$envfilt = factor(unlist(col_df$envfilt), levels=c('none','same','opposite','all'))
+
+col_df = col_df[with(col_df, order(maxN, corrA, corrB, r, envfilt)),]
+
+combos = expand.grid(corrB=b_corr, corrA=a_corr, maxN=maxN_vec)
+combos = subset(combos, corrB!=0|corrA!=0)
+
+bw_col = colorRampPalette(c('white','black'))(10)
+envrange=seq(-2,2,.2)
+use_labs = seq(1,length(envrange), 5)
+
+pdf(paste0(fig_dir, 'expected_num_colonists_gsad-env_correlation.pdf'), height=9, width=7)
+for(i in 1:nrow(combos)){
+	a = combos[i,'corrA']
+	b = combos[i,'corrB']
+	n = combos[i,'maxN']	
+
+	plot_data = subset(col_df, maxN==n & corrA==a & corrB==b)
+	
+	layout(matrix(c(1:8, rep(9,4)), nrow=4))
+	par(mar=c(.1,.1,.1,.1))
+	par(oma=c(4,10,4,1))
+	for(i in 1:nrow(plot_data)){
+		image(plot_data$col_a[[i]], col=bw_col, axes=F)
+		abline(h=0.5, v=0.5, col=2)
+		box()
+
+		if(i%%4 == 0){
+			axis(1, at=(use_labs-1)/(length(envrange)-1), labels=envrange[use_labs])
+			mtext('Env 1', 1, 2.5, cex=.8)
+		}
+		if(i <= 4){
+			axis(2, at=(use_labs-1)/(length(envrange)-1), labels=envrange[use_labs], las=1)
+			mtext('Env 2', 2, 2.5, cex=.8)
+			mtext(plot_data[i,'envfilt'], 2, 5, las=1, adj=1)
+		}
+		if(i%%4 ==1){
+			mtext(paste('r =',plot_data[i,'r']), 3, 1)
+		}	
+	}
+	plot.new()
+	plot.window(xlim=c(0,1), ylim=c(0,1))
+	plotColorRamp(bw_col, 10, c(0,.3,.2,.7), labels=seq(0, 30, 3), 'Expected Num. Species')
+
+	mtext(paste('MaxN =', n, ', A ~', a, ', B ~', b, ', Hosts Colonizing'), 3, 2, outer=T)
+
+	for(i in 1:nrow(plot_data)){
+		image(plot_data$col_b[[i]], col=bw_col, axes=F)
+		abline(h=0.5, v=0.5, col=2)
+		box()
+
+		if(i%%4 == 0){
+			axis(1, at=(use_labs-1)/(length(envrange)-1), labels=envrange[use_labs])
+			mtext('Env 1', 1, 2.5, cex=.8)
+		}
+		if(i <= 4){
+			axis(2, at=(use_labs-1)/(length(envrange)-1), labels=envrange[use_labs], las=1)
+			mtext('Env 2', 2, 2.5, cex=.8)
+			mtext(plot_data[i,'envfilt'], 2, 5, las=1, adj=1)
+		}
+		if(i%%4 ==1){
+			mtext(paste('r =',plot_data[i,'r']), 3, 1)
+		}	
+	}
+	plot.new()
+	plot.window(xlim=c(0,1), ylim=c(0,1))
+	plotColorRamp(bw_col, 10, c(0,.3,.2,.7), labels=seq(0, 10, 1), 'Expected Num. Species')
+
+	mtext(paste('MaxN =', n, ', A ~', a, ', B ~', b, ', Symbionts Colonizing'), 3, 2, outer=T)
+}
+
+dev.off()
 
 
 

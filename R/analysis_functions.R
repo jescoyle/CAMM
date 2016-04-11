@@ -101,3 +101,90 @@ plot_topo = function(topo, orderby='degree', use_col='#000000', lwd=2){
 
 }
 
+# A function that caculates the expected number of colonizing species for an environmental landscape.
+#	niches = an S x 2 x 2 array giving mu and sigma parameters of the gaussian distribution for 2 environmental variables and S species
+#	gsad = a S length vector of species global abundances
+# 	grad = a list of length 2 giving the sequence of values along each gradient to be evaluated
+#	draw_plot = logical indicating whether an image plot of the result should be plotted
+
+calc_colonists = function(niches, gsad, grad = list(seq(-2,2,.2), seq(-2,2,.2)), draw_plot=F, add_sites=NA){
+	N_S = dim(niches)[1]
+	
+	# Make array for holding probability of each species colonizing each combination of environments
+	probs = array(0, dim = c(N_S, length(grad[[1]]), length(grad[[2]])))	
+
+	# Calculate probabilities of colonization
+	for(i in 1:length(grad[[1]])){
+	for(j in 1:length(grad[[2]])){
+		# Set environment
+		env = c(grad[[1]][i], grad[[2]][j])
+		
+		# Calculate probability of etsablishing based on niche
+		p = sapply(1:N_S, function(k) niche_func(env, niches[k,'mu',], niches[k,'sigma',]))
+
+		# Probability of at least one propagule establishing with propagule pressure equal to global abundance
+		probs[,i,j] = 1 - dbinom(0, gsad, p) 
+	}}
+	
+	# Calculate expected number of colonist species for each time step	
+	# Expected value of sum of Bernouli random variable is sum of probabilities
+	ncolonists = apply(probs, c(2,3), sum)
+
+	if(draw_plot){
+		print(
+		levelplot(ncolonists, xlab='Env 1', ylab='Env 2', at=seq(0,N_S, length.out=11), 
+			col.regions=colorRampPalette(c('white','black'))(10), colorkey=list(labels=list(at=seq(0,N_S, length.out=11))),
+			row.values = grad[[1]], column.values = grad[[2]]
+		)
+		)
+	}
+	ncolonists
+}
+
+# A function that plots a vertical color ramp on the side of a plot
+# cols    : the colors to use
+# n       : number of divisions
+# barends : location of whole bar c(xleft, ybottom, xright, ytop)
+# labels    : vector of labels for bar, assumes 1st and last numbers correspond to 1st and last colors
+# title   : title to print above bar
+plotColorRamp = function(cols, n, barends, labels=NA, title=NA, mycex=1.5){
+	dX = barends[3] - barends[1]
+	dY = barends[4] - barends[2]
+	dy = dY/n
+	
+	xpd.old = par('xpd')
+	par(xpd=T)
+
+	usecols = colorRampPalette(cols)(n)
+
+	for(i in 1:n){
+		rect(barends[1], barends[2]+dy*(i-1), barends[3], barends[2]+dy*i, col=usecols[i], border=NA)
+	}
+
+	if(!is.na(labels)){
+		dZ = labels[length(labels)]-labels[1]
+		dz = dY/dZ
+		Yposition = barends[2] + dz*(labels-labels[1])
+
+		text(barends[3]+dX*0.5, Yposition, round(labels,2), pos=4, cex=mycex)
+		
+		segments(barends[3], Yposition, barends[3]+dX*0.5, Yposition)	
+	}
+	if(!is.na(title)){
+		labels.round = round(labels, 2)
+		
+		## Determine how many characters away to place title
+		digits = max(nchar(round(labels, 2))) # Maximum number of digits in a label
+		largest = labels.round[which(nchar(labels.round)==digits)] # Which labels are longest
+		no.decimal = sum(largest == floor(largest))>0 # Does one largest label lack a decimal?
+			if(!no.decimal) digits = digits-0.6 # Discount the size of the largest label by 0.6 a character
+		no.negative = sum(largest >= 0)>0 # Does one largest label lack a negative sign?
+			if(!no.negative) digits = digits-0.6 # Discount the size of the largest label by 0.6 a character
+		
+		text(barends[3]+dX*0.5+par('cxy')[1]*mycex*(digits+.5), barends[2]+0.5*dY, labels=title, srt=-90, cex=mycex)
+	}
+	par(xpd=xpd.old)
+}
+
+
+

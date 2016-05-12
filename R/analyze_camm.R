@@ -12,7 +12,7 @@ setwd(working_dir)
 fig_dir = 'C:/Users/jrcoyle/Documents/UNC/Projects/CAMM/Figures/'
 
 # Location of results
-results_dir = 'C:/Users/jrcoyle/Documents/UNC/Projects/CAMM/Runs/Summaries_6/'
+results_dir = 'C:/Users/jrcoyle/Documents/UNC/Projects/CAMM/Runs/Summaries_1/'
 
 # Load functions
 code_dir = 'C:/Users/jrcoyle/Documents/UNC/Projects/CAMM/GitHub/R/'
@@ -112,7 +112,7 @@ xyplot(cor_a ~ o | mrb + mra, groups = env, data=means, ylim = c(-.1,1),
 dev.off()
 
 # Results from obligate mutualism only (omega=1)
-plot_data = subset(cor_summary, measure=='rda' & summary=='mean' & o==1)
+plot_data = subset(cor_summary, measure=='rda' & summary=='mean' & o==0.5)
 means = subset(plot_data, stat=='mean')
 low95s = subset(plot_data, stat=='2.5%')
 up95s = subset(plot_data, stat=='97.5%')
@@ -120,7 +120,7 @@ jit_fact = .1
 jit_a = -1*c(3*jit_fact/2, jit_fact/2)
 jit_b = c(jit_fact/2, 3*jit_fact/2)
 
-pdf(paste0(fig_dir, 'obligate mutualism_mort_rates_RDAmean.pdf'), height=3, width=9)
+pdf(paste0(fig_dir, 'mort_rates_RDAmean_o=0.5.pdf'), height=3, width=9)
 xyplot(cor_a ~ factor(mrb) | mra, groups = env, data=means, ylim = c(-.1,1),
 	scales=list(alternating=1), xlab='Relative mortality of unassociated mutualist B', ylab=expression(RDA~~R^2),
 	panel=function(x, y, subscripts, groups){
@@ -136,7 +136,24 @@ xyplot(cor_a ~ factor(mrb) | mra, groups = env, data=means, ylim = c(-.1,1),
 	key=list(space='right', points=list(pch=c(a_pch, b_pch)), 
 		text=list(expression(A*" ~ "*E[1],A*" ~ "*E[2],B*" ~ "*E[1],B*" ~ "*E[2])))
 )
+
+xyplot(cor_a ~ factor(mra) | mrb, groups = env, data=means, ylim = c(-.1,1),
+	scales=list(alternating=1), xlab='Relative mortality of unassociated mutualist A', ylab=expression(RDA~~R^2),
+	panel=function(x, y, subscripts, groups){
+		x = as.numeric(x)
+		y = as.numeric(y)
+		panel.segments(x+jit_a[groups[subscripts]], low95s$cor_a[subscripts], x+jit_a[groups[subscripts]], up95s$cor_a[subscripts])
+		panel.segments(x+jit_b[groups[subscripts]], low95s$cor_b[subscripts], x+jit_b[groups[subscripts]], up95s$cor_b[subscripts])
+		panel.xyplot(x+jit_a[groups[subscripts]], y, pch=a_pch[groups[subscripts]], col=1)
+		panel.xyplot(x+jit_b[groups[subscripts]], means$cor_b[subscripts], pch=b_pch[groups[subscripts]], col=1)
+	}, 
+	strip = strip.custom(strip.names=T, strip.levels=T, sep='=', 
+		bg='transparent', var.name=expression(m[b]), fg='transparent'),
+	key=list(space='right', points=list(pch=c(a_pch, b_pch)), 
+		text=list(expression(A*" ~ "*E[1],A*" ~ "*E[2],B*" ~ "*E[1],B*" ~ "*E[2])))
+)
 dev.off()
+
 
 # RDA within chain variance (within 10 chains)
 plot_data = subset(cor_summary, measure=='rda' & summary=='var')
@@ -186,7 +203,55 @@ xyplot(cor_a ~ o | mrb + mra, groups = env, data=means, ylim=c(-1,1),
 )
 dev.off()
 
-# Species richness and abundance
+# Calculate species richness and abundance statistics since these weren't originally done during RUN 1
+
+
+
+
+# One each run:
+rdata_files = list.files('./Runs/Results_1/')
+
+load(paste0('./Runs/Results_1/', rdata_files[1]))
+
+topo_names = metacomm$topo_names
+
+# Need to load all 100 end_metacomm into a list, end_metacomms
+rich_summary = sapply(end_metacomms['comm',], function(comms){
+	apply(comms, 3, function(comm) calc_commstats(comm, topo_names))	
+}, simplify='array')
+
+
+comm_means = apply(rich_summary, c(1,2), function(x) colMeans(x[[1]]))
+				rich_stats = apply(comm_means, c(1,2), function(x) c(mean(x), var(x)))
+				dimnames(rich_stats)[[1]] = c('mean','var')
+				dimnames(rich_stats)[[3]] = paste0('T',sim_parms$reps)
+				
+				corr_stats = sapply(1:length(end_metacomms['comm',]), function(j){
+					comms = end_metacomms['comm',][[j]]
+					sapply(1:dim(comms)[3], function(i) calc_envcorr(comms[,,i], topo_names, sites, 'jaccard', binary=T), simplify='array')	
+				}, simplify='array')
+				corr_stats = apply(corr_stats, 1:5, function(vals) c(mean(vals), var(vals)))	
+				dimnames(corr_stats)[[1]] = c('mean','var')
+				dimnames(corr_stats)[[6]] = paste0('T',sim_parms$reps)
+# Analyze results from model_out which is a list of list(rich_stats, corr_stats)
+
+
+	S_a = melt(summarize_camm(model_out, 'S', 'a'))
+	S_b = melt(summarize_camm(model_out, 'S', 'b'))
+	N_comm = melt(summarize_camm(model_out, 'N'))
+	comm_summary = rbind(S_a, S_b, N_comm)
+	comm_summary = cast(comm_summary, ... ~ response)
+	
+	cor_a = melt(summarize_camm(model_out, 'cor','a'))
+	names(cor_a)[names(cor_a)=='value'] = 'cor_a'
+	cor_b = melt(summarize_camm(model_out, 'cor','b'))
+	names(cor_b)[names(cor_b)=='value'] = 'cor_b'
+	cor_summary = merge(cor_a, cor_b)
+
+
+
+
+
 # ACTUALLY THIS DOESN'T MAKE SENSE B/C COMMUNITIES ARE NOT EXPECTED TO HAVE THE SAME ENV ACROSS SIMULATIONS
 plot_data = subset(comm_summary, summary=='mean')
 plot_data = plot_data[order(plot_data$o),]
@@ -396,6 +461,113 @@ xyplot(cor_a ~ factor(sigA) | sigB + envfilt, groups = env, data=means, ylim = c
 }
 dev.off()
 
+
+pdf(paste0(fig_dir, 'envfilt_strength_by_type&axis_RDAmean.pdf'), height=8.5, width=11)
+
+for(t in levels(cor_summary$topo)){
+for(v in 1:2){
+
+plot_data = subset(cor_summary, measure=='rda' & summary=='mean' & topo==t & env==v)
+means = subset(plot_data, stat=='mean')
+low95s = subset(plot_data, stat=='2.5%')
+up95s = subset(plot_data, stat=='97.5%')
+
+print(
+xyplot(cor_a ~ factor(sigA) | sigB + envfilt, data=means, ylim = c(-.1,1),
+	scales=list(alternating=1), xlab=expression(sigma[a]), ylab=expression(RDA~~R^2),main=paste('Topology =',t,', Env',v),
+	panel=function(x, y, subscripts){
+		x = as.numeric(x)
+		panel.segments(x+jit_a[1], low95s$cor_a[subscripts], x+jit_a[1], up95s$cor_a[subscripts])
+		panel.segments(x+jit_b[1], low95s$cor_b[subscripts], x+jit_b[1], up95s$cor_b[subscripts])
+		panel.lines(x+jit_a[1], y, col='grey50')
+		panel.lines(x+jit_a[1], means$cor_b[subscripts], col='grey50')
+		panel.xyplot(x+jit_a[1], y, pch=a_pch[v], col=1)
+		panel.xyplot(x+jit_b[1], means$cor_b[subscripts], pch=b_pch[v], col=1)
+	}, 
+	strip = strip.custom(strip.names=T, strip.levels=T, sep='=', 
+		bg='transparent', var.name=expression(sigma[b], Filtering), fg='transparent'),
+	key=list(space='right', points=list(pch=c(a_pch[v], b_pch[v])), 
+		text=list(c('A','B')))
+)
+)
+}}
+dev.off()
+
+# Compare effect of topology by separating axes and partners
+use_pch = c(0,1,2)
+jit_fact = 0.15
+jit = jit_fact*c(-1,0,1)
+
+pdf(paste0(fig_dir, 'envfilt_strength_by_type&axis&partner_RDAmean.pdf'), height=8.5, width=11)
+
+for(p in c('cor_a','cor_b')){
+for(v in 1:2){
+
+plot_data = subset(cor_summary, measure=='rda' & summary=='mean' & env==v)
+means = subset(plot_data, stat=='mean')
+low95s = subset(plot_data, stat=='2.5%')
+up95s = subset(plot_data, stat=='97.5%')
+
+title_label = paste(ifelse(p=='cor_a', 'Host','Symbiont'), '~ Env', v)
+
+print(
+xyplot(means[,p] ~ factor(sigA) | sigB + envfilt, groups=topo, data=means, ylim = c(-.1,1),
+	scales=list(alternating=1), xlab=expression(sigma[a]), ylab=expression(RDA~~R^2),main=title_label,
+	panel=function(x, y, subscripts, groups){
+		x = as.numeric(x)
+		panel.segments(x+jit[groups[subscripts]], low95s[,p][subscripts], x+jit[groups[subscripts]], up95s[,p][subscripts])
+		panel.lines(x[groups[subscripts]=='one2one']+jit[1], y[groups[subscripts]=='one2one'], col='grey50')
+		panel.lines(x[groups[subscripts]=='one2many']+jit[2], y[groups[subscripts]=='one2many'], col='grey50')
+		panel.lines(x[groups[subscripts]=='many2many']+jit[3], y[groups[subscripts]=='many2many'], col='grey50')
+		panel.xyplot(x+jit[groups[subscripts]], y, pch=use_pch[groups[subscripts]], col=1)
+	}, 
+	strip = strip.custom(strip.names=T, strip.levels=T, sep='=', 
+		bg='transparent', var.name=expression(sigma[b], Filtering), fg='transparent'),
+	key=list(space='right', points=list(pch=use_pch), text=list(levels(means$topo)))
+)
+)
+}}
+dev.off()
+
+# Compare effects of topology and filtering type by separating filtering strength
+a_pch = c(16, 1)
+b_pch = c(15, 0)
+jit_fact = 0.1
+jit_a = -1*c(3*jit_fact/2, jit_fact/2)
+jit_b = c(jit_fact/2, 3*jit_fact/2)
+
+pdf(paste0(fig_dir, 'topo_vs_envfilt_RDAmean_by_filtering_strength.pdf'), height=5, width=7.5)
+for(a in 2^(-2:2)){
+for(b in 2^(-2:2)){
+
+	plot_data = subset(cor_summary, measure=='rda' & summary=='mean' & sigA==a & sigB==b)
+	means = subset(plot_data, stat=='mean')
+	low95s = subset(plot_data, stat=='2.5%')
+	up95s = subset(plot_data, stat=='97.5%')
+
+	title_label = bquote(sigma[A]==.(a)~~sigma[B]==.(b))
+	
+	print(
+	xyplot(cor_a ~ topo | envfilt, groups = env, data=means, ylim = c(-.1,1),
+		scales=list(alternating=1), xlab='Network Topology', ylab=expression(RDA~~R^2), main=title_label,
+		panel=function(x, y, subscripts, groups){
+			panel.segments(as.numeric(x)+jit_a[groups[subscripts]], low95s$cor_a[subscripts], as.numeric(x)+jit_a[groups[subscripts]], up95s$cor_a[subscripts])
+			panel.segments(as.numeric(x)+jit_b[groups[subscripts]], low95s$cor_b[subscripts], as.numeric(x)+jit_b[groups[subscripts]], up95s$cor_b[subscripts])
+			panel.xyplot(as.numeric(x)+jit_a[groups[subscripts]], y, pch=a_pch[groups[subscripts]], col=1)
+			panel.xyplot(as.numeric(x)+jit_b[groups[subscripts]], means$cor_b[subscripts], pch=b_pch[groups[subscripts]], col=1)
+		}, 
+		strip = strip.custom(strip.names=T, strip.levels=T, sep='=', 
+			bg='transparent', var.name=c('env filters'), fg='transparent'),
+		key=list(space='right', points=list(pch=c(a_pch, b_pch)), 
+			text=list(expression(A*" ~ "*E[1],A*" ~ "*E[2],B*" ~ "*E[1],B*" ~ "*E[2])))
+	)
+	)
+}}
+dev.off()
+
+
+
+
 plot_data = subset(cor_summary, measure=='rda' & summary=='mean' & env==2)
 means = subset(plot_data, stat=='mean')
 low95s = subset(plot_data, stat=='2.5%')
@@ -466,7 +638,7 @@ xyplot(S_a ~ factor(sigA) | sigB + envfilt, groups=topo, data=means, ylim=c(0,32
 	panel=function(x, y, subscripts, groups){
 		x = as.numeric(x)
 		panel.segments(x+jit, low95s$S_a[subscripts], x+jit, up95s$S_a[subscripts])
-		panel.xyplot(x+jit, y, pch=use_pch, col=1)
+		panel.xyplot(x+jit, y, pch=use_pch[groups[subscripts]], col=1)
 	}, 
 	strip = strip.custom(strip.names=T, strip.levels=T, sep='=', 
 		bg='transparent', var.name=expression(sigma[b], Filtering), fg='transparent'),
@@ -480,7 +652,7 @@ xyplot(S_b ~ factor(sigA) | sigB + envfilt, groups=topo, data=means, ylim=c(0,32
 	panel=function(x, y, subscripts, groups){
 		x = as.numeric(x)
 		panel.segments(x+jit, low95s$S_b[subscripts], x+jit, up95s$S_b[subscripts])
-		panel.xyplot(x+jit, y, pch=use_pch, col=1)
+		panel.xyplot(x+jit, y, pch=use_pch[groups[subscripts]], col=1)
 	}, 
 	strip = strip.custom(strip.names=T, strip.levels=T, sep='=', 
 		bg='transparent', var.name=expression(sigma[b], Filtering), fg='transparent'),
@@ -494,8 +666,31 @@ xyplot(N ~ factor(sigA) | sigB + envfilt, groups=topo, data=means, ylim=c(0,110)
 	panel=function(x, y, subscripts, groups){
 		x = as.numeric(x)
 		panel.segments(x+jit, low95s$N[subscripts], x+jit, up95s$N[subscripts])
-		panel.xyplot(x+jit, y, pch=use_pch, col=1)
+		panel.xyplot(x+jit, y, pch=use_pch[groups[subscripts]], col=1)
 		panel.abline(h=100, lty=3)
+	}, 
+	strip = strip.custom(strip.names=T, strip.levels=T, sep='=', 
+		bg='transparent', var.name=expression(sigma[b], Filtering), fg='transparent'),
+	key=list(space='right', points=list(pch=use_pch), 
+		text=list(levels(plot_data$topo)))
+)
+dev.off()
+
+# Scaled by num. symbiont species
+
+plot_data[plot_data$topo %in% c('many2many','one2many'),'S_b'] = plot_data[plot_data$topo %in% c('many2many','one2many'),'S_b'] / 10
+plot_data[plot_data$topo == 'one2one','S_b'] = plot_data[plot_data$topo == 'one2one','S_b'] / 30
+means = subset(plot_data, stat=='mean')
+low95s = subset(plot_data, stat=='2.5%')
+up95s = subset(plot_data, stat=='97.5%')
+
+pdf(paste0(fig_dir, 'envfilt_strength_by_type_Sb_prop_mean.pdf'), height=8.5, width=11)
+xyplot(S_b ~ factor(sigA) | sigB + envfilt, groups=topo, data=means, ylim=c(0,1.2),
+	scales=list(alternating=1), xlab=expression(sigma[a]), ylab=expression(Mean~~S[B]~~(Scaled)),
+	panel=function(x, y, subscripts, groups){
+		x = as.numeric(x)
+		panel.segments(x+jit, low95s$S_b[subscripts], x+jit, up95s$S_b[subscripts])
+		panel.xyplot(x+jit, y, pch=use_pch[groups[subscripts]], col=1)
 	}, 
 	strip = strip.custom(strip.names=T, strip.levels=T, sep='=', 
 		bg='transparent', var.name=expression(sigma[b], Filtering), fg='transparent'),

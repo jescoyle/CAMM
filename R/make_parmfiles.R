@@ -1,11 +1,11 @@
 ## This script makes sets of parameter values for CAMM to be run on the cluster
 
 options(stringsAsFactors=F)
-setwd('./UNC/Projects/CAMM')
+setwd('./Research/CAMM')
 
 # Set directories
-sim_dir = './GitHub/R/'
-parm_dir = './Parms/Parms_6/'
+sim_dir = './GitHub/CAMM/R/'
+parm_dir = './Parms/Parms_7/'
 
 dir.create(parm_dir)
 
@@ -421,6 +421,55 @@ for(maxN in maxN_vec){
 		write_parms(parm_list, paste0('p_', runID), this_dir)
 	}
 }
+
+
+### RUN 7 ###
+## Effect of changing community size
+
+topo_vec = c('one2many','many2many')
+envfilt_vec = c('same','opposite')
+N_vec = S_a*2^(-1:4)
+NC_vec = c(10, 20, 40, 80)
+combos = expand.grid(NC_vec, N_vec)
+S_a = 30
+S_b = 10
+
+for(envfilt in envfilt_vec){
+for(topology in topo_vec){
+	this_dir = paste0(parm_dir, topology, '-', envfilt, '/')
+	dir.create(this_dir)
+	
+	for(i in 1:nrow(combos)){
+		N = combos[i,2]
+		N_C = combos[i,1]
+
+		if(envfilt=='opposite'){
+			sigma_a1 = 10
+			sigma_a2 = 0.5
+			sigma_b1 = 0.5
+			sigma_b2 = 10
+		}
+
+		if(envfilt=='same'){
+			sigma_a1 = 10
+			sigma_a2 = 0.5
+			sigma_b1 = 10
+			sigma_b2 = 0.5
+		}
+					
+		if(topology=='one2many'){
+			N_L = 30
+		}
+
+		if(topology=='many2many'){
+			N_L = 60
+		}
+
+		runID = paste0('topo-',topology,'_envfilt-',envfilt,'_N-',N,'_NC-',N_C)
+		parm_list = make_parmlist()
+		write_parms(parm_list, paste0('p_', runID), this_dir)
+	}
+}}
 
 
 

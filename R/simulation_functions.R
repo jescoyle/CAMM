@@ -576,8 +576,9 @@ transition = function(probs){
 #	must contain: sites, comm, poolA, poolB, niches_a, niches_b, topo, topo_names, assoc_probs, gsad_a, gsad_b
 # sim_mode = 'converge' or 'fixed'
 # reps = If mode is 'fixed', must supply number of time steps
-# nchains = If mode is 'converge', mush supply number of chains (replicate simulation runs used to check convergence)
-run_camm = function(metacomm=NULL, sim_mode, reps=NA, nchains=NA){
+# nchains = If mode is 'converge', must supply number of chains (replicate simulation runs used to check convergence)
+# save_steps = If absent, all steps are saved in an array. Otherwise, a vector indicating which steps to save in an array. Simulations run in mode 'converge' must have save_steps=NA
+run_camm = function(metacomm=NULL, sim_mode, reps=NA, nchains=NA, save_steps=NA){
 	if(length(metacomm)>0){
 		comm = metacomm$comm
 		poolA = metacomm$poolA
@@ -594,14 +595,24 @@ run_camm = function(metacomm=NULL, sim_mode, reps=NA, nchains=NA){
 
 	if(sim_mode=='fixed'){
 	
+	# Make vector of steps to save that includes timepoints in reps (if it is a vector)
+	if(is.na(save_steps)) save_steps = 0:max(reps)
+	save_steps = unique(c(save_steps, reps))
+	save_steps = save_steps[order(save_steps)]
+
 	# Generate empty array to hold changes in community and add initial community
-	comm_records = array(NA, c(N_C, N, reps+1)) 
-	comm_records[,,1] = comm
-	poolA_records = array(NA, c(N_C, S_a, reps+1)) 
-	poolA_records[,,1] = poolA
-	poolB_records = array(NA, c(N_C, S_b, reps+1))
-	poolB_records[,,1] = poolB
-	Tmat_records = array(NA, c(N_C, N_L+1, N_L+1, reps))
+	nsteps = length(save_steps)
+	
+	comm_records = array(NA, c(N_C, N, nsteps))
+	poolA_records = array(NA, c(N_C, S_a, nsteps)) 
+	poolB_records = array(NA, c(N_C, S_b, nsteps))
+	Tmat_records = array(NA, c(N_C, N_L+1, N_L+1, nsteps))
+
+	if(is.na(save_steps)|(0 %in% save_steps)){
+		comm_records[,,1] = comm
+		poolA_records[,,1] = poolA
+		poolB_records[,,1] = poolB
+	}
 
 	# Run simulation
 	for(step in 1:reps){
@@ -625,10 +636,13 @@ run_camm = function(metacomm=NULL, sim_mode, reps=NA, nchains=NA){
 		comm = new_comm
 
 		# Save communities
-		comm_records[,,step+1] = comm
-		poolA_records[,,step+1] = poolA
-		poolB_records[,,step+1] = poolB
-		Tmat_records[,,,step] = T_mat
+		if(step %in% save_steps){
+			i = which(save_steps==step)
+			comm_records[,,i] = comm
+			poolA_records[,,i] = poolA
+			poolB_records[,,i] = poolB
+			Tmat_records[,,,i] = T_mat
+		}
 	}
 	} # CLOSES if(sim_mode=='fixed') 
 

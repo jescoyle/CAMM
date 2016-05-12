@@ -96,7 +96,7 @@ make_parmlist = function(e=parent.frame()){
 # nchains = number of identical starts in each run
 # nparallel = if run in parallel, number of cores
 # sim_parms = named list of parameter controling when simulations should stop
-#	components are: sim_mode and reps or nchains (depending on sim_mode)
+#	components are: sim_mode and reps and save_steps or nchains (depending on sim_mode)
 # simID = string that identifies this set of simulations runs
 # save_start = flag indicating whether each initial set of niches and topologies should be saved
 run_camm_N = function(sim_dir, parm_file, nruns, nchains, nparallel=1, sim_parms, simID, save_start=F, save_sim=F, save_dir='./'){
@@ -120,16 +120,28 @@ run_camm_N = function(sim_dir, parm_file, nruns, nchains, nparallel=1, sim_parms
 		# Run and Summarize CAMM
 		sim_results = parLapply(cluster, 1:nruns, function(j){
 			print(paste('start', runs[j]))
-			metacomm = metacomm_N[[j]]			
+			metacomm = metacomm_N[[j]]	
+			reps = sim_parms$reps		
 
+			# Define steps to save during simulation that includes timepoints in reps
+			if(is.null(sim_parms$save_steps)){
+				save_steps = 0:max(reps)
+			} else {
+				save_steps = sim_parms$save_steps
+			}
+			save_steps = unique(c(save_steps, reps))
+			save_steps = save_steps[order(save_steps)]
+	
 			end_metacomms = sapply(1:nchains, function(i){
 				# Run CAMM
-				this_run = run_camm(metacomm=metacomm, sim_mode=sim_parms$sim_mode, reps=sim_parms$reps[length(sim_parms$reps)], nchains=nchains)
+				this_run = run_camm(metacomm=metacomm, sim_mode=sim_parms$sim_mode, reps=sim_parms$reps[length(sim_parms$reps)], 
+					nchains=nchains, save_steps=save_steps)
 
 				# Just output the instance of each community at each of the timepoints in reps
-				list(comm=this_run$comm[,,sim_parms$reps+1], 
-					poolA=this_run$poolA[,,sim_parms$reps+1],
-					poolB=this_run$poolB[,,sim_parms$reps+1])
+				reps_i = which(save_steps %in% reps)
+				list(comm=this_run$comm[,,reps_i], 
+					poolA=this_run$poolA[,,reps_i],
+					poolB=this_run$poolB[,,reps_i])
 	
 			})
 			if(save_sim) save(end_metacomms, file=paste0(save_dir, runs[j], '_metacomms-end.RData'))
@@ -186,15 +198,28 @@ run_camm_N = function(sim_dir, parm_file, nruns, nchains, nparallel=1, sim_parms
 		# Run and Summarize CAMM
 		sim_results = lapply(1:nruns, function(j){
 			metacomm = metacomm_N[[j]]
+			reps = sim_parms$reps
 
+			# Define steps to save during simulation that includes timepoints in reps
+			if(is.null(sim_parms$save_steps)){
+				save_steps = 0:max(reps)
+			} else {
+				save_steps = sim_parms$save_steps
+			}
+			save_steps = unique(c(save_steps, reps))
+			save_steps = save_steps[order(save_steps)]
+	
 			end_metacomms = sapply(1:nchains, function(i){
 				# Run CAMM
-				this_run = run_camm(metacomm, sim_mode=sim_parms$sim_mode, reps=sim_parms$reps[length(sim_parms$reps)], nchains=sim_parms$nchains)
-		
-				# Just save the last instance of each community
-				list(comm=this_run$comm[,,sim_parms$reps+1], 
-					poolA=this_run$poolA[,,sim_parms$reps+1],
-					poolB=this_run$poolB[,,sim_parms$reps+1])
+				this_run = run_camm(metacomm=metacomm, sim_mode=sim_parms$sim_mode, reps=sim_parms$reps[length(sim_parms$reps)], 
+					nchains=nchains, save_steps=save_steps)
+
+				# Just output the instance of each community at each of the timepoints in reps
+				reps_i = which(save_steps %in% reps)
+				list(comm=this_run$comm[,,reps_i], 
+					poolA=this_run$poolA[,,reps_i],
+					poolB=this_run$poolB[,,reps_i])
+	
 			})
 
 			# Define objects

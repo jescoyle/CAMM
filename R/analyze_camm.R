@@ -5,17 +5,17 @@ library(reshape2)
 library(lattice) # Plots
 
 # Main directory
-working_dir = 'C:/Users/jrcoyle/Documents/UNC/Projects/CAMM/'
+working_dir = 'C:/Users/jrcoyle/Documents/Research/CAMM/'
 setwd(working_dir)
 
 # Directory for saving figures
-fig_dir = 'C:/Users/jrcoyle/Documents/UNC/Projects/CAMM/Figures/'
+fig_dir = 'C:/Users/jrcoyle/Documents/Research/CAMM/Figures/'
 
 # Location of results
-results_dir = 'C:/Users/jrcoyle/Documents/UNC/Projects/CAMM/Runs/Summaries_1/'
+results_dir = 'C:/Users/jrcoyle/Documents/Research/CAMM/Runs/Summaries_3/'
 
 # Load functions
-code_dir = 'C:/Users/jrcoyle/Documents/UNC/Projects/CAMM/GitHub/R/'
+code_dir = 'C:/Users/jrcoyle/Documents/Research/CAMM/GitHub/CAMM/R/'
 #source(paste(code_dir,'simulation_functions.R', sep=''))
 source(paste(code_dir,'analysis_functions.R', sep=''))
 source(paste(code_dir,'simulation_functions.R', sep=''))

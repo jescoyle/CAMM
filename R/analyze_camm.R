@@ -3,6 +3,7 @@
 options(stringsAsFactors=F)
 library(reshape2)
 library(lattice) # Plots
+library(latticeExtra)
 
 # Main directory
 working_dir = 'C:/Users/jrcoyle/Documents/Research/CAMM/'
@@ -12,7 +13,7 @@ setwd(working_dir)
 fig_dir = 'C:/Users/jrcoyle/Documents/Research/CAMM/Figures/'
 
 # Location of results
-results_dir = 'C:/Users/jrcoyle/Documents/Research/CAMM/Runs/Summaries_3/'
+results_dir = 'C:/Users/jrcoyle/Documents/Research/CAMM/Runs/Summaries_1-new/'
 
 # Load functions
 code_dir = 'C:/Users/jrcoyle/Documents/Research/CAMM/GitHub/CAMM/R/'
@@ -74,17 +75,76 @@ for(f in cor_filelist){
 }
 
 
+## In each run, evaluate effects of parameters on:
+## 1) Mean richness of hosts and symbionts
+## 2) Turnover of hosts and symbionts (total richness / mean richness)
+## 3) Correlation between host and symbiont richness
+## 4) Mean abundance
+## 5) Correlation between environment and host & symbiont community structure
+## 6) Correlation between environment and host & symbiont richness
+## 7) Correlation between environment and abundance 
+
+
+a_pch = c(16, 1)
+b_pch = c(15, 0)
+
 ## Run 1: incrementing over stregth of mutualism (omega = o) and relative mortality of unassociated mutualists (mort_rate_a = mra, mort_rate_b = mrb)
 
 cor_summary$o = as.numeric(cor_summary$o)
 cor_summary$mra = as.numeric(cor_summary$mra)
 cor_summary$mrb = as.numeric(cor_summary$mrb)
+comm_summary$o = as.numeric(comm_summary$o)
+comm_summary$mra = as.numeric(comm_summary$mra)
+comm_summary$mrb = as.numeric(comm_summary$mrb)
+
+
+## 1) Mean richness of hosts and symbionts
+
+plot_data = subset(comm_summary, summary=='mean')
+means = subset(plot_data, stat=='mean')
+low95s = subset(plot_data, stat=='2.5%')
+up95s = subset(plot_data, stat=='97.5%')
+
+jit = 0.01*c(-1,1)
+
+pdf(paste0(fig_dir, 'RUN 1/', 'mutualism_strength_vs_mort_rates_mean_S.pdf'), height=7, width=9)
+lp1 = xyplot(S_a ~ o | mrb + mra, data=means, ylim = c(-.1,30),
+	scales=list(alternating=1), xlab='Strength of mutalism (omega)', ylab=expression(Mean~~S[A]),
+	panel=function(x, y, subscripts){
+		panel.segments(x+jit[1], low95s$S_a[subscripts], x+jit[1], up95s$S_a[subscripts], col=1)
+		panel.xyplot(x+jit[1], y, pch=a_pch[1], col=1)
+	}, 
+	strip = strip.custom(strip.names=T, strip.levels=T, sep='=', 
+		bg='transparent', var.name=expression(m[a],m[b]), fg='transparent')
+)
+
+lp2 = xyplot(S_b ~ o | mrb + mra, data=means, ylim = c(-.1,10),
+	scales=list(alternating=1), xlab='Strength of mutalism (omega)', ylab=expression(Mean~~S[B]),
+	panel=function(x, y, subscripts){
+		panel.segments(x, low95s$S_b[subscripts], x, up95s$S_b[subscripts], col=1)
+		panel.xyplot(x, y, pch=b_pch[1], col=1)
+	}, 
+	strip = strip.custom(strip.names=T, strip.levels=T, sep='=', 
+		bg='transparent', var.name=expression(m[a],m[b]), fg='transparent')
+)
+doubleYScale(lp1, lp2, add.axis=T, add.ylab2=T, text=expression(S[A], S[B]))
+dev.off()
+
+## 2) Turnover of hosts and symbionts (total richness / mean richness)
+
+## 3) Correlation between host and symbiont richness
+## 4) Mean abundance
+## 5) Correlation between environment and host & symbiont community structure
+## 6) Correlation between environment and host & symbiont richness
+## 7) Correlation between environment and abundance 
+
+
+
 
 ## Plot correlations between mutualist communities and environment
 ## error bars show 95th percentile from 100 different starts
 
-a_pch = c(16, 1)
-b_pch = c(15, 0)
+
 jit_fact = 0.008
 jit_a = -1*c(3*jit_fact/2, jit_fact/2)
 jit_b = c(jit_fact/2, 3*jit_fact/2)

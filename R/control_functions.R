@@ -281,7 +281,7 @@ summarize_camm = function(results, what, type=NA){
 	if(tp){
 		# Richness in each community
 		if(what=='S'){
-			get_vars = paste(c('S','Stot'),type,sep='_')
+			get_vars = paste(c('S','Stot','Beta'),type,sep='_')
 			richness = sapply(results, function(x) x[[1]][,get_vars,], simplify='array')
 			return_stats = apply(richness, 1:3, function(x) c(mean=mean(x, na.rm=T), var=var(x, na.rm=T), quantile(x, c(0.025, 0.5, 0.975), na.rm=T)))
 			names(dimnames(return_stats)) = c('stat','summary','response','time')
@@ -302,7 +302,7 @@ summarize_camm = function(results, what, type=NA){
 	} else {
 		# Richness in each community
 		if(what=='S'){
-			get_vars = paste(c('S','Stot'),type,sep='_')
+			get_vars = paste(c('S','Stot','Beta'),type,sep='_')
 			richness = sapply(results, function(x) x[[1]][,get_vars], simplify='array')
 			return_stats = apply(richness, c(1,2), function(x) c(mean=mean(x, na.rm=T), var=var(x, na.rm=T), quantile(x, c(0.025, 0.5, 0.975), na.rm=T)))
 			names(dimnames(return_stats)) = c('stat','summary','response')

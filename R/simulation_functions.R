@@ -915,13 +915,18 @@ calc_commstats = function(comm, topo_names){
 	Stot_a = calc_tot_rich(comm, topo_names, 'a')
 	Stot_b = calc_tot_rich(comm, topo_names, 'b')
 
+	# Calculate beta diversity
+	Beta_species = Stot_species / mean(S_species, na.rm=T)
+	Beta_a = Stot_a / mean(S_a, na.rm=T)
+	Beta_b = Stot_b / mean(S_b, na.rm=T)
+
 	# Calculate total abundance
 	N = calc_occ(comm)
 	Ntot = calc_tot_occ(comm)
 
 	# Return dataframe
 	# NOTE: tots will be the same across all communities
-	data.frame(S_species, Stot_species, S_a, Stot_a, S_b, Stot_b, N, Ntot)
+	data.frame(S_species, Stot_species, Beta_species, S_a, Stot_a, Beta_a, S_b, Stot_b, Beta_b, N, Ntot)
 }
 
 

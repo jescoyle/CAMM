@@ -87,6 +87,7 @@ for(f in cor_filelist){
 ## Define symbols used for plotting throughout
 a_pch = c(16, 1)
 b_pch = c(15, 0)
+n_pch = c(17, 2)
 
 
 ## Run 1: incrementing over stregth of mutualism (omega = o) and relative mortality of unassociated mutualists (mort_rate_a = mra, mort_rate_b = mrb)
@@ -136,16 +137,42 @@ dev.off()
 ## 3) Correlation between host and symbiont richness
 
 ## 4) Mean abundance
+plot_data = subset(comm_summary, summary=='mean')
+means = subset(plot_data, stat=='mean')
+low95s = subset(plot_data, stat=='2.5%')
+up95s = subset(plot_data, stat=='97.5%')
+
+pdf(paste0(fig_dir, 'RUN 1/', 'mutualism_strength_vs_mort_rates_mean_N.pdf'), height=7, width=9)
+xyplot(N ~ o | mrb + mra, data=means, ylim=c(80,100),
+	scales=list(alternating=1), xlab='Strength of mutalism (omega)', ylab='Mean Total Abundance',
+	panel=function(x, y, subscripts){
+		panel.segments(x, low95s$N[subscripts], x, up95s$N[subscripts], col=1)
+		panel.xyplot(x, y, pch=n_pch[1], col=1)
+	}, 
+	strip = strip.custom(strip.names=T, strip.levels=T, sep='=', 
+		bg='transparent', var.name=expression(m[a],m[b]), fg='transparent')
+)
+dev.off()
+
+# From obligate mutualism onlye
+plot_data = subset(comm_summary, summary=='mean' & o==1)
+means = subset(plot_data, stat=='mean')
+low95s = subset(plot_data, stat=='2.5%')
+up95s = subset(plot_data, stat=='97.5%')
+
+pdf(paste0(fig_dir, 'RUN 1/', 'mutualism_strength_vs_mort_rates_mean_N_o=1.pdf'), height=3, width=4)
+xyplot(N ~ mrb | mra, data=means, ylim=c(80,100), layout=c(3,1),
+	scales=list(alternating=1), xlab=expression(m[b]), ylab='Mean Total Abundance',
+	panel=function(x, y, subscripts){
+		panel.segments(x, low95s$N[subscripts], x, up95s$N[subscripts], col=1)
+		panel.xyplot(x, y, pch=n_pch[1], col=1)
+	}, 
+	strip = strip.custom(strip.names=T, strip.levels=T, sep='=', 
+		bg='transparent', var.name=expression(m[a]), fg='transparent')
+)
+dev.off()
+
 ## 5) Correlation between environment and host & symbiont community structure
-## 6) Correlation between environment and host & symbiont richness
-## 7) Correlation between environment and abundance 
-
-
-
-
-## Plot correlations between mutualist communities and environment
-## error bars show 95th percentile from 100 different starts
-
 
 jit_fact = 0.008
 jit_a = -1*c(3*jit_fact/2, jit_fact/2)
@@ -173,7 +200,7 @@ xyplot(cor_a ~ o | mrb + mra, groups = env, data=means, ylim = c(-.1,1),
 )
 dev.off()
 
-# Results from obligate mutualism only (omega=1)
+# Results from given level of mutualism only (e.g., obligate: omega=1)
 plot_data = subset(cor_summary, measure=='rda' & summary=='mean' & o==0.5)
 means = subset(plot_data, stat=='mean')
 low95s = subset(plot_data, stat=='2.5%')
@@ -265,144 +292,17 @@ xyplot(cor_a ~ o | mrb + mra, groups = env, data=means, ylim=c(-1,1),
 )
 dev.off()
 
-# Calculate species richness and abundance statistics since these weren't originally done during RUN 1
+
+
+## 6) Correlation between environment and host & symbiont richness
+## 7) Correlation between environment and abundance 
 
 
 
 
-# One each run:
-rdata_files = list.files('./Runs/Results_1/')
+## Plot correlations between mutualist communities and environment
+## error bars show 95th percentile from 100 different starts
 
-load(paste0('./Runs/Results_1/', rdata_files[1]))
-
-topo_names = metacomm$topo_names
-
-# Need to load all 100 end_metacomm into a list, end_metacomms
-rich_summary = sapply(end_metacomms['comm',], function(comms){
-	apply(comms, 3, function(comm) calc_commstats(comm, topo_names))	
-}, simplify='array')
-
-
-comm_means = apply(rich_summary, c(1,2), function(x) colMeans(x[[1]]))
-				rich_stats = apply(comm_means, c(1,2), function(x) c(mean(x), var(x)))
-				dimnames(rich_stats)[[1]] = c('mean','var')
-				dimnames(rich_stats)[[3]] = paste0('T',sim_parms$reps)
-				
-				corr_stats = sapply(1:length(end_metacomms['comm',]), function(j){
-					comms = end_metacomms['comm',][[j]]
-					sapply(1:dim(comms)[3], function(i) calc_envcorr(comms[,,i], topo_names, sites, 'jaccard', binary=T), simplify='array')	
-				}, simplify='array')
-				corr_stats = apply(corr_stats, 1:5, function(vals) c(mean(vals), var(vals)))	
-				dimnames(corr_stats)[[1]] = c('mean','var')
-				dimnames(corr_stats)[[6]] = paste0('T',sim_parms$reps)
-# Analyze results from model_out which is a list of list(rich_stats, corr_stats)
-
-
-	S_a = melt(summarize_camm(model_out, 'S', 'a'))
-	S_b = melt(summarize_camm(model_out, 'S', 'b'))
-	N_comm = melt(summarize_camm(model_out, 'N'))
-	comm_summary = rbind(S_a, S_b, N_comm)
-	comm_summary = cast(comm_summary, ... ~ response)
-	
-	cor_a = melt(summarize_camm(model_out, 'cor','a'))
-	names(cor_a)[names(cor_a)=='value'] = 'cor_a'
-	cor_b = melt(summarize_camm(model_out, 'cor','b'))
-	names(cor_b)[names(cor_b)=='value'] = 'cor_b'
-	cor_summary = merge(cor_a, cor_b)
-
-
-
-
-
-# ACTUALLY THIS DOESN'T MAKE SENSE B/C COMMUNITIES ARE NOT EXPECTED TO HAVE THE SAME ENV ACROSS SIMULATIONS
-plot_data = subset(comm_summary, summary=='mean')
-plot_data = plot_data[order(plot_data$o),]
-means = subset(plot_data, stat=='mean')
-use_col = rainbow(20)
-
-xyplot(S_a ~ o | mrb + mra, groups = comm, data=means, type='l',ylim=c(0,30),
-	scales=list(alternating=1), xlab='Strength of mutalism (omega)', ylab=expression(S[A]),
-	strip = strip.custom(strip.names=T, strip.levels=T, sep='=', 
-		bg='transparent', var.name=expression(m[a],m[b]), fg='transparent')
-)
-
-xyplot(S_b ~ o | mrb + mra, groups = comm, data=means, type='l',ylim=c(0,10),
-	scales=list(alternating=1), xlab='Strength of mutalism (omega)', ylab=expression(S[A]),
-	strip = strip.custom(strip.names=T, strip.levels=T, sep='=', 
-		bg='transparent', var.name=expression(m[a],m[b]), fg='transparent')
-)
-
-xyplot(N ~ o | mrb + mra, groups = comm, data=means, type='l', ylim=c(0,100),
-	scales=list(alternating=1), xlab='Strength of mutalism (omega)', ylab=expression(S[A]),
-	strip = strip.custom(strip.names=T, strip.levels=T, sep='=', 
-		bg='transparent', var.name=expression(m[a],m[b]), fg='transparent')
-)
-
-
-## IT MIGHT ALSO BE USEFUL TO EXAMINE THE SYMBIONT POOLS SEPARATELY
-## This section run in interactive mode on killdevil cluster to avoid transfering results files
-## SECTION NOT DONE OR COMPLETE
-
-results_dir = './Results/'
-source('analysis_functions.R')
-
-
-# Get list of community richness and abundance summaries
-results_filelist = list.files(results_dir, 'results.RData')
-runs = unique(gsub('_[0-9]+_results.RData', '', results_filelist))
-
-
-# Go through files and append together into a data frame
-for(this_run in runs){
-	these_files = results_filelist[grep(paste0(this_run,'_[0-9]+'), results_filelist)]
-
-	poolA_summary = data.frame()
-	poolB_summary = data.frame()
-	
-	for(f in these_files){
-		load(paste0(results_dir, f))
-
-		poolA = end_metacomms['poolA',]
-		poolA = acast(melt(poolA), Var1 ~ Var2 ~ L1)
-
-		poolB = end_metacomms['poolB',]
-		poolB = acast(melt(poolB), Var1 ~ Var2 ~ L1)
-
-		A_probs = apply(poolA, c(1,2), function(x) sum(x)/nchains)
-		B_probs = apply(poolB, c(1,2), function(x) sum(x)/nchains)
-
-		A_probs = melt(A_probs)
-		B_probs = melt(B_probs)
-
-		# Extract run name
-		runID = gsub('_results.RData', '', f)
-
-		# Extract parameter values
-		parm_vals = get_parms(runID)
-
-		# Bind values to data
-		A_data = cbind(t(parm_vals[1:3]), names(parm_vals)[4], A_probs)
-		names(A_data)[4:7] = c('run','comm','species','prob')
-
-		B_data = cbind(t(parm_vals[1:3]), names(parm_vals)[4], B_probs)
-		names(B_data)[4:7] = c('run','comm','species','prob')
-
-		# Add to growing data frame
-		poolA_summary = rbind(poolA_summary, A_data)
-		poolB_summary = rbind(poolB_summary, B_data)
-
-	}
-
-	write.csv(poolA_summary, paste0(results_dir, this_run, '_poolA.csv'), row.names=F)
-	write.csv(poolB_summary, paste0(results_dir, this_run, '_poolB.csv'), row.names=F)
-
-	poolA_arr = acast(poolA_summary, comm~species~run, value.var='prob') 
-	poolB_arr = acast(poolB_summary, comm~species~run, value.var='prob')
-
-	poolA_stats = apply(poolA_arr, c(1,2), function(x) c(mean=mean(x, na.mrm=T), var=var(x, na.rm=T), quantile(x, c(0.025, 0.5, 0.975))))
-	poolB_stats = apply(poolB_arr, c(1,2), function(x) c(mean=mean(x, na.mrm=T), var=var(x, na.rm=T), quantile(x, c(0.025, 0.5, 0.975))))
-
-	# Calculate correlations and richness
 
 
 

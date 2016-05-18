@@ -84,9 +84,10 @@ for(f in cor_filelist){
 ## 6) Correlation between environment and host & symbiont richness
 ## 7) Correlation between environment and abundance 
 
-
+## Define symbols used for plotting throughout
 a_pch = c(16, 1)
 b_pch = c(15, 0)
+
 
 ## Run 1: incrementing over stregth of mutualism (omega = o) and relative mortality of unassociated mutualists (mort_rate_a = mra, mort_rate_b = mrb)
 
@@ -133,6 +134,7 @@ dev.off()
 ## 2) Turnover of hosts and symbionts (total richness / mean richness)
 
 ## 3) Correlation between host and symbiont richness
+
 ## 4) Mean abundance
 ## 5) Correlation between environment and host & symbiont community structure
 ## 6) Correlation between environment and host & symbiont richness

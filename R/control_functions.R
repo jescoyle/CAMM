@@ -292,6 +292,12 @@ summarize_camm = function(results, what, type=NA){
 			return_stats = apply(abun, 1:3, function(x) c(mean=mean(x, na.rm=T), var=var(x, na.rm=T), quantile(x, c(0.025, 0.5, 0.975), na.rm=T)))
 			names(dimnames(return_stats)) = c('stat','summary','response','time')
 		}
+	
+		if(what=='Cor_ab'){
+			abun = sapply(results, function(x) x[[1]][,c('Cor_ab'),], simplify='array')
+			return_stats = apply(abun, 1:2, function(x) c(mean=mean(x, na.rm=T), var=var(x, na.rm=T), quantile(x, c(0.025, 0.5, 0.975), na.rm=T)))
+			names(dimnames(return_stats)) = c('stat','summary','time')
+		}
 		
 		if(what=='cor'){
 			corr_mat = sapply(results, function(x) x[[2]][,type,,,,], simplify='array')
@@ -308,11 +314,16 @@ summarize_camm = function(results, what, type=NA){
 			names(dimnames(return_stats)) = c('stat','summary','response')
 		}
 
-
 		if(what=='N'){
 			abun = sapply(results, function(x) x[[1]][,c('N', 'Ntot')], simplify='array')
 			return_stats = apply(abun, c(1,2), function(x) c(mean=mean(x, na.rm=T), var=var(x, na.rm=T), quantile(x, c(0.025, 0.5, 0.975), na.rm=T)))
 			names(dimnames(return_stats)) = c('stat','summary','response')
+		}
+
+		if(what=='Cor_ab'){
+			corab = sapply(results, function(x) x[[1]][,c('Cor_ab')], simplify='array')
+			return_stats = apply(corab, 1, function(x) c(mean=mean(x, na.rm=T), var=var(x, na.rm=T), quantile(x, c(0.025, 0.5, 0.975), na.rm=T)))
+			names(dimnames(return_stats)) = c('stat','summary')
 		}
 
 		if(what=='cor'){

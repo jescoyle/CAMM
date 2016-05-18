@@ -900,6 +900,7 @@ calc_envcorr = function(comm, topo_names, env, metric, binary){
 }
 
 
+
 # A function that calculates all community summary statistics
 #	comm = an N_C x N matrix of species present at each site
 #	topo_names = matrix describing mutualistic netiwork and numbering each partner
@@ -920,13 +921,16 @@ calc_commstats = function(comm, topo_names){
 	Beta_a = Stot_a / mean(S_a, na.rm=T)
 	Beta_b = Stot_b / mean(S_b, na.rm=T)
 
+	# Calculate correlation between richness of a and b
+	Cor_ab = cor(S_a, S_b, use='complete.obs')
+
 	# Calculate total abundance
 	N = calc_occ(comm)
 	Ntot = calc_tot_occ(comm)
 
 	# Return dataframe
 	# NOTE: tots will be the same across all communities
-	data.frame(S_species, Stot_species, Beta_species, S_a, Stot_a, Beta_a, S_b, Stot_b, Beta_b, N, Ntot)
+	data.frame(S_species, Stot_species, Beta_species, S_a, Stot_a, Beta_a, S_b, Stot_b, Beta_b, N, Ntot, Cor_ab)
 }
 
 

@@ -13,7 +13,7 @@ setwd(working_dir)
 fig_dir = 'C:/Users/jrcoyle/Documents/Research/CAMM/Figures/'
 
 # Location of results
-results_dir = 'C:/Users/jrcoyle/Documents/Research/CAMM/Runs/Summaries_2/'
+results_dir = 'C:/Users/jrcoyle/Documents/Research/CAMM/Runs/Summaries_3/'
 
 # Load functions
 code_dir = 'C:/Users/jrcoyle/Documents/Research/CAMM/GitHub/CAMM/R/'
@@ -839,16 +839,187 @@ comm_summary$sigB = as.numeric(comm_summary$sigB)
 comm_summary$topo = factor(comm_summary$topo, levels = c('one2one','one2many','many2many'))
 comm_summary$envfilt = factor(comm_summary$envfilt, levels = c('none','same','opposite','all'))
 
+## 1) Mean richness of hosts and symbionts
 
-a_pch = c(16, 1)
-b_pch = c(15, 0)
+plot_data = subset(comm_summary, summary=='mean')
+means = subset(plot_data, stat=='mean')
+low95s = subset(plot_data, stat=='2.5%')
+up95s = subset(plot_data, stat=='97.5%')
+jit_fact = 0.18
+jit = c(-1, 0, 1)*jit_fact
+
+use_pch = c(0,1,2)
+
+# S_a
+pdf(paste0(fig_dir, 'RUN 3/', 'envfilt_strength_by_type_Sa_mean.pdf'), height=8.5, width=11)
+xyplot(S_a ~ factor(sigA) | sigB + envfilt, groups=topo, data=means, ylim=c(0,32),
+	scales=list(alternating=1), xlab=expression(sigma[a]), ylab=expression(Mean~~S[A]),
+	panel=function(x, y, subscripts, groups){
+		x = as.numeric(x)
+		panel.segments(x+jit, low95s$S_a[subscripts], x+jit, up95s$S_a[subscripts])
+		panel.xyplot(x+jit, y, pch=use_pch[groups[subscripts]], col=1)
+	}, 
+	strip = strip.custom(strip.names=T, strip.levels=T, sep='=', 
+		bg='transparent', var.name=expression(sigma[b], Filtering), fg='transparent'),
+	key=list(space='right', points=list(pch=use_pch), 
+		text=list(levels(plot_data$topo)))
+)
+dev.off()
+
+# S_b
+pdf(paste0(fig_dir, 'RUN 3/', 'envfilt_strength_by_type_Sb_mean.pdf'), height=8.5, width=11)
+xyplot(S_b ~ factor(sigA) | sigB + envfilt, groups=topo, data=means, ylim=c(0,32),
+	scales=list(alternating=1), xlab=expression(sigma[a]), ylab=expression(Mean~~S[B]),
+	panel=function(x, y, subscripts, groups){
+		x = as.numeric(x)
+		panel.segments(x+jit, low95s$S_b[subscripts], x+jit, up95s$S_b[subscripts])
+		panel.xyplot(x+jit, y, pch=use_pch[groups[subscripts]], col=1)
+	}, 
+	strip = strip.custom(strip.names=T, strip.levels=T, sep='=', 
+		bg='transparent', var.name=expression(sigma[b], Filtering), fg='transparent'),
+	key=list(space='right', points=list(pch=use_pch), 
+		text=list(levels(plot_data$topo)))
+)
+dev.off()
+
+# Scaled by num. symbiont species
+plot_data[plot_data$topo %in% c('many2many','one2many'),'S_b'] = plot_data[plot_data$topo %in% c('many2many','one2many'),'S_b'] / 10
+plot_data[plot_data$topo == 'one2one','S_b'] = plot_data[plot_data$topo == 'one2one','S_b'] / 30
+means = subset(plot_data, stat=='mean')
+low95s = subset(plot_data, stat=='2.5%')
+up95s = subset(plot_data, stat=='97.5%')
+
+pdf(paste0(fig_dir, 'RUN 3/', 'envfilt_strength_by_type_Sb_prop_mean.pdf'), height=8.5, width=11)
+xyplot(S_b ~ factor(sigA) | sigB + envfilt, groups=topo, data=means, ylim=c(0,1.2),
+	scales=list(alternating=1), xlab=expression(sigma[a]), ylab=expression(Mean~~S[B]~~(Scaled)),
+	panel=function(x, y, subscripts, groups){
+		x = as.numeric(x)
+		panel.segments(x+jit, low95s$S_b[subscripts], x+jit, up95s$S_b[subscripts])
+		panel.xyplot(x+jit, y, pch=use_pch[groups[subscripts]], col=1)
+	}, 
+	strip = strip.custom(strip.names=T, strip.levels=T, sep='=', 
+		bg='transparent', var.name=expression(sigma[b], Filtering), fg='transparent'),
+	key=list(space='right', points=list(pch=use_pch), 
+		text=list(levels(plot_data$topo)))
+)
+dev.off()
+
+
+# Sa vs Sb
+plot_data = subset(comm_summary, summary=='mean'&topo!='one2one')
+means = subset(plot_data, stat=='mean')
+low95s = subset(plot_data, stat=='2.5%')
+up95s = subset(plot_data, stat=='97.5%')
+pch_1 = c(0,1,2,5)
+use_col = c(1:2)
+
+pdf(paste0(fig_dir, 'RUN 3/', 'Sa_vs_Sb_mean_across_envfilt_type_strength.pdf'), height=10, width=10)
+xyplot(S_a  ~ S_b | sigA + sigB, groups=envfilt, data=means,
+	ylim=c(0,32), xlim=c(0,12), ylab=expression(S[a]), xlab=expression(S[b]),
+	panel=function(x, y, subscripts, groups){
+		panel.segments(x, low95s$S_a[subscripts], x, up95s$S_a[subscripts], col='grey')
+		panel.segments(low95s$S_b[subscripts], y, up95s$S_b[subscripts], y, col='grey')
+		panel.xyplot(x, y, pch=pch_1[groups[subscripts]], col=1+as.numeric(means$topo[subscripts]=='many2many'))
+		panel.abline(h=30, lty=3)
+		panel.abline(v=10, lty=3)
+	}, 
+	strip = strip.custom(strip.names=T, strip.levels=T, sep='=', 
+		bg='transparent', var.name=expression(sigma[a], sigma[b]), fg='transparent'),
+	key=list(space='right', points=list(pch=pch_1), text=list(levels(means$envfilt)))
+
+)
+dev.off()
+
+## 2) Turnover of hosts and symbionts (total richness / mean richness)
+
+plot_data = subset(comm_summary, summary=='mean')
+means = subset(plot_data, stat=='mean')
+low95s = subset(plot_data, stat=='2.5%')
+up95s = subset(plot_data, stat=='97.5%')
+
+jit_fact = 0.18
+jit = c(-1, 0, 1)*jit_fact
+
+use_pch = c(0,1,2)
+
+
+pdf(paste0(fig_dir, 'RUN 3/', 'envfilt_strength_by_type_Beta_mean.pdf'), height=8.5, width=11)
+xyplot(Beta_a ~ factor(sigA) | sigB + envfilt, groups=topo, data=means, ylim=c(0,12.5),
+	scales=list(alternating=1), xlab=expression(sigma[a]), ylab=expression(beta[A]),main=expression(Host~~beta-diversity),
+	panel=function(x, y, subscripts, groups){
+		x = as.numeric(x)
+		panel.abline(h=seq(2,12,2), col='grey90')
+		panel.segments(x+jit, low95s$Beta_a[subscripts], x+jit, up95s$Beta_a[subscripts])
+		panel.xyplot(x+jit, y, pch=use_pch[groups[subscripts]], col=1)
+	}, 
+	strip = strip.custom(strip.names=T, strip.levels=T, sep='=', 
+		bg='transparent', var.name=expression(sigma[b], Filtering), fg='transparent'),
+	key=list(space='right', points=list(pch=use_pch), 
+		text=list(levels(plot_data$topo)))
+)
+
+xyplot(Beta_b ~ factor(sigA) | sigB + envfilt, groups=topo, data=means, ylim=c(0,12.5),
+	scales=list(alternating=1), xlab=expression(sigma[a]), ylab=expression(beta[B]), main=expression(Symbiont~~beta-diversity),
+	panel=function(x, y, subscripts, groups){
+		x = as.numeric(x)
+		panel.abline(h=seq(2,12,2), col='grey90')
+		panel.segments(x+jit, low95s$Beta_b[subscripts], x+jit, up95s$Beta_b[subscripts])
+		panel.xyplot(x+jit, y, pch=use_pch[groups[subscripts]], col=1)
+	}, 
+	strip = strip.custom(strip.names=T, strip.levels=T, sep='=', 
+		bg='transparent', var.name=expression(sigma[b], Filtering), fg='transparent'),
+	key=list(space='right', points=list(pch=use_pch), 
+		text=list(levels(plot_data$topo)))
+)
+dev.off()
+
+## 3) Correlation between host and symbiont richness
+
+pdf(paste0(fig_dir, 'RUN 3/', 'envfilt_strength_by_type_Cor_ab_mean.pdf'), height=8.5, width=11)
+xyplot(Cor_ab ~ factor(sigA) | sigB + envfilt, groups=topo, data=means, ylim=c(-.2,1.1),
+	scales=list(alternating=1), xlab=expression(sigma[a]), ylab=expression(Correlation~~S[A]%~%S[B]),
+	panel=function(x, y, subscripts, groups){
+		x = as.numeric(x)
+		panel.abline(h=seq(-1,1,.2), col='grey90')
+		panel.segments(x+jit, low95s$Cor_ab[subscripts], x+jit, up95s$Cor_ab[subscripts])
+		panel.xyplot(x+jit, y, pch=use_pch[groups[subscripts]], col=1)
+	}, 
+	strip = strip.custom(strip.names=T, strip.levels=T, sep='=', 
+		bg='transparent', var.name=expression(sigma[b], Filtering), fg='transparent'),
+	key=list(space='right', points=list(pch=use_pch), 
+		text=list(levels(plot_data$topo)))
+)
+dev.off()
+
+
+## 4) Mean abundance
+
+pdf(paste0(fig_dir, 'RUN 3/', 'envfilt_strength_by_type_N_mean.pdf'), height=8.5, width=11)
+xyplot(N ~ factor(sigA) | sigB + envfilt, groups=topo, data=means, ylim=c(0,110),
+	scales=list(alternating=1), xlab=expression(sigma[a]), ylab='Mean N',
+	panel=function(x, y, subscripts, groups){
+		x = as.numeric(x)
+		panel.segments(x+jit, low95s$N[subscripts], x+jit, up95s$N[subscripts])
+		panel.xyplot(x+jit, y, pch=use_pch[groups[subscripts]], col=1)
+		panel.abline(h=100, lty=3)
+	}, 
+	strip = strip.custom(strip.names=T, strip.levels=T, sep='=', 
+		bg='transparent', var.name=expression(sigma[b], Filtering), fg='transparent'),
+	key=list(space='right', points=list(pch=use_pch), 
+		text=list(levels(plot_data$topo)))
+)
+dev.off()
+
+## 5) Correlation between environment and host & symbiont community structure
+
+
+# RDA within chain mean
+
 jit_fact = 0.15
 jit_a = -1*c(3*jit_fact/2, jit_fact/2)
 jit_b = c(jit_fact/2, 3*jit_fact/2)
 
-# RDA within chain mean
-
-pdf(paste0(fig_dir, 'envfilt_strength_by_type_RDAmean.pdf'), height=8.5, width=11)
+pdf(paste0(fig_dir, 'RUN 3/', 'envfilt_strength_by_type_RDAmean.pdf'), height=8.5, width=11)
 
 for(t in levels(cor_summary$topo)){
 
@@ -877,7 +1048,7 @@ xyplot(cor_a ~ factor(sigA) | sigB + envfilt, groups = env, data=means, ylim = c
 dev.off()
 
 
-pdf(paste0(fig_dir, 'envfilt_strength_by_type&axis_RDAmean.pdf'), height=8.5, width=11)
+pdf(paste0(fig_dir, 'RUN 3/', 'envfilt_strength_by_type&axis_RDAmean.pdf'), height=8.5, width=11)
 
 for(t in levels(cor_summary$topo)){
 for(v in 1:2){
@@ -913,7 +1084,7 @@ use_pch = c(0,1,2)
 jit_fact = 0.15
 jit = jit_fact*c(-1,0,1)
 
-pdf(paste0(fig_dir, 'envfilt_strength_by_type&axis&partner_RDAmean.pdf'), height=8.5, width=11)
+pdf(paste0(fig_dir, 'RUN 3/', 'envfilt_strength_by_type&axis&partner_RDAmean.pdf'), height=8.5, width=11)
 
 for(p in c('cor_a','cor_b')){
 for(v in 1:2){
@@ -945,13 +1116,11 @@ xyplot(means[,p] ~ factor(sigA) | sigB + envfilt, groups=topo, data=means, ylim 
 dev.off()
 
 # Compare effects of topology and filtering type by separating filtering strength
-a_pch = c(16, 1)
-b_pch = c(15, 0)
 jit_fact = 0.1
 jit_a = -1*c(3*jit_fact/2, jit_fact/2)
 jit_b = c(jit_fact/2, 3*jit_fact/2)
 
-pdf(paste0(fig_dir, 'topo_vs_envfilt_RDAmean_by_filtering_strength.pdf'), height=5, width=7.5)
+pdf(paste0(fig_dir, 'RUN 3/', 'topo_vs_envfilt_RDAmean_by_filtering_strength.pdf'), height=5, width=7.5)
 for(a in 2^(-2:2)){
 for(b in 2^(-2:2)){
 
@@ -981,8 +1150,6 @@ for(b in 2^(-2:2)){
 dev.off()
 
 
-
-
 plot_data = subset(cor_summary, measure=='rda' & summary=='mean' & env==2)
 means = subset(plot_data, stat=='mean')
 low95s = subset(plot_data, stat=='2.5%')
@@ -990,7 +1157,7 @@ up95s = subset(plot_data, stat=='97.5%')
 use_col = c('black','red','cornflowerblue')
 pch_1 = c(0,1,2,5)
 
-pdf(paste0(fig_dir, 'cora_vs_corb_mean_across_envfilt2_type_strength.pdf'), height=10, width=10)
+pdf(paste0(fig_dir, 'RUN 3/', 'cora_vs_corb_mean_across_envfilt2_type_strength.pdf'), height=10, width=10)
 xyplot(cor_a  ~ cor_b | sigA + sigB, groups=envfilt, data=means,
 	ylim=c(0,.65), xlim=c(0,.65), ylab=expression(S[a]), xlab=expression(S[b]),
 	panel=function(x, y, subscripts, groups){
@@ -1006,7 +1173,12 @@ xyplot(cor_a  ~ cor_b | sigA + sigB, groups=envfilt, data=means,
 dev.off()
 
 
-pdf(paste0(fig_dir, 'envfilt_strength_by_type_Smean_cor.pdf'), height=8.5, width=11)
+## 6) Correlation between environment and host & symbiont richness
+jit_fact = 0.1
+jit_a = -1*c(3*jit_fact/2, jit_fact/2)
+jit_b = c(jit_fact/2, 3*jit_fact/2)
+
+pdf(paste0(fig_dir, 'RUN 3/', 'envfilt_strength_by_type_Smean_cor.pdf'), height=8.5, width=11)
 
 for(t in levels(cor_summary$topo)){
 
@@ -1015,12 +1187,12 @@ means = subset(plot_data, stat=='mean')
 low95s = subset(plot_data, stat=='2.5%')
 up95s = subset(plot_data, stat=='97.5%')
 
-
 print(
 xyplot(cor_a ~ factor(sigA) | sigB + envfilt, groups = env, data=means, ylim = c(-1,1),
-	scales=list(alternating=1), xlab=expression(sigma[a]), ylab=expression(RDA~~R^2),main=paste('Topology =',t),
+	scales=list(alternating=1), xlab=expression(sigma[a]), ylab=expression(Correlation~~S%~%E),main=paste('Topology =',t),
 	panel=function(x, y, subscripts, groups){
 		x = as.numeric(x)
+		panel.abline(h=0, col='grey90')
 		panel.segments(x+jit_a[groups[subscripts]], low95s$cor_a[subscripts], x+jit_a[groups[subscripts]], up95s$cor_a[subscripts])
 		panel.segments(x+jit_b[groups[subscripts]], low95s$cor_b[subscripts], x+jit_b[groups[subscripts]], up95s$cor_b[subscripts])
 		panel.xyplot(x+jit_a[groups[subscripts]], y, pch=a_pch[groups[subscripts]], col=1)
@@ -1035,52 +1207,29 @@ xyplot(cor_a ~ factor(sigA) | sigB + envfilt, groups = env, data=means, ylim = c
 }
 dev.off()
 
-# Diversity and abundance changes?
 
-plot_data = subset(comm_summary, summary=='mean')
-means = subset(plot_data, stat=='mean')
-low95s = subset(plot_data, stat=='2.5%')
-up95s = subset(plot_data, stat=='97.5%')
+## 7) Correlation between environment and abundance
+
 jit_fact = 0.18
 jit = c(-1, 0, 1)*jit_fact
 
 use_pch = c(0,1,2)
 
-# Might want to plot these as percentages of total possible S
-pdf(paste0(fig_dir, 'envfilt_strength_by_type_Sa_mean.pdf'), height=8.5, width=11)
-xyplot(S_a ~ factor(sigA) | sigB + envfilt, groups=topo, data=means, ylim=c(0,32),
-	scales=list(alternating=1), xlab=expression(sigma[a]), ylab=expression(Mean~~S[A]),
+pdf(paste0(fig_dir, 'RUN 3/', 'envfilt_strength_by_type_N_cor.pdf'), height=8.5, width=11)
+for(i in 1:2){
+
+plot_data = subset(cor_summary, summary=='mean'&measure=='N'&env==i)
+means = subset(plot_data, stat=='mean')
+low95s = subset(plot_data, stat=='2.5%')
+up95s = subset(plot_data, stat=='97.5%')
+
+
+print(xyplot(cor_a ~ factor(sigA) | sigB + envfilt, groups=topo, data=means, ylim=c(-1,1),
+	scales=list(alternating=1), xlab=expression(sigma[a]), ylab=bquote(Correlaton~~N%~%E[.(i)]), main=bquote(E[.(i)]),
 	panel=function(x, y, subscripts, groups){
 		x = as.numeric(x)
-		panel.segments(x+jit, low95s$S_a[subscripts], x+jit, up95s$S_a[subscripts])
-		panel.xyplot(x+jit, y, pch=use_pch[groups[subscripts]], col=1)
-	}, 
-	strip = strip.custom(strip.names=T, strip.levels=T, sep='=', 
-		bg='transparent', var.name=expression(sigma[b], Filtering), fg='transparent'),
-	key=list(space='right', points=list(pch=use_pch), 
-		text=list(levels(plot_data$topo)))
-)
-dev.off()
-pdf(paste0(fig_dir, 'envfilt_strength_by_type_Sb_mean.pdf'), height=8.5, width=11)
-xyplot(S_b ~ factor(sigA) | sigB + envfilt, groups=topo, data=means, ylim=c(0,32),
-	scales=list(alternating=1), xlab=expression(sigma[a]), ylab=expression(Mean~~S[B]),
-	panel=function(x, y, subscripts, groups){
-		x = as.numeric(x)
-		panel.segments(x+jit, low95s$S_b[subscripts], x+jit, up95s$S_b[subscripts])
-		panel.xyplot(x+jit, y, pch=use_pch[groups[subscripts]], col=1)
-	}, 
-	strip = strip.custom(strip.names=T, strip.levels=T, sep='=', 
-		bg='transparent', var.name=expression(sigma[b], Filtering), fg='transparent'),
-	key=list(space='right', points=list(pch=use_pch), 
-		text=list(levels(plot_data$topo)))
-)
-dev.off()
-pdf(paste0(fig_dir, 'envfilt_strength_by_type_N_mean.pdf'), height=8.5, width=11)
-xyplot(N ~ factor(sigA) | sigB + envfilt, groups=topo, data=means, ylim=c(0,110),
-	scales=list(alternating=1), xlab=expression(sigma[a]), ylab='Mean N',
-	panel=function(x, y, subscripts, groups){
-		x = as.numeric(x)
-		panel.segments(x+jit, low95s$N[subscripts], x+jit, up95s$N[subscripts])
+		panel.abline(h=0, col='grey90')
+		panel.segments(x+jit, low95s$cor_a[subscripts], x+jit, up95s$cor_a[subscripts])
 		panel.xyplot(x+jit, y, pch=use_pch[groups[subscripts]], col=1)
 		panel.abline(h=100, lty=3)
 	}, 
@@ -1088,66 +1237,18 @@ xyplot(N ~ factor(sigA) | sigB + envfilt, groups=topo, data=means, ylim=c(0,110)
 		bg='transparent', var.name=expression(sigma[b], Filtering), fg='transparent'),
 	key=list(space='right', points=list(pch=use_pch), 
 		text=list(levels(plot_data$topo)))
-)
-dev.off()
+))
 
-# Scaled by num. symbiont species
-
-plot_data[plot_data$topo %in% c('many2many','one2many'),'S_b'] = plot_data[plot_data$topo %in% c('many2many','one2many'),'S_b'] / 10
-plot_data[plot_data$topo == 'one2one','S_b'] = plot_data[plot_data$topo == 'one2one','S_b'] / 30
-means = subset(plot_data, stat=='mean')
-low95s = subset(plot_data, stat=='2.5%')
-up95s = subset(plot_data, stat=='97.5%')
-
-pdf(paste0(fig_dir, 'envfilt_strength_by_type_Sb_prop_mean.pdf'), height=8.5, width=11)
-xyplot(S_b ~ factor(sigA) | sigB + envfilt, groups=topo, data=means, ylim=c(0,1.2),
-	scales=list(alternating=1), xlab=expression(sigma[a]), ylab=expression(Mean~~S[B]~~(Scaled)),
-	panel=function(x, y, subscripts, groups){
-		x = as.numeric(x)
-		panel.segments(x+jit, low95s$S_b[subscripts], x+jit, up95s$S_b[subscripts])
-		panel.xyplot(x+jit, y, pch=use_pch[groups[subscripts]], col=1)
-	}, 
-	strip = strip.custom(strip.names=T, strip.levels=T, sep='=', 
-		bg='transparent', var.name=expression(sigma[b], Filtering), fg='transparent'),
-	key=list(space='right', points=list(pch=use_pch), 
-		text=list(levels(plot_data$topo)))
-)
+}
 dev.off()
 
 
-## Sa vs Sb vs RDA R2
-plot_data = subset(comm_summary, summary=='mean'&topo!='one2one')
-means = subset(plot_data, stat=='mean')
-low95s = subset(plot_data, stat=='2.5%')
-up95s = subset(plot_data, stat=='97.5%')
-pch_1 = c(0,1,2,5)
-use_col = c(1:2)
 
-pdf(paste0(fig_dir, 'Sa_vs_Sb_mean_across_envfilt_type_strength.pdf'), height=10, width=10)
-xyplot(S_a  ~ S_b | sigA + sigB, groups=envfilt, data=means,
-	ylim=c(0,32), xlim=c(0,12), ylab=expression(S[a]), xlab=expression(S[b]),
-	panel=function(x, y, subscripts, groups){
-		panel.segments(x, low95s$S_a[subscripts], x, up95s$S_a[subscripts], col='grey')
-		panel.segments(low95s$S_b[subscripts], y, up95s$S_b[subscripts], y, col='grey')
-		panel.xyplot(x, y, pch=pch_1[groups[subscripts]], col=1+as.numeric(means$topo[subscripts]=='many2many'))
-		panel.abline(h=30, lty=3)
-		panel.abline(v=10, lty=3)
-	}, 
-	strip = strip.custom(strip.names=T, strip.levels=T, sep='=', 
-		bg='transparent', var.name=expression(sigma[a], sigma[b]), fg='transparent'),
-	key=list(space='right', points=list(pch=pch_1), text=list(levels(means$envfilt)))
 
-)
-dev.off()
 
-plot_data = subset(cor_summary, measure=='rda')
-plot_data = merge(plot_data, comm_summary)
-plot_data = subset(plot_data, summary=='mean'&env==1)
-means = subset(plot_data, stat=='mean')
-low95s = subset(plot_data, stat=='2.5%')
-up95s = subset(plot_data, stat=='97.5%')
+## 8) Within-run variance of community statistics
+## 9) Within-run variance of environmental correlations
 
-plot(cor_b ~ S_b, data=means)
 
 
 

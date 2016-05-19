@@ -13,7 +13,7 @@ setwd(working_dir)
 fig_dir = 'C:/Users/jrcoyle/Documents/Research/CAMM/Figures/'
 
 # Location of results
-results_dir = 'C:/Users/jrcoyle/Documents/Research/CAMM/Runs/Summaries_1-new/'
+results_dir = 'C:/Users/jrcoyle/Documents/Research/CAMM/Runs/Summaries_2/'
 
 # Load functions
 code_dir = 'C:/Users/jrcoyle/Documents/Research/CAMM/GitHub/CAMM/R/'
@@ -82,7 +82,9 @@ for(f in cor_filelist){
 ## 4) Mean abundance
 ## 5) Correlation between environment and host & symbiont community structure
 ## 6) Correlation between environment and host & symbiont richness
-## 7) Correlation between environment and abundance 
+## 7) Correlation between environment and abundance
+## 8) Within-run variance of community statistics
+## 9) Within-run variance of environmental correlations
 
 ## Define symbols used for plotting throughout
 a_pch = c(16, 1)
@@ -137,6 +139,7 @@ doubleYScale(lp1, lp2, add.axis=T, add.ylab2=T, style1=0, style2=0)
 
 dev.off()
 
+
 ## 2) Turnover of hosts and symbionts (total richness / mean richness)
 
 jit = 0.01*c(-1,1)
@@ -171,7 +174,7 @@ dev.off()
 
 pdf(paste0(fig_dir, 'RUN 1/', 'mutualism_strength_vs_mort_rates_Cor_ab.pdf'), height=7, width=9)
 xyplot(Cor_ab ~ o | mrb + mra, data=means, ylim=c(-.1,1.1),
-	scales=list(alternating=1), xlab='Strength of mutalism (omega)', ylab=expression(Correlation~~S[A]%prop%S[B]),
+	scales=list(alternating=1), xlab='Strength of mutalism (omega)', ylab=expression(Correlation~~S[A]%~%S[B]),
 	panel=function(x, y, subscripts){
 		panel.abline(h=seq(0,1,.2), col='grey90')
 		panel.segments(x, low95s$Cor_ab[subscripts], x, up95s$Cor_ab[subscripts], col=1)
@@ -289,31 +292,6 @@ xyplot(cor_a ~ factor(mra) | mrb, groups = env, data=means, ylim = c(-.1,1),
 dev.off()
 
 
-# RDA within chain variance (within 10 chains)
-plot_data = subset(cor_summary, measure=='rda' & summary=='var')
-means = subset(plot_data, stat=='mean')
-low95s = subset(plot_data, stat=='2.5%')
-up95s = subset(plot_data, stat=='97.5%')
-jit_fact = 0.008
-jit_a = -1*c(3*jit_fact/2, jit_fact/2)
-jit_b = c(jit_fact/2, 3*jit_fact/2)
-
-pdf(paste0(fig_dir, 'mutualism_strength_vs_mort_rates_RDAvar.pdf'), height=7, width=9)
-xyplot(cor_a ~ o | mrb + mra, groups = env, data=means, ylim=c(-0.001, .02),
-	scales=list(alternating=1), xlab='Strength of mutalism (omega)', ylab=expression(RDA~~R^2),
-	panel=function(x, y, subscripts, groups){
-		panel.segments(x+jit_a[groups[subscripts]], low95s$cor_a[subscripts], x+jit_a[groups[subscripts]], up95s$cor_a[subscripts])
-		panel.segments(x+jit_b[groups[subscripts]], low95s$cor_b[subscripts], x+jit_b[groups[subscripts]], up95s$cor_b[subscripts])
-		panel.xyplot(x+jit_a[groups[subscripts]], y, pch=a_pch[groups[subscripts]], col=1)
-		panel.xyplot(x+jit_b[groups[subscripts]], means$cor_b[subscripts], pch=b_pch[groups[subscripts]], col=1)
-	}, 
-	strip = strip.custom(strip.names=T, strip.levels=T, sep='=', 
-		bg='transparent', var.name=expression(m[a],m[b]), fg='transparent'),
-	key=list(space='right', points=list(pch=c(a_pch, b_pch)), 
-		text=list(expression(A*" ~ "*E[1],A*" ~ "*E[2],B*" ~ "*E[1],B*" ~ "*E[2])))
-)
-dev.off()
-
 # Jaccard within chain mean
 plot_data = subset(cor_summary, measure=='jaccard' & summary=='mean')
 means = subset(plot_data, stat=='mean')
@@ -391,21 +369,218 @@ xyplot(cor_a ~ o | mrb + mra, groups = env, data=means, ylim=c(-1,1),
 dev.off()
 
 
+## 8) Within-run variance of community statistics
+
+within_run = subset(comm_summary, summary=='var')
+means = subset(within_run, stat=='mean')
+low95s = subset(within_run, stat=='2.5%')
+up95s = subset(within_run, stat=='97.5%')
+between_run = subset(comm_summary, summary=='mean'&stat=='var')
+
+commstat = 'Cor_ab'
+
+pdf(paste0(fig_dir,'RUN 1/','mutualism_strength_vs_mort_rates_', commstat, '_var.pdf'), height=7, width=9)
+lp1 = xyplot(means[,commstat] ~ o | mrb + mra, data=means, ylim=c(0,1.1*max(up95s[,commstat])),
+	scales=list(alternating=1), xlab='Strength of mutalism (omega)', ylab='Within Run Variance',
+	panel=function(x, y, subscripts, groups){
+		#panel.abline(h=seq(0,.4,.1), col='grey90')
+		panel.segments(x, low95s[subscripts,commstat], x, up95s[subscripts,commstat])
+		panel.xyplot(x, y, pch=16, col=1)
+	}, 
+	strip = strip.custom(strip.names=T, strip.levels=T, sep='=', 
+		bg='transparent', var.name=expression(m[a],m[b]), fg='transparent'),
+	key=list(space='top', points=list(pch=c(16,1), col=1:2), 
+		text=list(c('Within Runs','Between Runs')))
+)
+
+lp2 = xyplot(between_run[,commstat] ~ o | mrb + mra, data=between_run, ylab='Between Run Variance', pch=1, col=2) 
+
+doubleYScale(lp1, lp2, add.axis=T, add.ylab2=T, style1=0, style2=0)
+
+dev.off()
+
+
+within_run = subset(comm_summary, summary=='var' & o==1)
+means = subset(within_run, stat=='mean')
+low95s = subset(within_run, stat=='2.5%')
+up95s = subset(within_run, stat=='97.5%')
+between_run = subset(comm_summary, summary=='mean'&stat=='var'&o==1)
+
+pdf(paste0(fig_dir,'RUN 1/','mort_rates_effect_var.pdf'), height=3, width=7)
+for(commstat in c('S_a','S_b','Beta_a','Beta_b','N','Cor_ab')){
+
+lp1 = xyplot(means[,commstat] ~ mrb | mra, data=means, main=commstat, ylim=c(0,1.1*max(up95s[,commstat])),
+	scales=list(alternating=1), xlab='Strength of mutalism (omega)', ylab='Within Run Variance',
+	panel=function(x, y, subscripts, groups){
+		panel.segments(x, low95s[subscripts,commstat], x, up95s[subscripts,commstat])
+		panel.xyplot(x, y, pch=16, col=1)
+	}, 
+	strip = strip.custom(strip.names=T, strip.levels=T, sep='=', 
+		bg='transparent', var.name=expression(m[a],m[b]), fg='transparent'),
+	key=list(space='top', points=list(pch=c(16,1), col=1:2), 
+		text=list(c('Within Runs','Between Runs')))
+)
+
+lp2 = xyplot(between_run[,commstat] ~ mrb | mra, data=between_run, ylab='Between Run Variance', pch=1, col=2) 
+
+print(doubleYScale(lp1, lp2, add.axis=T, add.ylab2=T, style1=0, style2=0))
+
+}
+dev.off()
+
+## 9) Within-run variance of environmental correlations
+
+# RDA within chain variance 
+plot_data = subset(cor_summary, measure=='rda' & summary=='var')
+means = subset(plot_data, stat=='mean')
+low95s = subset(plot_data, stat=='2.5%')
+up95s = subset(plot_data, stat=='97.5%')
+between_run = subset(cor_summary, measure=='rda' & summary=='mean' & stat=='var')
+
+jit = 0.01*c(-1,1)
+
+pdf(paste0(fig_dir,'RUN 1/', 'mutualism_strength_vs_mort_rates_RDAvar.pdf'), height=7, width=9)
+# A: Host
+lp1 = xyplot(cor_a ~ o | mrb + mra, groups = env, data=means, ylim=c(0, max(up95s[,'cor_a'])),
+	scales=list(alternating=1), xlab='Strength of mutalism (omega)', ylab='Within Run Variance', main=expression(Host~~RDA~~R^2),
+	panel=function(x, y, subscripts, groups){
+		panel.segments(x+jit[groups[subscripts]], low95s$cor_a[subscripts], x+jit[groups[subscripts]], up95s$cor_a[subscripts])
+		panel.xyplot(x+jit[groups[subscripts]], y, pch=a_pch[groups[subscripts]], col=1)
+	}, 
+	strip = strip.custom(strip.names=T, strip.levels=T, sep='=', 
+		bg='transparent', var.name=expression(m[a],m[b]), fg='transparent'),
+	key=list(space='right', points=list(pch=c(a_pch,a_pch), col=rep(1:2, each=2)), 
+		text=list(rep(expression(A*" ~ "*E[1],A*" ~ "*E[2]),2)), text=list(rep(c('Within Run', 'Between Run'), each=2))
+	)
+)
+lp2 = xyplot(between_run[,'cor_a'] ~ o | mrb + mra, groups = env, data=between_run, ylab='Between Run Variance', 
+	pch=a_pch, col=2) 
+print(doubleYScale(lp1, lp2, add.axis=T, add.ylab2=T, style1=0, style2=0))
+
+# B: Symbiont
+lp1 = xyplot(cor_b ~ o | mrb + mra, groups = env, data=means, ylim=c(0, max(up95s[,'cor_b'])),
+	scales=list(alternating=1), xlab='Strength of mutalism (omega)', ylab='Within Run Variance', main=expression(Symbiont~~RDA~~R^2),
+	panel=function(x, y, subscripts, groups){
+		panel.segments(x+jit[groups[subscripts]], low95s$cor_b[subscripts], x+jit[groups[subscripts]], up95s$cor_b[subscripts])
+		panel.xyplot(x+jit[groups[subscripts]], y, pch=b_pch[groups[subscripts]], col=1)
+	}, 
+	strip = strip.custom(strip.names=T, strip.levels=T, sep='=', 
+		bg='transparent', var.name=expression(m[a],m[b]), fg='transparent'),
+	key=list(space='right', points=list(pch=c(b_pch,b_pch), col=rep(1:2, each=2)), 
+		text=list(rep(expression(B*" ~ "*E[1],B*" ~ "*E[2]),2)), text=list(rep(c('Within Run', 'Between Run'), each=2))
+	)
+)
+lp2 = xyplot(between_run[,'cor_b'] ~ o | mrb + mra, groups = env, data=between_run, ylab='Between Run Variance', 
+	pch=b_pch, col=2) 
+print(doubleYScale(lp1, lp2, add.axis=T, add.ylab2=T, style1=0, style2=0))
+
+dev.off()
+
 
 
 ######################################################################################
 ### Run 2: incrementing over strength of mutualism (omega = o), topology (topo) and type of environmental filtering (envfilt)
 
-
-## Plot correlations between mutualist communities and environment
-## error bars show 95th percentile from 100 different starts
-
+comm_summary$o = as.numeric(comm_summary$o)
+comm_summary$topo = factor(comm_summary$topo, levels=c('one2one','one2many','many2many'))
+comm_summary$envfilt = factor(comm_summary$envfilt, levels=c('none','same','opposite','all'))
 cor_summary$o = as.numeric(cor_summary$o)
 cor_summary$topo = factor(cor_summary$topo, levels=c('one2one','one2many','many2many'))
 cor_summary$envfilt = factor(cor_summary$envfilt, levels=c('none','same','opposite','all'))
 
-a_pch = c(16, 1)
-b_pch = c(15, 0)
+## 1) Mean richness of hosts and symbionts
+
+plot_data = subset(comm_summary, summary=='mean')
+means = subset(plot_data, stat=='mean')
+low95s = subset(plot_data, stat=='2.5%')
+up95s = subset(plot_data, stat=='97.5%')
+
+jit = 0.01*c(-1,1)
+
+pdf(paste0(fig_dir, 'RUN 2/', 'mutualism_strength_vs_envfilt_topo_mean_S.pdf'), height=7, width=9)
+lp1 = xyplot(S_a ~ o | topo + envfilt, data=means, ylim = c(-.1,30),
+	scales=list(alternating=1), xlab='Strength of mutalism (omega)', ylab=expression(Mean~~S[A]),
+	panel=function(x, y, subscripts){
+		panel.abline(h=seq(0,30,5), col='grey90')
+		panel.segments(x+jit[1], low95s$S_a[subscripts], x+jit[1], up95s$S_a[subscripts], col=1)
+		panel.xyplot(x+jit[1], y, pch=a_pch[1], col=1)
+	}, 
+	strip = strip.custom(strip.names=T, strip.levels=T, sep='=', 
+		bg='transparent', var.name=c('Topology','Env Filters'), fg='transparent'),
+	key=list(space='top', points=list(pch=c(a_pch[1], b_pch[1])), 
+		text=list(expression(S[A],S[B])))
+)
+
+lp2 = xyplot(S_b ~ o | topo + envfilt, data=means, ylim = c(-.1,30),
+	scales=list(alternating=1), xlab='Strength of mutalism (omega)', ylab=expression(Mean~~S[B]),
+	panel=function(x, y, subscripts){
+		panel.segments(x+jit[2], low95s$S_b[subscripts], x+jit[2], up95s$S_b[subscripts], col=1)
+		panel.xyplot(x+jit[2], y, pch=b_pch[1], col=1)
+	}
+)
+doubleYScale(lp1, lp2, add.axis=T, add.ylab2=T, style1=0, style2=0)
+
+dev.off()
+
+## 2) Turnover of hosts and symbionts (total richness / mean richness)
+
+pdf(paste0(fig_dir, 'RUN 2/', 'mutualism_strength_vs_envfilt_topo_beta.pdf'), height=7, width=9)
+lp1 = xyplot(Beta_a ~ o | topo + envfilt, data=means, ylim=c(.8,4),
+	scales=list(alternating=1), xlab='Strength of mutalism (omega)', ylab=expression(beta[A]),
+	panel=function(x, y, subscripts){
+		panel.abline(h=seq(1,4,.5), col='grey90')
+		panel.segments(x+jit[1], low95s$Beta_a[subscripts], x+jit[1], up95s$Beta_a[subscripts], col=1)
+		panel.xyplot(x+jit[1], y, pch=a_pch[1], col=1)
+	}, 
+	strip = strip.custom(strip.names=T, strip.levels=T, sep='=', 
+		bg='transparent', var.name=c('Topology','Env Filters'), fg='transparent'),
+	key=list(space='top', points=list(pch=c(a_pch[1], b_pch[1])), 
+		text=list(expression(beta[A],beta[B])))
+)
+
+lp2 = xyplot(Beta_b ~ o | topo + envfilt, data=means, ylim=c(.8,4),
+	scales=list(alternating=1), xlab='Strength of mutalism (omega)', ylab=expression(beta[B]),
+	panel=function(x, y, subscripts){
+		panel.segments(x, low95s$Beta_b[subscripts], x, up95s$Beta_b[subscripts], col=1)
+		panel.xyplot(x, y, pch=b_pch[1], col=1)
+	}
+)
+doubleYScale(lp1, lp2, add.axis=T, add.ylab2=T, , style1=0, style2=0)
+
+dev.off()
+
+## 3) Correlation between host and symbiont richness
+
+pdf(paste0(fig_dir, 'RUN 2/', 'mutualism_strength_vs_envfilt_topo_Cor_ab.pdf'), height=7, width=9)
+xyplot(Cor_ab ~ o | topo + envfilt, data=means, ylim=c(-.1,1.1),
+	scales=list(alternating=1), xlab='Strength of mutalism (omega)', ylab=expression(Correlation~~S[A]%~%S[B]),
+	panel=function(x, y, subscripts){
+		panel.abline(h=seq(0,1,.2), col='grey90')
+		panel.segments(x, low95s$Cor_ab[subscripts], x, up95s$Cor_ab[subscripts], col=1)
+		panel.xyplot(x, y, pch=cor_pch[1], col=1)
+	}, 
+	strip = strip.custom(strip.names=T, strip.levels=T, sep='=', 
+		bg='transparent', var.name=c('Topology','Env Filters'), fg='transparent')
+)
+dev.off()
+
+## 4) Mean abundance
+
+pdf(paste0(fig_dir, 'RUN 2/', 'mutualism_strength_vs_envfilt_topo_mean_N.pdf'), height=7, width=9)
+xyplot(N ~ o | topo + envfilt, data=means, ylim=c(70,100),
+	scales=list(alternating=1), xlab='Strength of mutalism (omega)', ylab='Mean Total Abundance',
+	panel=function(x, y, subscripts){
+		panel.abline(h=seq(70,100,5), col='grey90')
+		panel.segments(x, low95s$N[subscripts], x, up95s$N[subscripts], col=1)
+		panel.xyplot(x, y, pch=n_pch[1], col=1)
+	}, 
+	strip = strip.custom(strip.names=T, strip.levels=T, sep='=', 
+		bg='transparent', var.name=c('Topology','Env Filters'), fg='transparent')
+)
+dev.off()
+
+## 5) Correlation between environment and host & symbiont community structure
+
 jit_fact = 0.008
 jit_a = -1*c(3*jit_fact/2, jit_fact/2)
 jit_b = c(jit_fact/2, 3*jit_fact/2)
@@ -454,6 +629,195 @@ xyplot(cor_a ~ topo | envfilt, groups = env, data=means, ylim = c(-.1,1),
 		bg='transparent', var.name=c('env filters'), fg='transparent'),
 	key=list(space='right', points=list(pch=c(a_pch, b_pch)), 
 		text=list(expression(A*" ~ "*E[1],A*" ~ "*E[2],B*" ~ "*E[1],B*" ~ "*E[2])))
+)
+dev.off()
+
+## 6) Correlation between environment and host & symbiont richness
+
+plot_data = subset(cor_summary, measure=='S' & summary=='mean')
+means = subset(plot_data, stat=='mean')
+low95s = subset(plot_data, stat=='2.5%')
+up95s = subset(plot_data, stat=='97.5%')
+
+jit_fact = .01
+jit_a = -1*c(3*jit_fact/2, jit_fact/2)
+jit_b = c(jit_fact/2, 3*jit_fact/2)
+
+pdf(paste0(fig_dir,'RUN 2/','mutualism_strength_vs_envfilt_topo_Smean.pdf'), height=9, width=11)
+xyplot(cor_a ~ o | topo + envfilt, groups = env, data=means, ylim=c(-1,1),
+	scales=list(alternating=1), xlab='Strength of mutalism (omega)', ylab='S ~ Env',
+	panel=function(x, y, subscripts, groups){
+		panel.abline(h=0, col='grey')
+		panel.segments(x+jit_a[groups[subscripts]], low95s$cor_a[subscripts], x+jit_a[groups[subscripts]], up95s$cor_a[subscripts])
+		panel.segments(x+jit_b[groups[subscripts]], low95s$cor_b[subscripts], x+jit_b[groups[subscripts]], up95s$cor_b[subscripts])
+		panel.xyplot(x+jit_a[groups[subscripts]], y, pch=a_pch[groups[subscripts]], col=1)
+		panel.xyplot(x+jit_b[groups[subscripts]], means$cor_b[subscripts], pch=b_pch[groups[subscripts]], col=1)
+	}, 
+	strip = strip.custom(strip.names=T, strip.levels=T, sep='=', 
+		bg='transparent', var.name=c('Topology','Env Filters'), fg='transparent'),
+	key=list(space='right', points=list(pch=c(a_pch, b_pch)), 
+		text=list(expression(A*" ~ "*E[1],A*" ~ "*E[2],B*" ~ "*E[1],B*" ~ "*E[2])))
+)
+dev.off()
+
+## 7) Correlation between environment and abundance
+
+plot_data = subset(cor_summary, measure=='N' & summary=='mean')
+means = subset(plot_data, stat=='mean')
+low95s = subset(plot_data, stat=='2.5%')
+up95s = subset(plot_data, stat=='97.5%')
+
+jit = 0.01*c(-1,1)
+
+pdf(paste0(fig_dir,'RUN 1/','mutualism_strength_vs_envfilt_topo_Nmean.pdf'), height=9, width=11)
+xyplot(cor_a ~ o | topo + envfilt, groups = env, data=means, ylim=c(-1,1),
+	scales=list(alternating=1), xlab='Strength of mutalism (omega)', ylab='N ~ Env',
+	panel=function(x, y, subscripts, groups){
+		panel.abline(h=0, col='grey')
+		panel.segments(x+jit[groups[subscripts]], low95s$cor_a[subscripts], x+jit[groups[subscripts]], up95s$cor_a[subscripts])
+		panel.xyplot(x+jit[groups[subscripts]], y, pch=n_pch[groups[subscripts]], col=1)
+	}, 
+	strip = strip.custom(strip.names=T, strip.levels=T, sep='=', 
+		bg='transparent', var.name=c('Topology','Env Filters'), fg='transparent'),
+	key=list(space='right', points=list(pch=n_pch), 
+		text=list(expression(N*" ~ "*E[1],N*" ~ "*E[2])))
+)
+dev.off()
+
+## 8) Within-run variance of community statistics
+
+within_run = subset(comm_summary, summary=='var')
+means = subset(within_run, stat=='mean')
+low95s = subset(within_run, stat=='2.5%')
+up95s = subset(within_run, stat=='97.5%')
+between_run = subset(comm_summary, summary=='mean'&stat=='var')
+
+commstat = 'S_a'
+
+pdf(paste0(fig_dir,'RUN 2/','mutualism_strength_vs_topo_envfilt_community_stat_var.pdf'), height=7, width=9)
+for(commstat in c('S_a','S_b','Beta_a','Beta_b','Cor_ab')){
+lp1 = xyplot(means[,commstat] ~ o | topo + envfilt, data=means, ylim=c(0,1.1*max(up95s[,commstat])),
+	scales=list(alternating=1), xlab='Strength of mutalism (omega)', ylab='Within Run Variance', main=commstat,
+	panel=function(x, y, subscripts, groups){
+		#panel.abline(h=seq(0,.4,.1), col='grey90')
+		panel.segments(x, low95s[subscripts,commstat], x, up95s[subscripts,commstat])
+		panel.xyplot(x, y, pch=16, col=1)
+	}, 
+	strip = strip.custom(strip.names=T, strip.levels=T, sep='=', 
+		bg='transparent', var.name=c('Topology','Env Filters'), fg='transparent'),
+	key=list(space='top', points=list(pch=c(16,1), col=1:2), 
+		text=list(c('Within Runs','Between Runs')))
+)
+
+lp2 = xyplot(between_run[,commstat] ~ o | topo + envfilt, data=between_run, ylim=c(0,1.1*max(between_run[,commstat])), ylab='Between Run Variance', pch=1, col=2) 
+
+print(doubleYScale(lp1, lp2, add.axis=T, add.ylab2=T, style1=0, style2=0))
+}
+dev.off()
+
+
+within_run = subset(comm_summary, summary=='var' & o==1)
+means = subset(within_run, stat=='mean')
+low95s = subset(within_run, stat=='2.5%')
+up95s = subset(within_run, stat=='97.5%')
+between_run = subset(comm_summary, summary=='mean'&stat=='var'&o==1)
+
+pdf(paste0(fig_dir,'RUN 1/','mort_rates_effect_var.pdf'), height=3, width=7)
+for(commstat in c('S_a','S_b','Beta_a','Beta_b','N','Cor_ab')){
+
+lp1 = xyplot(means[,commstat] ~ mrb | mra, data=means, main=commstat, ylim=c(0,1.1*max(up95s[,commstat])),
+	scales=list(alternating=1), xlab='Strength of mutalism (omega)', ylab='Within Run Variance',
+	panel=function(x, y, subscripts, groups){
+		panel.segments(x, low95s[subscripts,commstat], x, up95s[subscripts,commstat])
+		panel.xyplot(x, y, pch=16, col=1)
+	}, 
+	strip = strip.custom(strip.names=T, strip.levels=T, sep='=', 
+		bg='transparent', var.name=expression(m[a],m[b]), fg='transparent'),
+	key=list(space='top', points=list(pch=c(16,1), col=1:2), 
+		text=list(c('Within Runs','Between Runs')))
+)
+
+lp2 = xyplot(between_run[,commstat] ~ mrb | mra, data=between_run, ylab='Between Run Variance', pch=1, col=2) 
+
+print(doubleYScale(lp1, lp2, add.axis=T, add.ylab2=T, style1=0, style2=0))
+
+}
+dev.off()
+
+## 9) Within-run variance of environmental correlations
+
+# RDA within chain variance 
+plot_data = subset(cor_summary, measure=='rda' & summary=='var')
+means = subset(plot_data, stat=='mean')
+low95s = subset(plot_data, stat=='2.5%')
+up95s = subset(plot_data, stat=='97.5%')
+between_run = subset(cor_summary, measure=='rda' & summary=='mean' & stat=='var')
+
+jit = 0.01*c(-1,1)
+
+pdf(paste0(fig_dir,'RUN 2/', 'mutualism_strength_vs_envfilt_topo_RDAvar.pdf'), height=7, width=9)
+# A: Host
+use_ylim = c(0, max(c(up95s[,'cor_a'], between_run[,'cor_a']), na.rm=T))
+lp1 = xyplot(cor_a ~ o | topo + envfilt, groups = env, data=means, ylim=use_ylim,
+	scales=list(alternating=1), xlab='Strength of mutalism (omega)', ylab='Within Run Variance', main=expression(Host~~RDA~~R^2),
+	panel=function(x, y, subscripts, groups){
+		panel.segments(x+jit[groups[subscripts]], low95s$cor_a[subscripts], x+jit[groups[subscripts]], up95s$cor_a[subscripts])
+		panel.xyplot(x+jit[groups[subscripts]], y, pch=a_pch[groups[subscripts]], col=1)
+	}, 
+	strip = strip.custom(strip.names=T, strip.levels=T, sep='=', 
+		bg='transparent', var.name=c('Topology','Env Filters'), fg='transparent'),
+	key=list(space='right', points=list(pch=c(a_pch,a_pch), col=rep(1:2, each=2)), 
+		text=list(rep(expression(A*" ~ "*E[1],A*" ~ "*E[2]),2)), text=list(rep(c('Within Run', 'Between Run'), each=2))
+	)
+)
+lp2 = xyplot(between_run[,'cor_a'] ~ o | topo + envfilt, groups = env, data=between_run, ylab='Between Run Variance', ylim=use_ylim, pch=a_pch, col=2) 
+print(doubleYScale(lp1, lp2, add.axis=T, add.ylab2=T, style1=0, style2=0))
+
+# B: Symbiont
+use_ylim=c(0, max(c(up95s[,'cor_b'], between_run[,'cor_b']), na.rm=T))
+lp1 = xyplot(cor_b ~ o | topo + envfilt, groups = env, data=means, ylim=use_ylim,
+	scales=list(alternating=1), xlab='Strength of mutalism (omega)', ylab='Within Run Variance', main=expression(Symbiont~~RDA~~R^2),
+	panel=function(x, y, subscripts, groups){
+		panel.segments(x+jit[groups[subscripts]], low95s$cor_b[subscripts], x+jit[groups[subscripts]], up95s$cor_b[subscripts])
+		panel.xyplot(x+jit[groups[subscripts]], y, pch=b_pch[groups[subscripts]], col=1)
+	}, 
+	strip = strip.custom(strip.names=T, strip.levels=T, sep='=', 
+		bg='transparent', var.name=c('Topology','Env Filters'), fg='transparent'),
+	key=list(space='right', points=list(pch=c(b_pch,b_pch), col=rep(1:2, each=2)), 
+		text=list(rep(expression(B*" ~ "*E[1],B*" ~ "*E[2]),2)), text=list(rep(c('Within Run', 'Between Run'), each=2))
+	)
+)
+lp2 = xyplot(between_run[,'cor_b'] ~ o | topo + envfilt, groups = env, data=between_run, ylab='Between Run Variance', ylim=use_ylim, pch=b_pch, col=2) 
+print(doubleYScale(lp1, lp2, add.axis=T, add.ylab2=T, style1=0, style2=0))
+
+dev.off()
+
+pdf(paste0(fig_dir,'RUN 2/', 'mutualism_strength_vs_envfilt_topo_RDAvar_no_between.pdf'), height=7, width=9)
+use_ylim = c(0, max(up95s[,'cor_a'], na.rm=T))
+xyplot(cor_a ~ o | topo + envfilt, groups = env, data=means, ylim=use_ylim,
+	scales=list(alternating=1), xlab='Strength of mutalism (omega)', ylab='Within Run Variance', main=expression(Host~~RDA~~R^2),
+	panel=function(x, y, subscripts, groups){
+		panel.segments(x+jit[groups[subscripts]], low95s$cor_a[subscripts], x+jit[groups[subscripts]], up95s$cor_a[subscripts])
+		panel.xyplot(x+jit[groups[subscripts]], y, pch=a_pch[groups[subscripts]], col=1)
+	}, 
+	strip = strip.custom(strip.names=T, strip.levels=T, sep='=', 
+		bg='transparent', var.name=c('Topology','Env Filters'), fg='transparent'),
+	key=list(space='right', points=list(pch=c(a_pch,a_pch), col=rep(1:2, each=2)), 
+		text=list(rep(expression(A*" ~ "*E[1],A*" ~ "*E[2]),2)), text=list(rep(c('Within Run', 'Between Run'), each=2))
+	)
+)
+use_ylim=c(0, max(up95s[,'cor_b'], na.rm=T))
+xyplot(cor_b ~ o | topo + envfilt, groups = env, data=means, ylim=use_ylim,
+	scales=list(alternating=1), xlab='Strength of mutalism (omega)', ylab='Within Run Variance', main=expression(Symbiont~~RDA~~R^2),
+	panel=function(x, y, subscripts, groups){
+		panel.segments(x+jit[groups[subscripts]], low95s$cor_b[subscripts], x+jit[groups[subscripts]], up95s$cor_b[subscripts])
+		panel.xyplot(x+jit[groups[subscripts]], y, pch=b_pch[groups[subscripts]], col=1)
+	}, 
+	strip = strip.custom(strip.names=T, strip.levels=T, sep='=', 
+		bg='transparent', var.name=c('Topology','Env Filters'), fg='transparent'),
+	key=list(space='right', points=list(pch=c(b_pch,b_pch), col=rep(1:2, each=2)), 
+		text=list(rep(expression(B*" ~ "*E[1],B*" ~ "*E[2]),2)), text=list(rep(c('Within Run', 'Between Run'), each=2))
+	)
 )
 dev.off()
 

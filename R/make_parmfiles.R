@@ -5,7 +5,7 @@ setwd('./Research/CAMM')
 
 # Set directories
 sim_dir = './GitHub/CAMM/R/'
-parm_dir = './Parms/Parms_7/'
+parm_dir = './Parms/Parms_3B/'
 
 dir.create(parm_dir)
 
@@ -113,7 +113,10 @@ for(o in omega_vec){
 }
 
 
-## RUN 3 ##
+## RUN 3 & 3B ##
+
+# For 3B
+omega = 0
 
 # Define parameter sets
 breadth_vec = c(0.25, 0.5, 1, 2, 4)

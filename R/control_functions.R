@@ -152,29 +152,34 @@ run_camm_N = function(sim_dir, parm_file, nruns, nchains, nparallel=1, sim_parms
 	
 			# Calculate mean community richness and abundance
 			if(length(sim_parms$reps)==1){
-				rich_summary = sapply(end_metacomms['comm',], function(comm) calc_commstats(comm, topo_names), simplify='array')
+				rich_summary = sapply(1:nchains, function(i) calc_commstats(end_metacomms['comm',i][[1]], topo_names, list(a=end_metacomms['poolA',i][[1]], b=end_metacomms['poolB',i][[1]])), simplify='array')
 				comm_means = sapply(rownames(rich_summary), function(type) apply(simplify2array(rich_summary[type,]), 2, mean))
 				rich_stats = apply(comm_means, 2, function(x) c(mean(x), var(x))) 
 				rownames(rich_stats) = c('mean','var')
 			
 				# Calculate environmental correlations
 				# CURRENTLY USES PRES/ABSENCE, NOT ABUNDANCE
-				corr_stats = sapply(end_metacomms['comm',], function(comm) calc_envcorr(comm, topo_names, sites, 'jaccard', binary=T), simplify='array')
+				corr_stats = sapply(1:nchains, function(i) calc_envcorr(end_metacomms['comm',i][[1]], topo_names, sites, 'jaccard', binary=T,list(a=end_metacomms['poolA',i][[1]], b=end_metacomms['poolB',i][[1]])), simplify='array')
 				corr_stats = apply(corr_stats, 1:4, function(vals) c(mean(vals), var(vals)))	
 				dimnames(corr_stats)[[1]] = c('mean','var')
 				# Returns array with [mean/var, type, env, S/N/rda/jaccard, binary]
 			} else {
-				rich_summary = sapply(end_metacomms['comm',], function(comms){
-					 apply(comms, 3, function(comm) calc_commstats(comm, topo_names))	
+				rich_summary = sapply(1:nchains, function(i){
+					comms = end_metacomms[,i]$comm
+					poolAs = end_metacomms[,i]$poolA
+					poolBs = end_metacomms[,i]$poolB
+					sapply(1:dim(comms)[3], function(j) calc_commstats(comms[,,j], topo_names, list(a=poolAs[,,j], b=poolBs[,,j])))	
 				}, simplify='array')
-				comm_means = apply(rich_summary, c(1,2), function(x) colMeans(x[[1]]))
+				comm_means = apply(rich_summary, c(1,2,3), function(x) mean(x[[1]]))
 				rich_stats = apply(comm_means, c(1,2), function(x) c(mean(x), var(x)))
 				dimnames(rich_stats)[[1]] = c('mean','var')
 				dimnames(rich_stats)[[3]] = paste0('T',sim_parms$reps)
 				
-				corr_stats = sapply(1:length(end_metacomms['comm',]), function(j){
-					comms = end_metacomms['comm',][[j]]
-					sapply(1:dim(comms)[3], function(i) calc_envcorr(comms[,,i], topo_names, sites, 'jaccard', binary=T), simplify='array')	
+				corr_stats = sapply(1:nchains, function(i){
+					comms = end_metacomms[,i]$comm
+					poolAs = end_metacomms[,i]$poolA
+					poolBs = end_metacomms[,i]$poolB
+					sapply(1:dim(comms)[3], function(j) calc_envcorr(comms[,,j], topo_names, sites, 'jaccard', binary=T, list(a=poolAs[,,j], b=poolBs[,,j])), simplify='array')	
 				}, simplify='array')
 				corr_stats = apply(corr_stats, 1:5, function(vals) c(mean(vals), var(vals)))	
 				dimnames(corr_stats)[[1]] = c('mean','var')
@@ -228,29 +233,34 @@ run_camm_N = function(sim_dir, parm_file, nruns, nchains, nparallel=1, sim_parms
 	
 			# Calculate mean community richness and abundance
 			if(length(sim_parms$reps)==1){
-				rich_summary = sapply(end_metacomms['comm',], function(comm) calc_commstats(comm, topo_names), simplify='array')
+				rich_summary = sapply(1:nchains, function(i) calc_commstats(end_metacomms['comm',i][[1]], topo_names, list(a=end_metacomms['poolA',i][[1]], b=end_metacomms['poolB',i][[1]])), simplify='array')
 				comm_means = sapply(rownames(rich_summary), function(type) apply(simplify2array(rich_summary[type,]), 2, mean))
 				rich_stats = apply(comm_means, 2, function(x) c(mean(x), var(x))) 
 				rownames(rich_stats) = c('mean','var')
 			
 				# Calculate environmental correlations
 				# CURRENTLY USES PRES/ABSENCE, NOT ABUNDANCE
-				corr_stats = sapply(end_metacomms['comm',], function(comm) calc_envcorr(comm, topo_names, sites, 'jaccard', binary=T), simplify='array')
+				corr_stats = sapply(1:nchains, function(i) calc_envcorr(end_metacomms['comm',i][[1]], topo_names, sites, 'jaccard', binary=T,list(a=end_metacomms['poolA',i][[1]], b=end_metacomms['poolB',i][[1]])), simplify='array')
 				corr_stats = apply(corr_stats, 1:4, function(vals) c(mean(vals), var(vals)))	
 				dimnames(corr_stats)[[1]] = c('mean','var')
 				# Returns array with [mean/var, type, env, S/N/rda/jaccard, binary]
 			} else {
-				rich_summary = sapply(end_metacomms['comm',], function(comms){
-					 apply(comms, 3, function(comm) calc_commstats(comm, topo_names))	
+				rich_summary = sapply(1:nchains, function(i){
+					comms = end_metacomms[,i]$comm
+					poolAs = end_metacomms[,i]$poolA
+					poolBs = end_metacomms[,i]$poolB
+					sapply(1:dim(comms)[3], function(j) calc_commstats(comms[,,j], topo_names, list(a=poolAs[,,j], b=poolBs[,,j])))	
 				}, simplify='array')
-				comm_means = apply(rich_summary, c(1,2), function(x) colMeans(x[[1]]))
+				comm_means = apply(rich_summary, c(1,2,3), function(x) mean(x[[1]]))
 				rich_stats = apply(comm_means, c(1,2), function(x) c(mean(x), var(x)))
 				dimnames(rich_stats)[[1]] = c('mean','var')
 				dimnames(rich_stats)[[3]] = paste0('T',sim_parms$reps)
 				
-				corr_stats = sapply(1:length(end_metacomms['comm',]), function(j){
-					comms = end_metacomms['comm',][[j]]
-					sapply(1:dim(comms)[3], function(i) calc_envcorr(comms[,,i], topo_names, sites, 'jaccard', binary=T), simplify='array')	
+				corr_stats = sapply(1:nchains, function(i){
+					comms = end_metacomms[,i]$comm
+					poolAs = end_metacomms[,i]$poolA
+					poolBs = end_metacomms[,i]$poolB
+					sapply(1:dim(comms)[3], function(j) calc_envcorr(comms[,,j], topo_names, sites, 'jaccard', binary=T, list(a=poolAs[,,j], b=poolBs[,,j])), simplify='array')	
 				}, simplify='array')
 				corr_stats = apply(corr_stats, 1:5, function(vals) c(mean(vals), var(vals)))	
 				dimnames(corr_stats)[[1]] = c('mean','var')

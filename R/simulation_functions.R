@@ -443,11 +443,11 @@ die = function(comm, topo_names, pool, mortality, partner){
 	
 	# Find pool of mutualists that are not in an association and can die
 	comm_pool = calc_pool(comm, topo_names, partner)
-	not_associated = which(pool!=comm_pool)
-
+	not_associated = which(pool!=comm_pool) # also finds species in associations that are not in the pool (when omega < 1)
+	
 	# For each unassociated partner in each community do random mortality
 	survive = runif(length(not_associated)) > mortality
-	pool[not_associated] = pool[not_associated]*survive
+	pool[not_associated] = pool[not_associated]*survive # species in associations that are not in the pool remain not in pool while species in pool but not associations may die
 
 	# Return new pool
 	pool
@@ -766,16 +766,17 @@ run_camm = function(metacomm=NULL, sim_mode, reps=NA, nchains=NA, save_steps=NA)
 # A function that calculates species abundances for all sites
 #	comm = an N_C x N matrix of species present at each site
 #	topo_names = matrix describing mutualistic netiwork and numbering each partner
-#	type = 'species', 'a', 'b' : which partner should be tabulated	
+#	type = 'species', 'a', 'b' : which partner should be tabulated
+#	pool = N_C x S matrix indicating which species are present in the species pool at each site. Should be included when type is 'b' and omega < 1.
 
-calc_sa = function(comm, topo_names, type='species'){
+calc_sa = function(comm, topo_names, type='species', pool=NULL){
 	if(type=='species'){
 		counts = apply(comm, 1, function(x) table(factor(x, 1:max(topo_names))))
 	}
 	
 	if(type=='a'){
 		counts = apply(comm, 1, function(x){
-			table(factor(sapply(x, function(xi) ifelse(xi==0, 0, which(topo_names==xi, arr.ind=T)[1])), 1:nrow(topo_names)))
+			table(factor(sapply(x, function(xi)	ifelse(xi==0, 0, which(topo_names==xi, arr.ind=T)[1])), 1:nrow(topo_names)))
 		})
 	}
 
@@ -785,24 +786,29 @@ calc_sa = function(comm, topo_names, type='species'){
 		})
 	}
 
+	if(!is.null(pool)) counts = counts*t(pool)
+
 	t(counts)
 }
 
 # A function that calculates species richness for all sites
+# This will include species 'present' in associations that may not be present in the species pools (when omega < 1)
 #	comm = an N_C x N matrix of species present at each site
 #	topo_names = matrix describing mutualistic netiwork and numbering each partner
 #	type = 'species', 'a', 'b' : which partner should be tabulated		
-calc_rich = function(comm, topo_names, type){
-	sa = calc_sa(comm, topo_names, type)
+#	pool = N_C x S matrix indicating which species are present in the species pool at each site. Should be included when type is 'b' and omega < 1.
+calc_rich = function(comm, topo_names, type, pool=NULL){
+	sa = calc_sa(comm, topo_names, type, pool)
 	apply(sa, 1, function(x) sum(x>0))
 }
 
 # A function that calculates species richness in the entire metacommunity 
+# This will include species 'present' in associations that may not be present in the species pools (when omega < 1)
 #	comm = an N_C x N matrix of species present at each site
 #	topo_names = matrix describing mutualistic netiwork and numbering each partner
 #	type = 'species', 'a', 'b' : which partner should be tabulated		
-calc_tot_rich = function(comm, topo_names, type){
-	sa = calc_sa(comm, topo_names, type)
+calc_tot_rich = function(comm, topo_names, type, pool=NULL){
+	sa = calc_sa(comm, topo_names, type, pool)
 	sum(colSums(sa) > 0)
 }
 
@@ -826,8 +832,9 @@ calc_tot_occ = function(comm){
 #	type = 'species', 'a', 'b' : which partner should be tabulated
 # 	metric = any dissimilarity method allowed by vegdist function in vegan 
 #	binary = convert community matrix to presence/absence?	
-calc_diss = function(comm, topo_names, type, metric, binary=F){
-	comm_mat = calc_sa(comm, topo_names, type)
+#	pool = N_C x S matrix indicating which species are present in the species pool at each site. Should be included when type is 'b' and omega < 1.
+calc_diss = function(comm, topo_names, type, metric, binary=F, pool=NULL){
+	comm_mat = calc_sa(comm, topo_names, type, pool)
 	if(binary) comm_mat = comm_mat > 0
 	vegdist(comm_mat, method=metric)
 }
@@ -839,9 +846,10 @@ calc_diss = function(comm, topo_names, type, metric, binary=F){
 #	type = 'species', 'a', 'b' : which partner should be tabulated
 #	env = matrix of environmental variables across sites (in same order as comm)
 #	binary = convert community matrix to presence/absence?	
-calc_rda = function(comm, topo_names, type, env, binary=F){
+#	pool = N_C x S matrix indicating which species are present in the species pool at each site. Should be included when type is 'b' and omega < 1.
+calc_rda = function(comm, topo_names, type, env, binary=F, pool=NULL){
 	# Calculate community matrix of species abudances
-	comm_mat = calc_sa(comm, topo_names, type)
+	comm_mat = calc_sa(comm, topo_names, type, pool)
 
 	# Convert to presence/absence if indicated
 	if(binary) comm_mat = comm_mat > 0
@@ -862,7 +870,8 @@ calc_rda = function(comm, topo_names, type, env, binary=F){
 #	topo_names = matrix describing mutualistic netiwork and numbering each partner
 # 	metric = any dissimilarity method allowed by vegdist function in vegan 
 #	binary = vector of logical indicated whether community matrix should be converted to presence/absence?
-calc_envcorr = function(comm, topo_names, env, metric, binary){
+#	pools = a named list of species pools: list(a=poolA, b=poolB)
+calc_envcorr = function(comm, topo_names, env, metric, binary, pools=NULL){
 	# Count the number of environmental axes
 	Nenv = ifelse(is.null(dim(env)), 1, ncol(env))
 
@@ -878,18 +887,30 @@ calc_envcorr = function(comm, topo_names, env, metric, binary){
 		
 		# Calculate correlation with species richness
 		# NOTE: DOES NOT IMPLEMENT ABUNDANCE-WEIGHTED SPECIES DIVERSITY, SAME CALCULATION FOR BINARY=T/F
-		corr_mat[type, i, 'S', k] = cor(X, calc_rich(comm, topo_names, type))
+		if(type=='species'){
+			corr_mat[type, i, 'S', as.character(k)] = cor(X, calc_rich(comm, topo_names, type))
+		} else {
+			corr_mat[type, i, 'S', as.character(k)] = cor(X, calc_rich(comm, topo_names, type, pools[[type]]))
+		}
 
 		# Calculate correlation with abundance
 		# NOTE: THIS WILL BE THE SAME REGARDLESS OF TYPE OR BINARY
-		corr_mat[type, i, 'N', k] = cor(X, calc_occ(comm))
+		corr_mat[type, i, 'N', as.character(k)] = cor(X, calc_occ(comm))
 
 		# Calculate RDA
-		corr_mat[type, i, 'rda', as.character(k)] = calc_rda(comm, topo_names, type, X, k)
+		if(type=='species'){
+			corr_mat[type, i, 'rda', as.character(k)] = calc_rda(comm, topo_names, type, X, k)
+		} else {
+			corr_mat[type, i, 'rda', as.character(k)] = calc_rda(comm, topo_names, type, X, k, pools[[type]])
+		}
 		
 		# Calculate correlation for each dissimilarity metric
 		for(j in metric){
-			comm_diss = calc_diss(comm, topo_names, type, j, k)
+			if(type=='species'){
+				comm_diss = calc_diss(comm, topo_names, type, j, k)
+			} else {
+				comm_diss = calc_diss(comm, topo_names, type, j, k, pools[[type]])
+			}
 			env_dist = dist(X)
 			corr_mat[type, i, j, as.character(k)] = cor(comm_diss, env_dist, use='pairwise.complete.obs')
 		}
@@ -904,17 +925,18 @@ calc_envcorr = function(comm, topo_names, env, metric, binary){
 # A function that calculates all community summary statistics
 #	comm = an N_C x N matrix of species present at each site
 #	topo_names = matrix describing mutualistic netiwork and numbering each partner
-calc_commstats = function(comm, topo_names){
+#	pools = a named list of species pools: list(a=poolA, b=poolB)
+calc_commstats = function(comm, topo_names, pools){
 
 	# Calculate richness
 	S_species = calc_rich(comm, topo_names, 'species')
-	S_a = calc_rich(comm, topo_names, 'a')
-	S_b = calc_rich(comm, topo_names, 'b')
+	S_a = calc_rich(comm, topo_names, 'a', pools[['a']])
+	S_b = calc_rich(comm, topo_names, 'b', pools[['b']])
 	
 	# Calculate total richness
 	Stot_species = calc_tot_rich(comm, topo_names, 'species')
-	Stot_a = calc_tot_rich(comm, topo_names, 'a')
-	Stot_b = calc_tot_rich(comm, topo_names, 'b')
+	Stot_a = calc_tot_rich(comm, topo_names, 'a', pools[['a']])
+	Stot_b = calc_tot_rich(comm, topo_names, 'b', pools[['b']])
 
 	# Calculate beta diversity
 	Beta_species = Stot_species / mean(S_species, na.rm=T)

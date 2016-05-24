@@ -42,9 +42,8 @@ r_b = 0 # covariance of niche breadths of 2 environmental variables for mutualis
 ## Parameters controling global abundance distribution (differential dispersal)
 # Shape of the SAD
 
-gsad_dist_a = list(type='uniform', maxN = 2, P_maxN = 0.999, corr=matrix(0, nrow=2, ncol=2))
-gsad_dist_b = list(type='uniform', maxN = 2, P_maxN = 0.999, corr=matrix(0, nrow=2, ncol=2))
-
+gsad_dist_a = list(type='same', maxN = 2, P_maxN = 0.999, corr=matrix(0, nrow=2, ncol=2))
+gsad_dist_b = list(type='same', maxN = 2, P_maxN = 0.999, corr=matrix(0, nrow=2, ncol=2))
 
 # Lists of parameters for each mutualist
 nicheparms_a = list(mu = c(mu_a1, mu_a2), rho = rho_a, sigma = c(sigma_a1, sigma_a2), alpha = c(alpha_a1, alpha_a2), r=r_a)
@@ -60,7 +59,7 @@ topology = 'one2many' # links from mutualist a to mutualist b: 'one2one','one2ma
 # Range from 0 (no mutualism) to 1 (obligate mutualism)
 # Currently affects the probability of establishment when partner A is present and B is not
 # P(establish| A & !B) = (1 - omega)*P(association)
-omega = 1 
+omega = 0 
 
 # Environmental dependence of association
 # 	a function that calculates the probability of association given environmental conditions at a site and optimal niches of mutualists

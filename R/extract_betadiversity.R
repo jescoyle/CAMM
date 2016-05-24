@@ -58,7 +58,7 @@ foreach(runID=runIDs, .packages='reshape') %dopar% {
 
 		# Summarize results across chains
 		if(length(reps)==1){
-			rich_summary = sapply(end_metacomms['comm',], function(comm) calc_commstats(comm, topo_names), simplify='array')
+			rich_summary = sapply(1:nchains, function(i) calc_commstats(end_metacomms['comm',i][[1]], topo_names, list(a=end_metacomms['poolA',i][[1]], b=end_metacomms['poolB',i][[1]])), simplify='array')
 			comm_means = sapply(rownames(rich_summary), function(type) apply(simplify2array(rich_summary[type,]), 2, mean))
 			rich_stats = apply(comm_means, 2, function(x) c(mean(x), var(x))) 
 			rownames(rich_stats) = c('mean','var')

@@ -13,7 +13,7 @@ setwd(working_dir)
 fig_dir = 'C:/Users/jrcoyle/Documents/Research/CAMM/Figures/'
 
 # Location of results
-results_dir = 'C:/Users/jrcoyle/Documents/Research/CAMM/Runs/Summaries_4/'
+results_dir = 'C:/Users/jrcoyle/Documents/Research/CAMM/Runs/Summaries_3/'
 
 # Load functions
 code_dir = 'C:/Users/jrcoyle/Documents/Research/CAMM/GitHub/CAMM/R/'
@@ -75,9 +75,13 @@ for(f in cor_filelist){
 }
 
 # Write out a summary tables
-this_run = 'run4'
+this_run = 'run2'
 write.csv(comm_summary, paste0(git_dir,'Results/comm_summary_',this_run,'.csv'), row.names=F)
 write.csv(cor_summary, paste0(git_dir,'Results/cor_summary_',this_run,'.csv'), row.names=F)
+
+# Read in tables from RUN 2 with no mutualism
+comm_nomut = read.csv(paste0(git_dir, 'Results/comm_summary_no_mutualism.csv'))
+cor_nomut = read.csv(paste0(git_dir, 'Results/cor_summary_no_mutualism.csv'))
 
 ## In each run, evaluate effects of parameters on:
 ## 1) Mean richness of hosts and symbionts
@@ -96,7 +100,7 @@ b_pch = c(15, 0)
 n_pch = c(17, 2)
 cor_pch = 18
 
-
+######################################################################
 ## Run 1: incrementing over stregth of mutualism (omega = o) and relative mortality of unassociated mutualists (mort_rate_a = mra, mort_rate_b = mrb)
 
 cor_summary$o = as.numeric(cor_summary$o)
@@ -795,6 +799,9 @@ xyplot(cor_b ~ o | topo + envfilt, groups = env, data=means, ylim=use_ylim,
 )
 dev.off()
 
+## Save table of results from no mutualism for use in later figures
+write.csv(subset(comm_summary, o==0), paste0(git_dir, 'Results/comm_summary_no_mutualism.csv'), row.names=F)
+write.csv(subset(cor_summary, o==0), paste0(git_dir, 'Results/cor_summary_no_mutualism.csv'), row.names=F)
 
 #######################################################################
 ### Run 3: Incrementng over topology, direction and strength of env filtering and 
@@ -856,6 +863,41 @@ xyplot(S_b ~ factor(sigA) | sigB + envfilt, groups=topo, data=means, ylim=c(0,32
 )
 dev.off()
 
+# Compare with no mutualism
+## NOT FINISHED B	/C NEED TO RUN SIMULATIONS WITHOUT MUTUALISM.
+for(this_topo in levels(comm_summary$topo)){
+
+plot_data = subset(comm_summary, summary=='mean'&topo==this_topo)
+means = subset(plot_data, stat=='mean')
+low95s = subset(plot_data, stat=='2.5%')
+up95s = subset(plot_data, stat=='97.5%')
+
+xyplot(S_a ~ factor(sigA) | sigB + envfilt, data=means, ylim=c(0,32),
+	scales=list(alternating=1), xlab=expression(sigma[a]), ylab=expression(Mean~~S[A]), main=paste('Topology =',this_topo),
+	panel=function(x, y, subscripts){
+		ef = levels(means$envfilt)[current.row()]
+		use_nomut = subset(comm_nomut, topo==this_topo&envfilt==ef&summary=='mean')
+		usr = par('usr')
+		panel.rect(usr[1], use_nomut[use_nomut$stat=='2.5%','S_a'], usr[2], use_nomut[use_nomut$stat=='97.5%','S_a'], 
+			col='grey80', border='transparent')
+		panel.abline(h=use_nomut[use_nomut$stat=='mean','S_a'], col='grey50')
+		x = as.numeric(x)
+		panel.segments(x, low95s$S_a[subscripts], x, up95s$S_a[subscripts])
+		panel.xyplot(x, y, pch=use_pch[which(levels(comm_summary$topo)==this_topo)], col=1)
+	}, 
+	strip = strip.custom(strip.names=T, strip.levels=T, sep='=', 
+		bg='transparent', var.name=expression(sigma[b], Filtering), fg='transparent')
+)
+
+
+# same
+plot_data = subset(comm_summary, summary=='mean'&envfilt=='same'&sigA==.5&sigB==.5)
+make_plotdfs(plot_data)
+
+use_nomut = subset(comm_nomut, summary=='mean'&envfilt=='same')
+
+
+
 # Scaled by num. symbiont species
 plot_data[plot_data$topo %in% c('many2many','one2many'),'S_b'] = plot_data[plot_data$topo %in% c('many2many','one2many'),'S_b'] / 10
 plot_data[plot_data$topo == 'one2one','S_b'] = plot_data[plot_data$topo == 'one2one','S_b'] / 30
@@ -903,6 +945,8 @@ xyplot(S_a  ~ S_b | sigA + sigB, groups=envfilt, data=means,
 
 )
 dev.off()
+
+
 
 ## 2) Turnover of hosts and symbionts (total richness / mean richness)
 

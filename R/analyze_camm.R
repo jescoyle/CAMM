@@ -13,7 +13,7 @@ setwd(working_dir)
 fig_dir = 'C:/Users/jrcoyle/Documents/Research/CAMM/Figures/'
 
 # Location of results
-results_dir = 'C:/Users/jrcoyle/Documents/Research/CAMM/Runs/Summaries_3/'
+results_dir = 'C:/Users/jrcoyle/Documents/Research/CAMM/Runs/Summaries_2-new/'
 
 # Load functions
 code_dir = 'C:/Users/jrcoyle/Documents/Research/CAMM/GitHub/CAMM/R/'
@@ -102,6 +102,7 @@ cor_pch = 18
 
 ######################################################################
 ## Run 1: incrementing over stregth of mutualism (omega = o) and relative mortality of unassociated mutualists (mort_rate_a = mra, mort_rate_b = mrb)
+#NEED TO REDO WITH SUMMARIES_1-NEW AS OF 5/25/2016
 
 cor_summary$o = as.numeric(cor_summary$o)
 cor_summary$mra = as.numeric(cor_summary$mra)
@@ -588,7 +589,7 @@ dev.off()
 
 ## 5) Correlation between environment and host & symbiont community structure
 
-jit_fact = 0.008
+jit_fact = 0.015
 jit_a = -1*c(3*jit_fact/2, jit_fact/2)
 jit_b = c(jit_fact/2, 3*jit_fact/2)
 
@@ -598,10 +599,11 @@ means = subset(plot_data, stat=='mean')
 low95s = subset(plot_data, stat=='2.5%')
 up95s = subset(plot_data, stat=='97.5%')
 
-pdf(paste0(fig_dir, 'mutualism_strength_vs_topo&envfilt_RDAmean.pdf'), height=7, width=9)
+pdf(paste0(fig_dir, 'RUN 2/', 'mutualism_strength_vs_topo&envfilt_RDAmean.pdf'), height=7, width=9)
 xyplot(cor_a ~ o | topo + envfilt, groups = env, data=means, ylim = c(-.1,1),
 	scales=list(alternating=1), xlab='Strength of mutalism (omega)', ylab=expression(RDA~~R^2),
 	panel=function(x, y, subscripts, groups){
+		panel.abline(h=seq(0,1,.2), col='grey90')
 		panel.segments(x+jit_a[groups[subscripts]], low95s$cor_a[subscripts], x+jit_a[groups[subscripts]], up95s$cor_a[subscripts])
 		panel.segments(x+jit_b[groups[subscripts]], low95s$cor_b[subscripts], x+jit_b[groups[subscripts]], up95s$cor_b[subscripts])
 		panel.xyplot(x+jit_a[groups[subscripts]], y, pch=a_pch[groups[subscripts]], col=1)
@@ -623,7 +625,7 @@ jit_fact = 0.1
 jit_a = -1*c(3*jit_fact/2, jit_fact/2)
 jit_b = c(jit_fact/2, 3*jit_fact/2)
 
-pdf(paste0(fig_dir, 'topo_vs_envfilt_RDAmean_o=1.pdf'), height=5, width=7.5)
+pdf(paste0(fig_dir, 'RUN 2/', 'topo_vs_envfilt_RDAmean_o=1.pdf'), height=5, width=7.5)
 xyplot(cor_a ~ topo | envfilt, groups = env, data=means, ylim = c(-.1,1),
 	scales=list(alternating=1), xlab='Network Topology', ylab=expression(RDA~~R^2),
 	panel=function(x, y, subscripts, groups){

@@ -48,7 +48,10 @@ for(f in file_list){
 	S_a = melt(summarize_camm(model_out, 'S', 'a'))
 	S_b = melt(summarize_camm(model_out, 'S', 'b'))
 	N_comm = melt(summarize_camm(model_out, 'N'))
-	comm_summary = rbind(S_a, S_b, N_comm)
+	Cor_ab = melt(summarize_camm(model_out, 'Cor_ab'))
+	Cor_ab$response = 'Cor_ab'
+	Cor_ab = Cor_ab[,colnames(S_a)]
+	comm_summary = rbind(S_a, S_b, Cor_ab, N_comm)
 	comm_summary = cast(comm_summary, ... ~ response)
 	
 	cor_a = melt(summarize_camm(model_out, 'cor','a'))

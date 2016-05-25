@@ -63,13 +63,16 @@ foreach(runID=runIDs, .packages='reshape') %dopar% {
 			rich_stats = apply(comm_means, 2, function(x) c(mean(x), var(x))) 
 			rownames(rich_stats) = c('mean','var')
 		} else {
-			rich_summary = sapply(end_metacomms['comm',], function(comms){
-				 apply(comms, 3, function(comm) calc_commstats(comm, topo_names))	
-			}, simplify='array')
-			comm_means = apply(rich_summary, c(1,2), function(x) colMeans(x[[1]]))
-			rich_stats = apply(comm_means, c(1,2), function(x) c(mean(x), var(x)))
-			dimnames(rich_stats)[[1]] = c('mean','var')
-			dimnames(rich_stats)[[3]] = paste0('T',sim_parms$reps)
+			rich_summary = sapply(1:nchains, function(i){
+					comms = end_metacomms[,i]$comm
+					poolAs = end_metacomms[,i]$poolA
+					poolBs = end_metacomms[,i]$poolB
+					sapply(1:dim(comms)[3], function(j) calc_commstats(comms[,,j], topo_names, list(a=poolAs[,,j], b=poolBs[,,j])))	
+				}, simplify='array')
+				comm_means = apply(rich_summary, c(1,2,3), function(x) mean(x[[1]]))
+				rich_stats = apply(comm_means, c(1,2), function(x) c(mean(x), var(x)))
+				dimnames(rich_stats)[[1]] = c('mean','var')
+				dimnames(rich_stats)[[3]] = paste0('T',sim_parms$reps)
 		}
 			
 		list(rich_stats)

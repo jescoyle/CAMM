@@ -76,8 +76,8 @@ for(f in cor_filelist){
 
 # Write out a summary tables
 this_run = 'run2'
-write.csv(comm_summary, paste0(git_dir,'Results/comm_summary_',this_run,'.csv'), row.names=F)
-write.csv(cor_summary, paste0(git_dir,'Results/cor_summary_',this_run,'.csv'), row.names=F)
+#write.csv(comm_summary, paste0(git_dir,'Results/comm_summary_',this_run,'.csv'), row.names=F)
+#write.csv(cor_summary, paste0(git_dir,'Results/cor_summary_',this_run,'.csv'), row.names=F)
 
 # Read in tables from RUN 2 with no mutualism
 comm_nomut = read.csv(paste0(git_dir, 'Results/comm_summary_no_mutualism.csv'))
@@ -102,7 +102,6 @@ cor_pch = 18
 
 ######################################################################
 ## Run 1: incrementing over stregth of mutualism (omega = o) and relative mortality of unassociated mutualists (mort_rate_a = mra, mort_rate_b = mrb)
-#NEED TO REDO WITH SUMMARIES_1-NEW AS OF 5/25/2016
 
 cor_summary$o = as.numeric(cor_summary$o)
 cor_summary$mra = as.numeric(cor_summary$mra)
@@ -154,7 +153,7 @@ dev.off()
 jit = 0.01*c(-1,1)
 
 pdf(paste0(fig_dir, 'RUN 1/', 'mutualism_strength_vs_mort_rates_beta.pdf'), height=7, width=9)
-lp1 = xyplot(Beta_a ~ o | mrb + mra, data=means, ylim=c(0.9,2.1),
+lp1 = xyplot(Beta_a ~ o | mrb + mra, data=means, ylim=c(0.9,2.2),
 	scales=list(alternating=1), xlab='Strength of mutalism (omega)', ylab=expression(beta[A]),
 	panel=function(x, y, subscripts){
 		panel.abline(h=seq(1,2,.2), col='grey90')
@@ -163,7 +162,7 @@ lp1 = xyplot(Beta_a ~ o | mrb + mra, data=means, ylim=c(0.9,2.1),
 	}, 
 	strip = strip.custom(strip.names=T, strip.levels=T, sep='=', 
 		bg='transparent', var.name=expression(m[a],m[b]), fg='transparent'),
-	key=list(space='top', points=list(pch=c(a_pch[1], b_pch[1])), 
+	key=list(space='top', points=list(pch=c(a_pch[1],b_pch[1])), 
 		text=list(expression(beta[A],beta[B])))
 )
 
@@ -171,7 +170,7 @@ lp2 = xyplot(Beta_b ~ o | mrb + mra, data=means, ylim = c(0.9,2.1),
 	scales=list(alternating=1), xlab='Strength of mutalism (omega)', ylab=expression(beta[B]),
 	panel=function(x, y, subscripts){
 		panel.segments(x, low95s$Beta_b[subscripts], x, up95s$Beta_b[subscripts], col=1)
-		panel.xyplot(x, y, pch=cor_pch, col=1)
+		panel.xyplot(x, y, pch=b_pch[1], col=1)
 	}, 
 	strip = strip.custom(strip.names=T, strip.levels=T, sep='=', 
 		bg='transparent', var.name=expression(m[a],m[b]), fg='transparent')
@@ -182,10 +181,10 @@ dev.off()
 ## 3) Correlation between host and symbiont richness
 
 pdf(paste0(fig_dir, 'RUN 1/', 'mutualism_strength_vs_mort_rates_Cor_ab.pdf'), height=7, width=9)
-xyplot(Cor_ab ~ o | mrb + mra, data=means, ylim=c(-.1,1.1),
+xyplot(Cor_ab ~ o | mrb + mra, data=means, ylim=c(-.3,1.1),
 	scales=list(alternating=1), xlab='Strength of mutalism (omega)', ylab=expression(Correlation~~S[A]%~%S[B]),
 	panel=function(x, y, subscripts){
-		panel.abline(h=seq(0,1,.2), col='grey90')
+		panel.abline(h=seq(-.2,1,.2), col='grey90')
 		panel.segments(x, low95s$Cor_ab[subscripts], x, up95s$Cor_ab[subscripts], col=1)
 		panel.xyplot(x, y, pch=cor_pch[1], col=1)
 	}, 
@@ -198,10 +197,10 @@ dev.off()
 ## 4) Mean abundance
 
 pdf(paste0(fig_dir, 'RUN 1/', 'mutualism_strength_vs_mort_rates_mean_N.pdf'), height=7, width=9)
-xyplot(N ~ o | mrb + mra, data=means, ylim=c(80,100),
+xyplot(N ~ o | mrb + mra, data=means, ylim=c(85,100),
 	scales=list(alternating=1), xlab='Strength of mutalism (omega)', ylab='Mean Total Abundance',
 	panel=function(x, y, subscripts){
-		panel.abline(h=seq(80,100,5), col='grey90')
+		panel.abline(h=seq(85,100,5), col='grey90')
 		panel.segments(x, low95s$N[subscripts], x, up95s$N[subscripts], col=1)
 		panel.xyplot(x, y, pch=n_pch[1], col=1)
 	}, 
@@ -220,6 +219,7 @@ pdf(paste0(fig_dir, 'RUN 1/', 'mutualism_strength_vs_mort_rates_mean_N_o=1.pdf')
 xyplot(N ~ mrb | mra, data=means, ylim=c(80,100), layout=c(3,1),
 	scales=list(alternating=1), xlab=expression(m[b]), ylab='Mean Total Abundance',
 	panel=function(x, y, subscripts){
+		panel.abline(h=seq(85,100,5), col='grey90')
 		panel.segments(x, low95s$N[subscripts], x, up95s$N[subscripts], col=1)
 		panel.xyplot(x, y, pch=n_pch[1], col=1)
 	}, 
@@ -240,10 +240,11 @@ means = subset(plot_data, stat=='mean')
 low95s = subset(plot_data, stat=='2.5%')
 up95s = subset(plot_data, stat=='97.5%')
 
-pdf(paste0(fig_dir, 'mutualism_strength_vs_mort_rates_RDAmean.pdf'), height=7, width=9)
+pdf(paste0(fig_dir, 'mutualism_strength_vs_mort_rates_RDAmean.pdf'), height=7, width=11)
 xyplot(cor_a ~ o | mrb + mra, groups = env, data=means, ylim = c(-.1,1),
 	scales=list(alternating=1), xlab='Strength of mutalism (omega)', ylab=expression(RDA~~R^2),
 	panel=function(x, y, subscripts, groups){
+		panel.abline(h=seq(0,1,.2), col='grey90')
 		panel.segments(x+jit_a[groups[subscripts]], low95s$cor_a[subscripts], x+jit_a[groups[subscripts]], up95s$cor_a[subscripts])
 		panel.segments(x+jit_b[groups[subscripts]], low95s$cor_b[subscripts], x+jit_b[groups[subscripts]], up95s$cor_b[subscripts])
 		panel.xyplot(x+jit_a[groups[subscripts]], y, pch=a_pch[groups[subscripts]], col=1)
@@ -257,7 +258,7 @@ xyplot(cor_a ~ o | mrb + mra, groups = env, data=means, ylim = c(-.1,1),
 dev.off()
 
 # Results from given level of mutualism only (e.g., obligate: omega=1)
-plot_data = subset(cor_summary, measure=='rda' & summary=='mean' & o==0.5)
+plot_data = subset(cor_summary, measure=='rda' & summary=='mean' & o==1)
 means = subset(plot_data, stat=='mean')
 low95s = subset(plot_data, stat=='2.5%')
 up95s = subset(plot_data, stat=='97.5%')
@@ -266,10 +267,11 @@ jit_fact = .1
 jit_a = -1*c(3*jit_fact/2, jit_fact/2)
 jit_b = c(jit_fact/2, 3*jit_fact/2)
 
-pdf(paste0(fig_dir, 'mort_rates_RDAmean_o=0.5.pdf'), height=3, width=9)
+pdf(paste0(fig_dir, 'RUN 1/', 'mort_rates_RDAmean_o=1.pdf'), height=3, width=9)
 xyplot(cor_a ~ factor(mrb) | mra, groups = env, data=means, ylim = c(-.1,1),
 	scales=list(alternating=1), xlab='Relative mortality of unassociated mutualist B', ylab=expression(RDA~~R^2),
 	panel=function(x, y, subscripts, groups){
+		panel.abline(h=seq(0,1,.2), col='grey90')
 		x = as.numeric(x)
 		y = as.numeric(y)
 		panel.segments(x+jit_a[groups[subscripts]], low95s$cor_a[subscripts], x+jit_a[groups[subscripts]], up95s$cor_a[subscripts])
@@ -286,6 +288,7 @@ xyplot(cor_a ~ factor(mrb) | mra, groups = env, data=means, ylim = c(-.1,1),
 xyplot(cor_a ~ factor(mra) | mrb, groups = env, data=means, ylim = c(-.1,1),
 	scales=list(alternating=1), xlab='Relative mortality of unassociated mutualist A', ylab=expression(RDA~~R^2),
 	panel=function(x, y, subscripts, groups){
+		panel.abline(h=seq(0,1,.2), col='grey90')
 		x = as.numeric(x)
 		y = as.numeric(y)
 		panel.segments(x+jit_a[groups[subscripts]], low95s$cor_a[subscripts], x+jit_a[groups[subscripts]], up95s$cor_a[subscripts])
@@ -300,29 +303,6 @@ xyplot(cor_a ~ factor(mra) | mrb, groups = env, data=means, ylim = c(-.1,1),
 )
 dev.off()
 
-
-# Jaccard within chain mean
-plot_data = subset(cor_summary, measure=='jaccard' & summary=='mean')
-means = subset(plot_data, stat=='mean')
-low95s = subset(plot_data, stat=='2.5%')
-up95s = subset(plot_data, stat=='97.5%')
-
-pdf(paste0(fig_dir, 'mutualism_strength_vs_mort_rates_Jaccardmean.pdf'), height=7, width=9)
-xyplot(cor_a ~ o | mrb + mra, groups = env, data=means, ylim=c(-1,1),
-	scales=list(alternating=1), xlab='Strength of mutalism (omega)', ylab='Jaccard Similarity ~ Env',
-	panel=function(x, y, subscripts, groups){
-		panel.abline(h=0, col='grey')
-		panel.segments(x+jit_a[groups[subscripts]], low95s$cor_a[subscripts], x+jit_a[groups[subscripts]], up95s$cor_a[subscripts])
-		panel.segments(x+jit_b[groups[subscripts]], low95s$cor_b[subscripts], x+jit_b[groups[subscripts]], up95s$cor_b[subscripts])
-		panel.xyplot(x+jit_a[groups[subscripts]], y, pch=a_pch[groups[subscripts]], col=1)
-		panel.xyplot(x+jit_b[groups[subscripts]], means$cor_b[subscripts], pch=b_pch[groups[subscripts]], col=1)
-	}, 
-	strip = strip.custom(strip.names=T, strip.levels=T, sep='=', 
-		bg='transparent', var.name=expression(m[a],m[b]), fg='transparent'),
-	key=list(space='right', points=list(pch=c(a_pch, b_pch)), 
-		text=list(expression(A*" ~ "*E[1],A*" ~ "*E[2],B*" ~ "*E[1],B*" ~ "*E[2])))
-)
-dev.off()
 
 ## 6) Correlation between environment and host & symbiont richness
 
@@ -362,7 +342,7 @@ up95s = subset(plot_data, stat=='97.5%')
 
 jit = 0.01*c(-1,1)
 
-pdf(paste0(fig_dir,'RUN 1/','mutualism_strength_vs_mort_rates_Nmean.pdf'), height=9, width=11)
+pdf(paste0(fig_dir,'RUN 1/','mutualism_strength_vs_mort_rates_Ncor.pdf'), height=9, width=11)
 xyplot(cor_a ~ o | mrb + mra, groups = env, data=means, ylim=c(-1,1),
 	scales=list(alternating=1), xlab='Strength of mutalism (omega)', ylab='N ~ Env',
 	panel=function(x, y, subscripts, groups){
@@ -386,11 +366,12 @@ low95s = subset(within_run, stat=='2.5%')
 up95s = subset(within_run, stat=='97.5%')
 between_run = subset(comm_summary, summary=='mean'&stat=='var')
 
-commstat = 'Cor_ab'
+pdf(paste0(fig_dir,'RUN 1/','mutualism_strength_vs_mort_rates_commstat_var.pdf'), height=7, width=9)
 
-pdf(paste0(fig_dir,'RUN 1/','mutualism_strength_vs_mort_rates_', commstat, '_var.pdf'), height=7, width=9)
+for(commstat in c('S_a','S_b','Beta_a','Beta_b','Cor_ab','N')){
+
 lp1 = xyplot(means[,commstat] ~ o | mrb + mra, data=means, ylim=c(0,1.1*max(up95s[,commstat])),
-	scales=list(alternating=1), xlab='Strength of mutalism (omega)', ylab='Within Run Variance',
+	scales=list(alternating=1), xlab='Strength of mutalism (omega)', ylab='Within Run Variance',main=commstat,
 	panel=function(x, y, subscripts, groups){
 		#panel.abline(h=seq(0,.4,.1), col='grey90')
 		panel.segments(x, low95s[subscripts,commstat], x, up95s[subscripts,commstat])
@@ -404,8 +385,9 @@ lp1 = xyplot(means[,commstat] ~ o | mrb + mra, data=means, ylim=c(0,1.1*max(up95
 
 lp2 = xyplot(between_run[,commstat] ~ o | mrb + mra, data=between_run, ylab='Between Run Variance', pch=1, col=2) 
 
-doubleYScale(lp1, lp2, add.axis=T, add.ylab2=T, style1=0, style2=0)
+print(doubleYScale(lp1, lp2, add.axis=T, add.ylab2=T, style1=0, style2=0))
 
+}
 dev.off()
 
 within_run = subset(comm_summary, summary=='var' & o==1)
@@ -560,7 +542,7 @@ dev.off()
 ## 3) Correlation between host and symbiont richness
 
 pdf(paste0(fig_dir, 'RUN 2/', 'mutualism_strength_vs_envfilt_topo_Cor_ab.pdf'), height=7, width=9)
-xyplot(Cor_ab ~ o | topo + envfilt, data=means, ylim=c(-.1,1.1),
+xyplot(Cor_ab ~ o | topo + envfilt, data=means, ylim=c(-.2,1.1),
 	scales=list(alternating=1), xlab='Strength of mutalism (omega)', ylab=expression(Correlation~~S[A]%~%S[B]),
 	panel=function(x, y, subscripts){
 		panel.abline(h=seq(0,1,.2), col='grey90')
@@ -704,7 +686,7 @@ between_run = subset(comm_summary, summary=='mean'&stat=='var')
 
 pdf(paste0(fig_dir,'RUN 2/','mutualism_strength_vs_topo_envfilt_community_stat_var.pdf'), height=7, width=9)
 for(commstat in c('S_a','S_b','Beta_a','Beta_b','Cor_ab')){
-lp1 = xyplot(means[,commstat] ~ o | topo + envfilt, data=means, ylim=c(0,1.1*max(up95s[,commstat])),
+lp1 = xyplot(means[,commstat] ~ o | topo + envfilt, data=means, ylim=c(0,1.1*max(up95s[,commstat], na.rm=T)),
 	scales=list(alternating=1), xlab='Strength of mutalism (omega)', ylab='Within Run Variance', main=commstat,
 	panel=function(x, y, subscripts, groups){
 		#panel.abline(h=seq(0,.4,.1), col='grey90')
@@ -717,7 +699,7 @@ lp1 = xyplot(means[,commstat] ~ o | topo + envfilt, data=means, ylim=c(0,1.1*max
 		text=list(c('Within Runs','Between Runs')))
 )
 
-lp2 = xyplot(between_run[,commstat] ~ o | topo + envfilt, data=between_run, ylim=c(0,1.1*max(between_run[,commstat])), ylab='Between Run Variance', pch=1, col=2) 
+lp2 = xyplot(between_run[,commstat] ~ o | topo + envfilt, data=between_run, ylim=c(0,1.1*max(between_run[,commstat], na.rm=T)), ylab='Between Run Variance', pch=1, col=2) 
 
 print(doubleYScale(lp1, lp2, add.axis=T, add.ylab2=T, style1=0, style2=0))
 }

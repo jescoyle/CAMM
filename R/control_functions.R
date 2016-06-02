@@ -151,6 +151,7 @@ run_camm_N = function(sim_dir, parm_file, nruns, nchains, nparallel=1, sim_parms
 			sites = metacomm$sites
 	
 			# Calculate mean community richness and abundance
+			# For runs where only the end tiepoint shoudl be summarized
 			if(length(sim_parms$reps)==1){
 				rich_summary = sapply(1:nchains, function(i) calc_commstats(end_metacomms['comm',i][[1]], topo_names, list(a=end_metacomms['poolA',i][[1]], b=end_metacomms['poolB',i][[1]])), simplify='array')
 				comm_means = sapply(rownames(rich_summary), function(type) apply(simplify2array(rich_summary[type,]), 2, mean))
@@ -163,6 +164,8 @@ run_camm_N = function(sim_dir, parm_file, nruns, nchains, nparallel=1, sim_parms
 				corr_stats = apply(corr_stats, 1:4, function(vals) c(mean(vals), var(vals)))	
 				dimnames(corr_stats)[[1]] = c('mean','var')
 				# Returns array with [mean/var, type, env, S/N/rda/jaccard, binary]
+
+			# For runs where multiple timepoints should be summarized
 			} else {
 				rich_summary = sapply(1:nchains, function(i){
 					comms = end_metacomms[,i]$comm

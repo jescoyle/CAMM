@@ -25,6 +25,14 @@ comm1 = read.csv(paste0(git_dir, 'Results/comm_summary_run1.csv'))
 cor1 = read.csv(paste0(git_dir, 'Results/cor_summary_run1.csv'))
 comm2 = read.csv(paste0(git_dir, 'Results/comm_summary_run2.csv'))
 cor2 = read.csv(paste0(git_dir, 'Results/cor_summary_run2.csv'))
+comm3 = read.csv(paste0(git_dir, 'Results/comm_summary_run3.csv'))
+cor3 = read.csv(paste0(git_dir, 'Results/cor_summary_run3.csv'))
+comm3$o = 1 ; cor3$o = 1 # Add column indicating that this was run under obligate mutualism
+comm3b = read.csv(paste0(git_dir, 'Results/comm_summary_run3b.csv'))
+cor3b = read.csv(paste0(git_dir, 'Results/cor_summary_run3b.csv'))
+comm3b$o = 0 ; cor3b$o = 0 # Add column indicating that this was run without mutualism
+
+
 
 ## Define symbols used for plotting throughout
 a_pch = c(16, 1)
@@ -49,7 +57,7 @@ env_names = c('None','Same Gradient','Opposite Gradients','Both Gradients'); nam
 
 # A function that calculates standardized mean difference (Cohen's d)
 # m : a vector of length 2 with the sample means
-# n : a vector of length 2 with the sample standard deviations
+# s : a vector of length 2 with the sample standard deviations
 # n : a vector of length 2 with the sample sizes
 # use.s : character indicating whether the standard deviation used should be 'pooled', 's1', or 's2'
 
@@ -67,6 +75,56 @@ calc_d = function(m, s, n, use.s='pooled'){
 	
 	(m[2]- m[1])/s	
 }
+
+
+# A function that plots a vertical color ramp on the side of a plot
+# cols    : the colors to use
+# barends : location of whole bar c(xleft, ybottom, xright, ytop)
+# labels  : vector of labels for bar
+# title   : title to print above bar
+# mycex   : size of label and title text
+# ndig    : number of digits to round numeric labels
+plotColorBoxes = function(cols, barends, labels, title=NA, mycex=1.5, ndig=0){
+	n = length(cols)
+	dX = barends[3] - barends[1]
+	dY = barends[4] - barends[2]
+	dy = dY/n
+	
+	xpd.old = par('xpd')
+	par(xpd=T)
+
+	lend.old = par('lend')
+	par(lend=1)
+
+	for(i in 1:n){
+		rect(barends[1], barends[2]+dy*(i-1), barends[3], barends[2]+dy*i, col=cols[i], border=NA)
+	}
+
+	if(is.numeric(labels)){
+		labels = format(round(labels, ndig), nsmall=ndig, trim=F)
+	}
+
+
+	Yposition = barends[2] + dy*(0:n)
+
+	text(barends[3]+dX*0.5, Yposition, labels, pos=4, cex=mycex)
+	segments(barends[3], Yposition, barends[3]+dX*0.5, Yposition)	
+
+	if(!is.na(title)){
+		
+		## Determine how many characters away to place title
+		digits = max(nchar(labels)) # Maximum number of digits in a label
+		largest = labels[which(nchar(labels)==digits)] # Which labels are longest
+		
+		small.chars = grep('[-.]', largest) # Does the largest label have a small character?
+			if(length(small.chars)==length(largest)) digits = digits-0.6 # Discount the size of the largest label by 0.6 a character
+		
+		text(barends[3]+dX*0.5+par('cxy')[1]*mycex*(digits+.5), barends[2]+0.5*dY, labels=title, srt=-90, cex=mycex)
+	}
+	par(xpd=xpd.old)
+	par(lend=lend.old)
+}
+
 
 
 ##################################################################
@@ -398,6 +456,101 @@ for(f in envfilt){
 
 }
 dev.off()
+
+
+##################################################################
+## Experiment 2: Strength and Type of Environmental Constraint
+
+# Combine results from run 3 with and without mutualism
+comm3 = rbind(comm3, comm3b)
+cor3 = rbind(cor3, cor3b)
+
+## TWO WAYS TO DISPLAY: AS EFFECTS SIZE OF MUTUALISM OR AS TWO SEPARATE SIMULATIONS W/ AND W/O MUTUALISM
+
+
+# A) Community statistics
+plot_data = subset(comm3, summary=='mean')
+plot_data = melt(plot_data, id.vars=c('o','sigA','sigB','topo','envfilt','stat'), measure.vars=7:15)
+plot_data = acast(plot_data, o~topo~envfilt~sigA~sigB~stat~variable)
+
+# Calculate standardized mean difference (Cohen's d)
+# Use both pooled and s1 for variance
+# Effects for S_tot are NA when variance is 0 b/c all species always present
+eff_data = apply(plot_data[,,,,,,use_stats], c(2,3,4,5,7), function(X){
+	calc_d(X[,'mean'], sqrt(X[,'var']), c(100,100), use.s='pooled')
+})
+
+
+# Calculate CI on Cohen's d (standardized mean difference), assumes equal variance
+CIs = apply(eff_data, 1:5, function(x){
+	if(is.na(x)){
+		rep(NA,3)
+	} else {
+		as.numeric(ci.smd(smd=x, n.1=100, n.2=100, conf.level=0.95))
+	}
+})
+
+envfilt = c('none','same','opposite','all')
+topos = c('one2one','one2many','many2many')
+
+
+# Display effects as heat map
+
+use_col = colorRampPalette(c('darkblue','white','darkred'))(10)
+
+# Each network topology on separate pages
+for(n in topos){
+
+data_range = range(eff_data[n,,,,], na.rm=T)
+data_range[1] = min(floor(data_range[1]),-8)
+data_range[2] = max(ceiling(data_range[2]),8)
+use_breaks = c(data_range[1],-8,-4,-2,-1,0,1,2,4,8, data_range[2])
+
+pdf(paste0(fig_dir, 'Effects of filtering strength on community stats ', n, '.pdf'), height=9, width=7)
+	par(lend=1)
+	layout(matrix(c(1:18, rep(19,6)), nrow=6))
+	par(mar=c(.25,.25,.25,.25))
+	par(oma=c(4.5,9,2,0))
+
+	for(f in envfilt[2:4]){
+	for(y in use_stats){
+		use_data = eff_data[n,f,,,y]
+		image(1:5,1:5, use_data, breaks=use_breaks, col=use_col, axes=F, xlab='', ylab='')
+
+		missing = which(is.na(use_data), arr.ind=T)
+		abline(h=c(1.5, 2.5, 3.5, 4.5), col='white')
+		abline(v=c(1.5, 2.5, 3.5, 4.5), col='white')
+		points(missing[,1], missing[,2],pch=4, col='grey', cex=1.5)
+
+		if(y==use_stats[6]){
+			axis(1, at=1:5, labels=rownames(use_data), las=2, tick=F, line=0)
+			mtext(expression(sigma[host]^2), 1, 3.5, cex=.8)
+		}
+		
+		if(y==use_stats[1]){
+			mtext(env_names[f], 3, 0.5)
+		}
+
+		if(f==envfilt[2]){
+
+			axis(2, at=1:5, labels=colnames(use_data), las=1, tick=F, line=0)
+			
+			par(xpd=NA)
+			text(-3.7, 5, stat_names[y], pos=4, cex=1.5)
+			par(xpd=F)
+
+			mtext(expression(sigma[sym]^2), 2, 3, cex=.8)
+		}
+	
+	}} # closes envfilt and use stats loops
+
+	plot.new()
+	plotColorBoxes(use_col, c(.1,.2,.2,.7), use_breaks, title='Std. mean difference')
+
+dev.off()
+} # closes topo loop
+
+
 
 
 

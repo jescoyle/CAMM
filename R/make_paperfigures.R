@@ -45,12 +45,15 @@ stat_names = expression(S[host],S[sym],beta[host],beta[sym],N,S[host]%~%S[sym]);
 stat_pch = c(0,1,2,4,5,6); names(stat_pch) = use_stats
 
 use_cor = c('cor_a_1','cor_a_2','cor_b_1','cor_b_2')
-cor_names = expression(Host%~%E[1], Host%~%E[2], Sym%~%E[1], Sym%~%E[2])
+cor_names = expression(Host%~%E[1], Host%~%E[2], Sym%~%E[1], Sym%~%E[2]); names(cor_names)=use_cor
 cor_S_names = expression(S[host]%~%E[1], S[host]%~%E[2], S[sym]%~%E[1], S[sym]%~%E[2])
 cor_pch = c(a_pch, b_pch); names(cor_pch) = use_cor
 
-topo_names = c('Both Specialist', 'Host Specialist', 'Both Non-Specialist'); names(topo_names) = c('one2one','one2many','many2many')
+envfilt = c('none','same','opposite','all')
 env_names = c('None','Same Gradient','Opposite Gradients','Both Gradients'); names(env_names) = c('none','same','opposite','all')
+env_names_stacked = c('None','Same\nGradient','Opposite\nGradients','Both\nGradients'); names(env_names_stacked) = c('none','same','opposite','all')
+topos = c('one2one','one2many','many2many')
+topo_names = c('Both Specialist', 'Host Specialist', 'Both Non-Specialist'); names(topo_names) = c('one2one','one2many','many2many')
 
 ##################################################################
 ## Functions
@@ -240,8 +243,6 @@ abline(v=par('usr')[1], lwd=3)
 ## (A) (some) community stats and (B) community correlations under different topology and filtering (from RUN 2).
 
 omegas = c(0,0.5,0.9,1)
-envfilt = c('none','same','opposite','all')
-topos = c('one2one','one2many','many2many')
 
 ## A) Community statistics
 plot_data = subset(comm2, summary=='mean')
@@ -490,9 +491,6 @@ CIs = apply(eff_data, 1:5, function(x){
 	}
 })
 
-envfilt = c('none','same','opposite','all')
-topos = c('one2one','one2many','many2many')
-
 
 # Display effects as heat map
 
@@ -506,7 +504,7 @@ data_range[1] = min(floor(data_range[1]),-8)
 data_range[2] = max(ceiling(data_range[2]),8)
 use_breaks = c(data_range[1],-8,-4,-2,-1,0,1,2,4,8, data_range[2])
 
-pdf(paste0(fig_dir, 'Effects of filtering strength on community stats ', n, '.pdf'), height=9, width=7)
+#pdf(paste0(fig_dir, 'Effects of filtering strength on community stats ', n, '.pdf'), height=9, width=7)
 	par(lend=1)
 	layout(matrix(c(1:18, rep(19,6)), nrow=6))
 	par(mar=c(.25,.25,.25,.25))
@@ -547,22 +545,361 @@ pdf(paste0(fig_dir, 'Effects of filtering strength on community stats ', n, '.pd
 	plot.new()
 	plotColorBoxes(use_col, c(.1,.2,.2,.7), use_breaks, title='Std. mean difference')
 
-dev.off()
+#dev.off()
 } # closes topo loop
 
 
+# Display only host statistics since symbionts not expected to differ from no mutualism situation
+host_stats = c('S_a','Beta_a','N','Cor_ab')
+
+for(n in topos){
+
+data_range = range(eff_data[n,,,,host_stats], na.rm=T)
+data_range[1] = min(floor(data_range[1]),-8)
+data_range[2] = max(ceiling(data_range[2]),8)
+use_breaks = c(data_range[1],-8,-4,-2,-1,0,1,2,4,8, data_range[2])
+
+#pdf(paste0(fig_dir, 'Effects of filtering strength on community stats ', n, ' host.pdf'), height=6, width=7)
+	par(lend=1)
+	layout(matrix(c(1:12, rep(13,4)), nrow=4))
+	par(mar=c(.25,.25,.25,.25))
+	par(oma=c(4.5,9,2,0))
+
+	for(f in envfilt[2:4]){
+	for(y in host_stats){
+		use_data = eff_data[n,f,,,y]
+		image(1:5,1:5, use_data, breaks=use_breaks, col=use_col, axes=F, xlab='', ylab='')
+
+		missing = which(is.na(use_data), arr.ind=T)
+		abline(h=c(1.5, 2.5, 3.5, 4.5), col='white')
+		abline(v=c(1.5, 2.5, 3.5, 4.5), col='white')
+		points(missing[,1], missing[,2],pch=4, col='grey', cex=1.5)
+
+		if(y==host_stats[4]){
+			axis(1, at=1:5, labels=rownames(use_data), las=2, tick=F, line=0)
+			mtext(expression(sigma[host]^2), 1, 3.5, cex=.8)
+		}
+		
+		if(y==host_stats[1]){
+			mtext(env_names[f], 3, 0.5)
+		}
+
+		if(f==envfilt[2]){
+
+			axis(2, at=1:5, labels=colnames(use_data), las=1, tick=F, line=0)
+			
+			par(xpd=NA)
+			text(-3.7, 5, stat_names[y], pos=4, cex=1.5)
+			par(xpd=F)
+
+			mtext(expression(sigma[sym]^2), 2, 3, cex=.8)
+		}
+	
+	}} # closes envfilt and use stats loops
+
+	plot.new()
+	plotColorBoxes(use_col, c(.1,.2,.2,.7), use_breaks, title='Std. mean difference')
+
+#dev.off()
+} # closes topo loop
+
+# B) Environmental correlations
+plot_data = subset(cor3, summary=='mean'&measure=='rda')
+plot_data = melt(plot_data, id.vars=c('o','sigA','sigB','topo','envfilt','stat','env'), measure.vars=c('cor_a','cor_b'))
+plot_data = acast(plot_data, o~topo~envfilt~sigA~sigB~stat~variable+env)
+
+# Calculate standardized mean difference (Cohen's d)
+# Use both pooled and s1 for variance
+# Effects for S_tot are NA when variance is 0 b/c all species always present
+eff_data = apply(plot_data, c(2,3,4,5,7), function(X){
+	calc_d(X[,'mean'], sqrt(X[,'var']), c(100,100), use.s='pooled')
+})
+
+# Calculate CI on Cohen's d (standardized mean difference), assumes equal variance
+CIs = apply(eff_data, 1:5, function(x){
+	if(is.na(x)){
+		rep(NA,3)
+	} else {
+		as.numeric(ci.smd(smd=x, n.1=100, n.2=100, conf.level=0.95))
+	}
+})
+
+# Display effects as heat map
+
+use_col = colorRampPalette(c('darkblue','white','darkred'))(10)
+
+# Each network topology on separate pages
+for(n in topos){
+
+#data_range = range(eff_data[n,,,,], na.rm=T)
+#data_range[1] = min(floor(data_range[1]),-8)
+#data_range[2] = max(ceiling(data_range[2]),8)
+#use_breaks = c(data_range[1],-8,-4,-2,-1,0,1,2,4,8, data_range[2])
+use_breaks = c(-8,-6,-4,-2,-1,0,1,2,4,6,8)
+
+#pdf(paste0(fig_dir, 'Effects of filtering strength on rda R2 ', n, '.pdf'), height=6, width=7)
+	par(lend=1)
+	layout(matrix(c(1:12, rep(13,4)), nrow=4))
+	par(mar=c(.25,.25,.25,.25))
+	par(oma=c(4.5,9,2,0))
+
+	for(f in envfilt[2:4]){
+	for(y in use_cor){
+		use_data = eff_data[n,f,,,y]
+		image(1:5,1:5, use_data, breaks=use_breaks, col=use_col, axes=F, xlab='', ylab='')
+
+		missing = which(is.na(use_data), arr.ind=T)
+		abline(h=c(1.5, 2.5, 3.5, 4.5), col='white')
+		abline(v=c(1.5, 2.5, 3.5, 4.5), col='white')
+		points(missing[,1], missing[,2],pch=4, col='grey', cex=1.5)
+
+		if(y==use_cor[4]){
+			axis(1, at=1:5, labels=rownames(use_data), las=2, tick=F, line=0)
+			mtext(expression(sigma[host]^2), 1, 3.5, cex=.8)
+		}
+		
+		if(y==use_cor[1]){
+			mtext(env_names[f], 3, 0.5)
+		}
+
+		if(f==envfilt[2]){
+
+			axis(2, at=1:5, labels=colnames(use_data), las=1, tick=F, line=0)
+			
+			par(xpd=NA)
+			text(-3.7, 5, cor_names[y], pos=4, cex=1.5)
+			par(xpd=F)
+
+			mtext(expression(sigma[sym]^2), 2, 3, cex=.8)
+		}
+	
+	}} # closes envfilt and use stats loops
+
+	plot.new()
+	plotColorBoxes(use_col, c(.1,.2,.2,.7), use_breaks, title='Std. mean difference')
+
+#dev.off()
+} # closes topo loop
+
+# Display for hosts only, since symbionts aren't really expected to diverge from no-mutualism situation
+host_cor = c('cor_a_1','cor_a_2')
+use_breaks = c(-8,-6,-4,-2,-1,0,1,2,4,6,8)
+
+for(n in topos){
+#pdf(paste0(fig_dir, 'Effects of filtering strength on rda R2 ', n, ' host.pdf'), height=4, width=7)
+	par(lend=1)
+	layout(matrix(c(1:6, rep(7,2)), nrow=2))
+	par(mar=c(.25,.25,.25,.25))
+	par(oma=c(4.5,9,2,0))
+
+	for(f in envfilt[2:4]){
+	for(y in host_cor){
+		use_data = eff_data[n,f,,,y]
+		image(1:5,1:5, use_data, breaks=use_breaks, col=use_col, axes=F, xlab='', ylab='')
+
+		missing = which(is.na(use_data), arr.ind=T)
+		abline(h=c(1.5, 2.5, 3.5, 4.5), col='white')
+		abline(v=c(1.5, 2.5, 3.5, 4.5), col='white')
+		points(missing[,1], missing[,2],pch=4, col='grey', cex=1.5)
+
+		if(y==host_cor[2]){
+			axis(1, at=1:5, labels=rownames(use_data), las=2, tick=F, line=0)
+			mtext(expression(sigma[host]^2), 1, 3.5, cex=.8)
+		}
+		
+		if(y==host_cor[1]){
+			mtext(env_names[f], 3, 0.5)
+		}
+
+		if(f==envfilt[2]){
+
+			axis(2, at=1:5, labels=colnames(use_data), las=1, tick=F, line=0)
+			
+			par(xpd=NA)
+			text(-3.7, 5, cor_names[y], pos=4, cex=1.5)
+			par(xpd=F)
+
+			mtext(expression(sigma[sym]^2), 2, 3, cex=.8)
+		}
+	
+	}} # closes envfilt and use stats loops
+
+	plot.new()
+	plotColorBoxes(use_col, c(.1,.2,.2,.8), use_breaks, title='Std. mean difference')
+
+#dev.off()
+} # closes topo loop
 
 
+# C) Display actual values
+comm_data = subset(comm3, summary=='mean')
+comm_data = melt(comm_data, id.vars=c('o','sigA','sigB','topo','envfilt','stat'), measure.vars=7:15)
+cor_data = subset(cor3, summary=='mean'&measure=='rda')
+cor_data = melt(cor_data, id.vars=c('o','sigA','sigB','topo','envfilt','stat','env'), measure.vars=c('cor_a','cor_b'))
+cor_data = dcast(cor_data, o+sigA+sigB+topo+envfilt+stat~variable+env)
+cor_data = melt(cor_data, id.vars=c('o','sigA','sigB','topo','envfilt','stat'), measure.vars=7:10)
+plot_data = rbind(comm_data, cor_data)
+plot_data = acast(plot_data, o~topo~envfilt~sigA~sigB~stat~variable)
+
+plot_vars = c(use_stats, use_cor)
+plot_var_names = c(stat_names, cor_names)
+
+pch0 = topo_pch; col0 = 'grey'
+pch1 = 0:2; col1 = 'black'
+
+xvals = sapply(1:5, function(x) x+c(-.25,0,.25))
+
+#pdf(paste0(fig_dir, 'Effects of env filtering strength and type on community stats and env correlations.pdf'), height=9, width=8)
+
+# Each variable on a separate page
+for(y in plot_vars){
+
+	par(lend=1)
+	layout(matrix(c(5:1,10:6,15:11, rep(16,5)), nrow=5))
+	par(mar=c(.5,.5,.5,.5))
+	par(oma=c(4.5,9,4,0))
+
+	data_range = range(plot_data[,,envfilt[2:4],,,c('2.5%','97.5%'),y], na.rm=T)
+	data_range = data_range + 0.01*abs(diff(data_range))*c(-1,1)
+
+	# Type of filtering in columns
+	for(f in envfilt[2:4]){
+	
+	# Filtering on hosts in rows (sigA)
+	for(s in dimnames(plot_data)[[4]]){
+		
+		# Set up plot
+		frame()
+		plot.window(xlim=c(0.5,5.5), ylim=data_range, xlab='', ylab='')
+		
+		
+		if(f==envfilt[2]){
+			yax = axis(2, las=1)
+			if(y %in% use_stats) mtext(stat_names[y], 2, 3, cex=.8)
+			if(y %in% use_cor) mtext(expression(RDA~~R^2), 2, 3)
+
+			par(xpd=NA)
+			text(-4, par('usr')[4], bquote(sigma[host]^2==.(s)), pos=4, cex=1.5)
+			par(xpd=F)
+		}
+	
+		if(s=='0.25'){
+			axis(1, at=1:5, labels=dimnames(plot_data)[[5]])
+			mtext(expression(sigma[sym]^2), 1, 3, cex=.8)
+		}
+
+		if(s=='4'){
+			mtext(env_names[f], 3, .5)
+		}
+
+		# Add axes and labels
+		abline(h=par('usr')[3], lwd=2)
+		abline(h=yax, lwd=1, col='grey90')
+		abline(v=par('usr')[1], lwd=2)
+
+		# Estimates under no mutualism
+		points(xvals, plot_data['0',topos,f,s,,'mean',y], pch=pch0, col=col0)
+		segments(xvals, plot_data['0',topos,f,s,,'2.5%',y], xvals, plot_data['0',topos,f,s,,'97.5%',y], col=col0, lwd=2.5)
+		
+		# Estimates under obligate mutualism
+		points(xvals, plot_data['1',topos,f,s,,'mean',y], pch=pch1, col=col1)
+		segments(xvals, plot_data['1',topos,f,s,,'2.5%',y], xvals, plot_data['1',topos,f,s,,'97.5%',y], col=col1, lwd=1)
+		
+		
+	}} # closes loops through envfilt and sigA
+
+	# Add legend
+	frame()
+
+	points(rep(.1,3), c(.55,.5,.45), pch=pch0, col=col0)
+	points(rep(.2,3), c(.55,.5,.45), pch=pch1, col=col1)
+	text(rep(.25,3), c(.55,.5,.45), topo_names, pos=4)
+	text(c(.1,.2), rep(.57,2), c('No Mutualism','Obligate Mutualism'), srt=90, adj=-.1)
+
+	# Add title
+	text(.5, .8, plot_var_names[y], cex=2)
+}
+
+#dev.off()
 
 
+##########################################################
+### Experiment 3: Effect of network topology
+
+comm_data = subset(comm3, summary=='mean'&sigA==0.5&sigB==0.5)
+comm_data = melt(comm_data, id.vars=c('o','topo','envfilt','stat'), measure.vars=7:15)
+cor_data = subset(cor3, summary=='mean'& measure=='rda'&sigA==0.5&sigB==0.5)
+cor_data = melt(cor_data, id.vars=c('o','topo','envfilt','stat','env'), measure.vars=c('cor_a','cor_b'))
+cor_data = dcast(cor_data, o+topo+envfilt+stat~variable+env)
+cor_data = melt(cor_data, id.vars=c('o','topo','envfilt','stat'), measure.vars=5:8)
+plot_data = rbind(comm_data, cor_data)
+plot_data = acast(plot_data, o~topo~envfilt~stat~variable)
+
+# Four panels (envfilt)
+# RDA R2 for host and sym vs. network topology (use sigmas = 0.5) 
+# Show both obligate and no mutualism
+
+pch0 = topo_pch; col0 = 'grey'
+pch1 = 0:2; col1 = 'black'
+
+plot_vars = c(use_stats, use_cor)
+plot_var_names = c(stat_names, cor_names)
+plot_var_units = expression(Num.~~species, Num.~~species, ' ', ' ', Num.~~individuals, italic(r), RDA~~R^2, RDA~~R^2, RDA~~R^2, RDA~~R^2)
+names(plot_var_units) = plot_vars
+n_y = length(plot_vars)
+xvals = sapply(1:length(envfilt), function(x) x+c(-.15,0,.15))
+
+pdf(paste0(fig_dir, 'Effects of network topology and type of filtering on community stats and env correlations.pdf'), height=9.5, width=5.7)
+
+par(lend=1)
+layout(matrix(c(1:n_y, rep(n_y+1,n_y)),nrow=n_y), widths=c(.6,.4))
+par(mar=c(.65,.5,.65,.5))
+par(oma=c(4,8,0,0))
+
+for(y in plot_vars){
+	data_range = range(plot_data[c('0','1'),,,c('2.5%','97.5%'),y], na.rm=T)	
+	data_range = abs(diff(data_range))*0.05*c(-1,1) + data_range
+
+	frame()
+	plot.window(ylim=data_range, xlim=c(0.5, length(envfilt)+.5))
+	
+	# Add axes and labels
+	yax = axis(2, las=1)
+	abline(h=yax, col='grey90')
+	abline(h=par('usr')[3], lwd=2)
+	abline(v=par('usr')[1], lwd=2)
+	if(y == plot_vars[n_y]) axis(1, at=xvals[2,], labels=env_names_stacked[envfilt], las=1, padj=1)
+	#mtext(plot_var_units[y], 2, 3, cex=.8)
+	
+	this_letter = paste0(letters[which(plot_vars==y)],')')
+	this_lab = plot_var_names[y][[1]]
+
+	par(xpd=NA)
+	text(-1.5, par('usr')[4], bquote(.(this_letter)~~.(this_lab)), pos=4)
+	par(xpd=F)
+
+	# Add no-mutualism points
+	points(xvals, plot_data['0',topos,envfilt,'mean',y], pch=pch0, col=col0)
+	segments(xvals, plot_data['0',topos,envfilt,'2.5%',y], xvals, plot_data['0',topos,envfilt,'97.5%',y], lwd=2.5, col=col0)
+	
+	# Add  obligate mutualism points
+	points(xvals, plot_data['1',topos,envfilt,'mean',y], pch=pch1, col=col1)
+	segments(xvals, plot_data['1',topos,envfilt,'2.5%',y], xvals, plot_data['1',topos,envfilt,'97.5%',y], lwd=1, col=col1)
+	
+}
+
+# Add legend
+frame()
+points(rep(.05,3), c(.52,.5,.48), pch=pch0, col=col0)
+points(rep(.15,3), c(.52,.5,.48), pch=pch1, col=col1)
+text(rep(.25,3), c(.52,.5,.48), topo_names, adj=0)
+text(c(.05,.15), rep(.54,2), c('No Mutualism','Obligate Mutualism'), srt=90, adj=0)
+
+dev.off()
 
 
-
-
-
-
-
-
+######################################################3
+### Comparison
 
 
 

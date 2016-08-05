@@ -2,9 +2,17 @@
 The Community Assembly of Mutualists Model (CAMM) is a general simulation model of community assembly for multiple host and symbiont species. The purpose of building this model was to explore the consequences of obligate mutualism on diversity patterns along environmental gradients. This model extends previous niche-based community assembly models to two communities (hosts and symbionts) linked by an association network that defines which species pairs facilitate each others’ establishment. CAMM is a spatially implicit patch-occupancy model that represents an open meta-community with patches jointly distributed along two environmental gradients. Patches are comprised of a fixed number of microsites, each of which may be occupied by a host and its symbiont. Each patch also has a pool of unassociated host and symbiont species. The primary process built into the model is environmental filtering. Competition only occurs as microsite pre-emption and there are no differences in dispersal among species or patches.
 
 The simulation currently operates as follows:
-1. Randomly initialize pools of host and symbiont species with 2-dimensional environmental niches, a landscape of patches with envionmental conditions, and an association network between hosts and symbiont.
-2. 
 
+1. Randomly initialize pools of host and symbiont species with 2-dimensional environmental niches, a landscape of patches with envionmental conditions, and an association network between hosts and symbiont. The simulation starts from an empty metacommunity with N[C] patches each with space for up to N individuals.
+2. During each time step the following operations occur in each patch in the following order:
+  1. Unassociated hosts and symbionts die with fixed probability.
+  2. Host and symbiont propagule disperse (independently) into patches probabilistically according to fixed global species distributions.
+  3. A transistion probability matrix is calculated that gives the probability that an empty microsite or established mutualism will stay the same or change status in this timestep. In the current simulation, the probability that an empty space is colonized by a host and symbiont is a function of the environmental conditions in the patch and the niches of the host and symbiont as well as the degree to which hosts depend on symbionts for establishment. The probability that colonized microsites will transition to empty microsites is determined by a fixed death rate and the probability that colonized microsites will transition directly to a different set of mutualists is set to 0 (no competition).
+  4. Each microsite stochastically changes to a new state according to the transition matrix.
+3. The simulation is run for a fixed number of timesteps to reach an equllibrium.
+4. Descriptive statistics are calculated to summarize patterns of commmunity variation along the two environmental gradients.
+5. Steps 2-3 is repeated several times on the same initial metacommunity ("multiple chains") and descriptive statistics are averaged.
+6. Step 5 is repeated multiple times to generate a distribution of community descriptive statistics for a given set of simulation parameters.
 
 
 ## Files

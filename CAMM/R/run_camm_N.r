@@ -80,28 +80,28 @@ run_camm_N = function(parm_file, nruns, nchains, nparallel=1, sim_parms, simID, 
 	# Attempt to run simulations in parallel
 	if((nparallel > 1) & requireNamespace('parallel', quietly=TRUE)){
 		# Attach functions in parallel
-		library(parallel)
+		#library(parallel)
 
-		cluster = makeCluster(nparallel, outfile=file.path(save_dir, runID))	
+		cluster = parallel::makeCluster(nparallel, outfile=file.path(save_dir, runID))	
 		
 		# Send required functions to each node
-		clusterExport(cluster, c('runs','nchains','sim_dir','parm_file','sim_parms','simID','save_start','save_sim','save_dir','restart'), envir=environment())
-		clusterEvalQ(cluster, library(CAMM, lib.loc=sim_dir))
-		clusterEvalQ(cluster, source(parm_file))
+		parallel::clusterExport(cluster, c('runs','nchains','sim_dir','parm_file','sim_parms','simID','save_start','save_sim','save_dir','restart'), envir=environment())
+		parallel::clusterEvalQ(cluster, library(CAMM, lib.loc=sim_dir))
+		parallel::clusterEvalQ(cluster, source(parm_file))
 		
 		# Initialize CAMM or get previously saved initial metacommunities
 		if(restart){
 			# Get pre-existing metacomm_N object
 			load(file.path(save_dir, paste0(simID, '_metacomms.RData')))
 		} else {
-			metacomm_N = parLapply(cluster, 1:nruns, function(j) initialize_camm(parm_file, save_start, runID=runs[j], save_dir))
+			metacomm_N = parallel::parLapply(cluster, 1:nruns, function(j) initialize_camm(parm_file, save_start, runID=runs[j], save_dir))
 		}
-		clusterExport(cluster, 'metacomm_N', envir=environment())
+		parallel::clusterExport(cluster, 'metacomm_N', envir=environment())
 
 		if(save_start&(!restart)) save(metacomm_N, file=file.path(save_dir, paste0(simID, '_metacomms.RData')))
 		
 		# Run and Summarize CAMM
-		sim_results = parLapply(cluster, 1:nruns, function(j){
+		sim_results = parallel::parLapply(cluster, 1:nruns, function(j){
 			print(paste('start', runs[j]))
 			metacomm = metacomm_N[[j]]
 			reps = sim_parms$reps
@@ -190,7 +190,7 @@ run_camm_N = function(parm_file, nruns, nchains, nparallel=1, sim_parms, simID, 
 			list(rich_stats, corr_stats)
 		})
 
-		stopCluster(cluster)
+		parallel::stopCluster(cluster)
 
 	} else {
 	

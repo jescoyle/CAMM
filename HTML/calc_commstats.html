@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+<title>calc_commstats. CAMM 0.1.0</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="author" content="">
+
+<link href="css/bootstrap.css" rel="stylesheet">
+<link href="css/bootstrap-responsive.css" rel="stylesheet">
+<link href="css/highlight.css" rel="stylesheet">
+<link href="css/staticdocs.css" rel="stylesheet">
+
+<!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+<![endif]-->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+<script type="text/javascript"
+  src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+  </head>
+
+  <body>
+    <div class="navbar">
+  <div class="navbar-inner">
+    <div class="container">
+      <a class="brand" href="#">CAMM 0.1.0</a>
+      <div class="nav">
+        <ul class="nav">
+          <li><a href="index.html"><i class="icon-home icon-white"></i> Index</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+    <div class="container">
+      <header>
+        
+      </header>
+      
+      <h1>Calculate community statistics</h1>
+
+<div class="row">
+  <div class="span8">
+    <h2>Usage</h2>
+    <pre><div>calc_commstats(comm, topo_names, pools)</div></pre>
+    
+    <h2>Arguments</h2>
+    <dl>
+      <dt>comm</dt>
+      <dd>(required) site x microsite matrix with integers representing the 
+associations present in each microsite</dd>
+      <dt>topo_names</dt>
+      <dd>(required) host x symbiont association matrix with integers
+identifying each association (as returned by <code>name_topo</code>)</dd>
+      <dt>pools</dt>
+      <dd>(required) named list of pools of hosts as symbionts present at
+each site. Pools are generated from the community matrix by 
+<code>calc_pool</code>. The host pool should be named <code>'a'</code> and the symbiont 
+pool named <code>'b'</code>.</dd>
+    </dl>
+    
+    <div class="Value">
+      <h2>Value</h2>
+
+      <p><dl>
+a dataframe of community statistics (see details) with rows 
+	representing sites
+</dl></p>
+  
+    </div>
+
+    <div class="Description">
+      <h2>Description</h2>
+
+      <p>Calculate diversity and abundance of hosts, symbionts and associations</p>
+  
+    </div>
+
+    <div class="Details">
+      <h2>Details</h2>
+
+      <p>This function calculates abundance and diversity of hosts, symbionts
+and associations that are established at sites. If a species is present
+in a site's species pool, but not in an association at a microsite it 
+will not be counted. Three diversity statistics are calculated for hosts
+(<code>'a'</code>), symbionts (<code>'b'</code>) and associations (<code>'species'</code>):
+<ul>
+<li> <strong><code>S</code></strong> : species richness (number of species present
+	at each site), see <code><a href='calc_rich.html'>calc_rich</a></code>
+</li>
+<li> <strong><code>Stot</code></strong> : total species richness across all sites,
+	see <code><a href='calc_rich.html'>calc_tot_rich</a></code>
+</li>
+<li> <strong><code>Beta</code></strong> : beta diversity (total richness divided
+	by mean richness at each site)
+</li>
+</ul></p>
+  
+      <p>The function also returns the number of microsites occupied at each site
+(<code>N</code>), the total number of microsites occupied across the entire
+metacommunity (<code>Ntot</code>), and the pearson correlation between 
+species richness of hosts and symbionts across sites (<code>Core_ab</code>).
+Community statistics are returned as a dataframe with each row representing
+a site.</p>
+  
+    </div>
+      </div>
+  <div class="span4">
+    <!-- <ul>
+      <li>calc_commstats</li>
+    </ul>
+    <ul>
+      
+    </ul> -->
+      
+        
+  </div>
+</div>
+      
+      <footer>
+      <p class="pull-right"><a href="#">Back to top</a></p>
+<p>Built by <a href="https://github.com/hadley/staticdocs">staticdocs</a>. Styled with <a href="https://getbootstrap.com/2.0.4/">bootstrap</a>.</p>
+      </footer>
+    </div>
+  </body>
+</html>

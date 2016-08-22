@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+<title>Index. CAMM 0.1.0</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="author" content="">
+
+<link href="css/bootstrap.css" rel="stylesheet">
+<link href="css/bootstrap-responsive.css" rel="stylesheet">
+<link href="css/highlight.css" rel="stylesheet">
+<link href="css/staticdocs.css" rel="stylesheet">
+
+<!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+<![endif]-->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+<script type="text/javascript"
+  src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+  </head>
+
+  <body>
+    <div class="navbar">
+  <div class="navbar-inner">
+    <div class="container">
+      <a class="brand" href="#">CAMM 0.1.0</a>
+      <div class="nav">
+        <ul class="nav">
+          <li><a href="index.html"><i class="icon-home icon-white"></i> Index</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+    <div class="container">
+      <header>
+        
+      </header>
+      
+      <div class="row">
+  <div class="span8">
+    The Community Assembly of Mutualists Model (CAMM) is a general
+simulation model of community assembly for multiple host and symbiont species.
+The purpose of building this model was to explore the consequences of obligate
+mutualism on diversity patterns along environmental gradients. This model
+extends previous niche-based community assembly models to two communities (hosts
+and symbionts) linked by an association network that defines which species
+pairs facilitate each others establishment. CAMM is a spatially implicit patch-
+occupancy model that represents an open meta-community with patches jointly
+distributed along two environmental gradients. Patches are comprised of a fixed
+number of microsites, each of which may be occupied by a host and its symbiont.
+Each patch also has a pool of unassociated host and symbiont species. The
+state of each microsite follows a discrete-time Markov process with transition
+probabilities determined by the presence of species in the pool of established
+an unassociated mutualists. The probability of species occuring in a patch's
+pool is determined by the match between species' niches and the environmental
+conditions in the patch as well as species' global abundances. Thus, the primary
+process built into the model is environmental filtering. Competition only occurs
+as microsite pre-emption and there are no differences in mortality among species
+or patches.
+
+    <h2>Help topics</h2>
+
+    <h3></h3>
+    
+    
+    <ul class="index">
+        
+      <li>
+        <code><a href="calc_commstats.html">calc_commstats</a></code><br />Calculate community statistics</li>
+            
+      <li>
+        <code><a href="calc_diss.html">calc_diss</a></code><br />Calculate community dissimilarity</li>
+            
+      <li>
+        <code><a href="calc_envcorr.html">calc_envcorr</a></code><br />Community-environment correlations</li>
+            
+      <li>
+        <code><a href="calc_occ.html">calc_occ</a></code>(calc_tot_occ)<br />Calculate abundance</li>
+            
+      <li>
+        <code><a href="calc_pool.html">calc_pool</a></code><br />Calculate species pool</li>
+            
+      <li>
+        <code><a href="calc_probs.html">calc_probs</a></code><br />Calculate transition probability matrices</li>
+            
+      <li>
+        <code><a href="calc_rda.html">calc_rda</a></code><br />Community-environment RDA</li>
+            
+      <li>
+        <code><a href="calc_rich.html">calc_rich</a></code>(calc_tot_rich)<br />Calculate species richness</li>
+            
+      <li>
+        <code><a href="calc_sa.html">calc_sa</a></code><br />Calculate species abundances</li>
+            
+      <li>
+        <code><a href="die.html">die</a></code><br />Death</li>
+            
+      <li>
+        <code><a href="disperse.html">disperse</a></code><br />Dispersal</li>
+            
+      <li>
+        <code><a href="initialize_camm.html">initialize_camm</a></code><br />Initialize simulation</li>
+            
+      <li>
+        <code><a href="make_comm.html">make_comm</a></code><br />Creation of metacommunity</li>
+            
+      <li>
+        <code><a href="make_niches_gsad.html">make_niches_gsad</a></code><br />Creation of species niches and global abundances</li>
+            
+      <li>
+        <code><a href="make_parmlist.html">make_parmlist</a></code><br />Create parameter list</li>
+            
+      <li>
+        <code><a href="make_sites.html">make_sites</a></code><br />Creation of sites</li>
+            
+      <li>
+        <code><a href="make_topo.html">make_topo</a></code><br />Creation of an association network</li>
+            
+      <li>
+        <code><a href="name_topo.html">name_topo</a></code><br />Identifies links in an association network</li>
+            
+      <li>
+        <code><a href="niche_func.html">niche_func</a></code><br />Calculate survival probability</li>
+            
+      <li>
+        <code><a href="run_camm.html">run_camm</a></code><br />Run a simulation</li>
+            
+      <li>
+        <code><a href="run_camm_N.html">run_camm_N</a></code><br />Run multiple simulations</li>
+            
+      <li>
+        <code><a href="summarize_camm.html">summarize_camm</a></code><br />Summarize simulation results</li>
+            
+      <li>
+        <code><a href="transition.html">transition</a></code><br />Transition microsite</li>
+            
+      <li>
+        <code><a href="write_parms.html">write_parms</a></code><br />Write parameter file</li>
+    
+    </ul>
+  </div>
+  
+  <div class="span3 offset1">
+        
+    <h2>Dependencies</h2>
+    <ul>
+      
+      <li><strong>Imports</strong>: MASS, sads, vegan</li>
+      <li><strong>Suggests</strong>: parallel</li>
+      
+    </ul>
+    <h2>Authors</h2>
+    <ul>
+      <li><a href="mailto:jes.r.coyle@gmail.com">Jessica Coyle</a> [aut, cre]</li>
+    </ul>
+
+  </div>
+</div>
+      
+      <footer>
+      <p class="pull-right"><a href="#">Back to top</a></p>
+<p>Built by <a href="https://github.com/hadley/staticdocs">staticdocs</a>. Styled with <a href="https://getbootstrap.com/2.0.4/">bootstrap</a>.</p>
+      </footer>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+<title>initialize_camm. CAMM 0.1.0</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="author" content="">
+
+<link href="css/bootstrap.css" rel="stylesheet">
+<link href="css/bootstrap-responsive.css" rel="stylesheet">
+<link href="css/highlight.css" rel="stylesheet">
+<link href="css/staticdocs.css" rel="stylesheet">
+
+<!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+<![endif]-->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+<script type="text/javascript"
+  src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+  </head>
+
+  <body>
+    <div class="navbar">
+  <div class="navbar-inner">
+    <div class="container">
+      <a class="brand" href="#">CAMM 0.1.0</a>
+      <div class="nav">
+        <ul class="nav">
+          <li><a href="index.html"><i class="icon-home icon-white"></i> Index</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+    <div class="container">
+      <header>
+        
+      </header>
+      
+      <h1>Initialize simulation</h1>
+
+<div class="row">
+  <div class="span8">
+    <h2>Usage</h2>
+    <pre><div>initialize_camm(parm_file&nbsp;=&nbsp;NA, save_start&nbsp;=&nbsp;F, runID&nbsp;=&nbsp;NA, save_dir&nbsp;=&nbsp;"./")</div></pre>
+    
+    <h2>Arguments</h2>
+    <dl>
+      <dt>parm_file</dt>
+      <dd>path to file with parameters</dd>
+      <dt>save_start</dt>
+      <dd>logical indicating whether metacommunity objects should be
+saved to an .RData file. Defaults to <code>FALSE</code>.</dd>
+      <dt>runID</dt>
+      <dd>character string identifying this simulation. Required if 
+<code>save_start=TRUE</code>.</dd>
+      <dt>save_dir</dt>
+      <dd>directory where simulation objects should be saved. Defaults
+to current directory.</dd>
+    </dl>
+    
+    <div class="Value">
+      <h2>Value</h2>
+
+      <p><dl>
+a named list containing all objects needed to run a simulation
+</dl></p>
+  
+    </div>
+
+    <div class="Description">
+      <h2>Description</h2>
+
+      <p>Initializes a simulation for a given set of parameters</p>
+  
+    </div>
+
+    <div class="Details">
+      <h2>Details</h2>
+
+      <p>The function creates host and symbiont species pools, global species 
+abundance distributions (gsad), an association network (and named links),
+an association probability matrix, a set of sites with environmental 
+conditions, and an empty metacommunity at those sites. Parameters for
+creating these objects are read from a file (<code>parm_file</code>) or from 
+the environmentwhere the function is called. Required parameters are:
+<dl>
+<dt><code>S_a</code> and <code>S_b</code></dt><dd>number of host and symbiont species</dd></p>
+  
+      <p><dt><code>N_L</code></dt><dd>number of links in the association network</dd></p>
+  
+      <p><dt><code>topology</code></dt><dd>association network topology (<code>'one2one'</code>,
+	<code>'one2many'</code> or <code>'many2many'</code>). See <code><a href='make_topo.html'>make_topo</a></code>.</dd></p>
+  
+      <p><dt><code>N_C</code></dt><dd>number of sites</dd></p>
+  
+      <p><dt><code>N</code></dt><dd>number of microsites/individuals per site</dd></p>
+  
+      <p><dt><code>rho_z</code></dt><dd>correlation between environmental axes across sites</dd></p>
+  
+      <p><dt><code>niche_parms_a</code> and <code>niche_parms_b</code></dt><dd>named list of parameters
+	used to create host (a) and symbiont (b) niches. 
+	See <code><a href='make_niches_gsad.html'>make_niches_gsad</a></code>.</dd></p>
+  
+      <p><dt><code>gsad_dist_a</code> and <code>gsad_dist_b</code></dt><dd>named list of parameters
+	used to create host (a) and symbiont (b) global species abundance 
+	distributions. See <code><a href='make_niches_gsad.html'>make_niches_gsad</a></code>.</dd></p>
+  
+      <p></dl></p>
+  
+      <p>Optional parameters are:
+<dl>
+<dt>comm_fill</dt><dd>character string indicating how initial metacommunity
+	should be filled. Defaults to <code>'empty'</code>. See <code>link{make_comm}</code>.</dd></p>
+  
+      <p></dl></p>
+  
+      <p></p>
+  
+    </div>
+      </div>
+  <div class="span4">
+    <!-- <ul>
+      <li>initialize_camm</li>
+    </ul>
+    <ul>
+      
+    </ul> -->
+      
+    <h2>See also</h2>
+    
+<code>link{make_topo}</code>, <code>link{make_niches_gsad}</code>, 
+	<code>link{make_comm}</code>, <code><a href='make_sites.html'>make_sites</a></code>
+
+        
+  </div>
+</div>
+      
+      <footer>
+      <p class="pull-right"><a href="#">Back to top</a></p>
+<p>Built by <a href="https://github.com/hadley/staticdocs">staticdocs</a>. Styled with <a href="https://getbootstrap.com/2.0.4/">bootstrap</a>.</p>
+      </footer>
+    </div>
+  </body>
+</html>

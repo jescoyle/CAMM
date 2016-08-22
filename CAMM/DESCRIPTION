@@ -1,0 +1,33 @@
+Package: CAMM
+Title: Community Assembly of Mutualists Model Simulation
+Version: 0.1.0
+Authors@R: person("Jessica", "Coyle", , "jes.r.coyle@gmail.com", role = c("aut", "cre"))
+Description: The Community Assembly of Mutualists Model (CAMM) is a general
+    simulation model of community assembly for multiple host and symbiont species.
+    The purpose of building this model was to explore the consequences of obligate
+    mutualism on diversity patterns along environmental gradients. This model
+    extends previous niche-based community assembly models to two communities (hosts
+    and symbionts) linked by an association network that defines which species
+    pairs facilitate each others establishment. CAMM is a spatially implicit patch-
+    occupancy model that represents an open meta-community with patches jointly
+    distributed along two environmental gradients. Patches are comprised of a fixed
+    number of microsites, each of which may be occupied by a host and its symbiont.
+    Each patch also has a pool of unassociated host and symbiont species. The
+    state of each microsite follows a discrete-time Markov process with transition
+    probabilities determined by the presence of species in the pool of established
+    an unassociated mutualists. The probability of species occuring in a patch's
+    pool is determined by the match between species' niches and the environmental
+    conditions in the patch as well as species' global abundances. Thus, the primary
+    process built into the model is environmental filtering. Competition only occurs
+    as microsite pre-emption and there are no differences in mortality among species
+    or patches.
+Depends:
+    R (>= 3.3.1)
+License: GPL (>=2)
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 5.0.1
+Imports: MASS,
+	sads,
+	vegan
+Suggests: parallel

@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+<title>run_camm_N. CAMM 0.1.0</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="author" content="">
+
+<link href="css/bootstrap.css" rel="stylesheet">
+<link href="css/bootstrap-responsive.css" rel="stylesheet">
+<link href="css/highlight.css" rel="stylesheet">
+<link href="css/staticdocs.css" rel="stylesheet">
+
+<!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+<![endif]-->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+<script type="text/javascript"
+  src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+  </head>
+
+  <body>
+    <div class="navbar">
+  <div class="navbar-inner">
+    <div class="container">
+      <a class="brand" href="#">CAMM 0.1.0</a>
+      <div class="nav">
+        <ul class="nav">
+          <li><a href="index.html"><i class="icon-home icon-white"></i> Index</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+    <div class="container">
+      <header>
+        
+      </header>
+      
+      <h1>Run multiple simulations</h1>
+
+<div class="row">
+  <div class="span8">
+    <h2>Usage</h2>
+    <pre><div>run_camm_N(parm_file, nruns, nchains, nparallel&nbsp;=&nbsp;1, sim_parms, simID, save_start&nbsp;=&nbsp;F, save_sim&nbsp;=&nbsp;F, save_dir&nbsp;=&nbsp;"./", restart&nbsp;=&nbsp;F, sim_dir&nbsp;=&nbsp;NULL)</div></pre>
+    
+    <h2>Arguments</h2>
+    <dl>
+      <dt>parm_file</dt>
+      <dd>(required) path to file where parameters are stored. 
+See <code><a href='write_parms.html'>write_parms</a></code> and <code><a href='make_parmlist.html'>make_parmlist</a></code> for 
+instructions on creating an appropriate parameter file</dd>
+      <dt>nruns</dt>
+      <dd>(required) number of independent simulation runs to conduct</dd>
+      <dt>nchains</dt>
+      <dd>(required) number of replicate simulations on each initial
+metacommunity. Defaults to 1.</dd>
+      <dt>nparallel</dt>
+      <dd>number of cores used for parallel simulation. Defaults to
+1.</dd>
+      <dt>sim_parms</dt>
+      <dd>(required) named list of parameters controlling simulation.
+Should contain:
+<dl>
+    <dt>reps</dt><dd>vector of timepoints at which to summarize simulations
+        across chains (see details). The last number is the timepoint at
+        which simulations are stopped.</dd>
+
+    <dt>save_steps</dt><dd>optional vector of timepoints to save. Defaults to 
+        all.</dd>
+
+</dl>
+</dd>
+      <dt>simID</dt>
+      <dd>(required) character vector identifying this simulation</dd>
+      <dt>save_start</dt>
+      <dd>logical indicating whether the initial metacommunities
+should be saved to an RData file. Defaults to <code>FALSE</code>.</dd>
+      <dt>save_sim</dt>
+      <dd>logical indicating whether simulations results should
+be save to RData files. Defaults to <code>FALSE</code>.</dd>
+      <dt>save_dir</dt>
+      <dd>path to directory where simulation results should be saved.
+Defaults to the current directory.</dd>
+      <dt>restart</dt>
+      <dd>logical indicating whether this simulation restarts an existing
+simulation. If <code>FALSE</code>, existing files will be overwritten. If 
+<code>TRUE</code>, then a metacommunity object named 
+<code>'<runID>_metacomms.RData'</code> must be present in <code>save_dir</code>.
+Defaults to <code>FALSE</code>.</dd>
+      <dt>sim_dir</dt>
+      <dd>directory where CAMM is installed. Defaults to R's search path.</dd>
+    </dl>
+    
+    <div class="Value">
+      <h2>Value</h2>
+
+      <p><dl>
+a list of lists (one for each independent simulation run), each 
+	containing two arrays summarizing diversity ('rich_stats') and 
+	community-environment correlations ('corr_stats') across simulations run   
+	on the same initial metacommunity (across chains). The first dimension of 
+	these arrrays refers to whether the quantities are the cross-chain mean
+	or variance. If summaries were requested for multiple timepoints, then 
+	the timepoint is indicated in the last dimension.
+</dl></p>
+  
+    </div>
+
+    <div class="Description">
+      <h2>Description</h2>
+
+      <p>Runs multiple simulations on the same set of parameters.</p>
+  
+    </div>
+
+    <div class="Details">
+      <h2>Details</h2>
+
+      <p>This function runs multiple simulations on a set of parameters 
+given in <code>parm_file</code>. The function first generates <code>nruns</code>
+independent metacommunities and if <code>save_start</code> is <code>TRUE</code>, 
+saves these as a list in the directory given in <code>save_dir</code> as
+<code>'<simID>_metacomms.RData'</code>. The function then executes one or more
+simulations (given in <code>nchains</code>) on each of these metacommunities.
+This allows the user to evaluate variability among simulations with 
+different initial metacommunities versus variability that arises during 
+the simulation. Simulations are controled by parameters passed in 
+<code>sim_parms</code>, including the number of timesteps and which steps to 
+record. Mean diversity statistics across communities ('rich_stats') and  
+community-environment correlations ('corr_stats') are calculated for  
+each simulation using <code><a href='calc_commstats.html'>calc_commstats</a></code> and 
+<code><a href='calc_envcorr.html'>calc_envcorr</a></code>) and the mean and variance of these community 
+descriptors are calculated across simulations run on the same initial  
+metacommunity (across 'chains'). Summaries can be calculated for multiple  
+timepoints by passing a vector of timepoints to the <code>sim_parms$reps</code>.   
+In this case, the simulation will be run until the last timepoint in the  
+vector (not the largest). If <code>save_sim</code> is <code>TRUE</code> then both the  
+cross-chain summary statistics and full simulation results are saved to 
+files in <code>save_dir</code> as <code>'<simID>_<run#>_results.RData'</code> and 
+<code>'<simID>_<run#>_metacomms-end.RData'</code>, respectively. Otherwise
+only the summaries are returned by the function, in a list.</p>
+  
+      <p>Simulations can be run in parallel by specifying 
+<code>nparallel > 1</code>, which requires the <code><a href='http://www.inside-r.org/packages/cran/doParallel/docs/doParallel-package'>doParallel</a></code>
+and <code><a href='http://www.inside-r.org/packages/cran/foreach/docs/foreach'>foreach</a></code> packages.
+By default, <code>nparallel = 1</code> and the simulations proceed serially.</p>
+  
+    </div>
+      </div>
+  <div class="span4">
+    <!-- <ul>
+      <li>run_camm_N</li>
+    </ul>
+    <ul>
+      
+    </ul> -->
+      
+        
+  </div>
+</div>
+      
+      <footer>
+      <p class="pull-right"><a href="#">Back to top</a></p>
+<p>Built by <a href="https://github.com/hadley/staticdocs">staticdocs</a>. Styled with <a href="https://getbootstrap.com/2.0.4/">bootstrap</a>.</p>
+      </footer>
+    </div>
+  </body>
+</html>

@@ -44,6 +44,7 @@
 #'		\code{p1}. Can alternatively specify \code{maxN} and \code{P_maxN} to   
 #'		find \code{p1} corresponding to a distribution with a probability of  
 #'		\code{P_maxN} of exceeding \code{maxN}.}
+#' }
 #' Note that is \code{maxN} is specified, it will be used instead of 
 #' \code{p1} or \code{p2}. In addition, continuous distributions are discretized
 #' so that abundances can be used as measures of propagule supply.
@@ -57,7 +58,7 @@
 #' @param N_S (required) number of species
 #' @param nicheparms (required) a named list decribing the distributions from 
 #' 	which niche optima and breadths are sampled. Contains:
-#'	\decribe{
+#'	\describe{
 #'		\item{mu}{vector of length 2 with the maximum niche optima for each 
 #'			environmental axis}
 #'		\item{rho}{correlation between niche optima aross the two environmental
@@ -73,7 +74,7 @@
 #'	}
 #' @param distribution (required) named list of parameters describing the 
 #' form of the species abundance distribution. Contains:
-#'	\decribe{
+#'	\describe{
 #'		\item{type}{character string indicating the form of the distribution.
 #'			See details.}
 #'		\item{maxN}{maximum abundance. Used when other distribution parameters
@@ -91,6 +92,8 @@
 #' @return named list whose first element is an array with species' niche 
 #' 	optima and breadths along each environmental axis and whose second element
 #' 	is a vector of species relative global abundances
+#'
+#' @importFrom sads qls
 #'
 #' @export
 
@@ -157,15 +160,15 @@ make_niches_gsad = function(N_S, nicheparms, distribution){
 			if(!exists(distribution$P_maxN)) stop('Must specify P_maxN.')
 		
 			use_N = 1
-			this_N = qls(1-distribution$P_maxN, use_N, distribution$p1)	
+			this_N = sads::qls(1-distribution$P_maxN, use_N, distribution$p1)	
 			while(this_N < distribution$maxN){
 				use_N = use_N + 1
-				this_N = qls(1-distribution$P_maxN, use_N, distribution$p1)	
+				this_N = sads::qls(1-distribution$P_maxN, use_N, distribution$p1)	
 			}
 			if(this_N > 10) use_N = use_N - 1
 
 		}
-		abuns = qls(U[,'abun'], N = use_N, alpha = distribution$p1)		
+		abuns = sads::qls(U[,'abun'], N = use_N, alpha = distribution$p1)		
 	}
 	if(distribution$type=='lognormal'){
 		if(!exists(distribution$maxN)){

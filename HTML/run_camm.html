@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+<title>run_camm. CAMM 0.1.0</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="author" content="">
+
+<link href="css/bootstrap.css" rel="stylesheet">
+<link href="css/bootstrap-responsive.css" rel="stylesheet">
+<link href="css/highlight.css" rel="stylesheet">
+<link href="css/staticdocs.css" rel="stylesheet">
+
+<!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+<![endif]-->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+<script type="text/javascript"
+  src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+  </head>
+
+  <body>
+    <div class="navbar">
+  <div class="navbar-inner">
+    <div class="container">
+      <a class="brand" href="#">CAMM 0.1.0</a>
+      <div class="nav">
+        <ul class="nav">
+          <li><a href="index.html"><i class="icon-home icon-white"></i> Index</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+    <div class="container">
+      <header>
+        
+      </header>
+      
+      <h1>Run a simulation</h1>
+
+<div class="row">
+  <div class="span8">
+    <h2>Usage</h2>
+    <pre><div>run_camm(metacomm&nbsp;=&nbsp;NULL, reps&nbsp;=&nbsp;NA, save_steps&nbsp;=&nbsp;NA)</div></pre>
+    
+    <h2>Arguments</h2>
+    <dl>
+      <dt>metacomm</dt>
+      <dd>list containing objects describing the metacommunity, 
+as returned by <code><a href='initialize_camm.html'>initialize_camm</a></code>. If not supplied, then then
+environment must contain the following:
+<dl>
+    <dt><code>comm</code></dt><dd>metacommunity object (see <code>make_comm)</code>)</dd>
+
+    <dt><code>poolA</code> and <code>poolB</code></dt><dd>species pools for hosts and
+        symbionts (see <code>calc_pool</code>)</dd>
+
+    <dt><code>niches_a</code>, <code>niches_b</code>, <code>gsad_a</code>, <code>gsad_b</code></dt><dd>
+        host ans symbiont niche parameters and global species abundance 
+        distributions (see <code>make_niches_gsad</code>)</dd>
+
+    <dt><code>assoc_probs</code></dt><dd>site x association matrix giving the
+        probability of each association forming at each site</dd>
+
+    <dt><code>topo</code> and <code>topo_names</code></dt><dd>binary host x symbiont species
+        matrix giving the association network (see <code>make_topo</code>) and 
+        a versionwith integers identifying each association (see 
+        <code>name_topo</code>)</dd>
+
+</dl>
+</dd>
+      <dt>reps</dt>
+      <dd>(required) number of timesteps to run simulation</dd>
+      <dt>save_steps</dt>
+      <dd>vector indicating which timesteps to save. Defaults to all.</dd>
+    </dl>
+    
+    <div class="Value">
+      <h2>Value</h2>
+
+      <p><dl>
+a list containing objects describing states of the metacommunity 
+	through time (see details)
+</dl></p>
+  
+    </div>
+
+    <div class="Description">
+      <h2>Description</h2>
+
+      <p>Runs a simulation on an existing metacommunity</p>
+  
+    </div>
+
+    <div class="Details">
+      <h2>Details</h2>
+
+      <p>Simulations are run for a fixed number of timesteps (<code>reps</code>) on the 
+metacommunity provided in <code>metacomm</code>, or if not provided, on the 
+metacommunity objects that exist in the environment where the function is 
+called. The simulation keeps track of the associations (<code>comm</code>),
+host species (<code>poolA</code>), and symbiont species (<code>poolB</code>) present
+at each site at each timestep to be saved (<code>save_steps</code>, defaults to all.
+It also records the transition matrix used to generate the status of the 
+at each of these timesteps (<code>Tmat</code>. These objects are returned as a 
+list.</p>
+  
+      <p>For each timestep, the simulation executes the following operations in 
+order:
+<ol>
+<li> <strong>Local Extinction</strong> : Stochastic extinction of species from 
+		sites where they are not established in an association at a microsite. 
+		See <code><a href='die.html'>die</a></code>.
+	</li>
+<li> <strong>Immigration</strong> : Stochastic immigration of species from mainland
+		into species pools at local sites. The probability that a species becomes
+		established in a site's local pool is a function of the number of propagules
+		arriving and the match between the species' niche and environmental
+		conditions. See <code><a href='disperse.html'>disperse</a></code>.
+	</li>
+<li> <strong>Transition Communities</strong> : Calculate a transition matrix
+		for each site based on species present in the species pool and then
+		stochastically change microsite states based on these transition
+		probabilities. This is the step where established associations can
+		die and empty microsites are colonized from species present in local
+		site species pools. See <code><a href='calc_probs.html'>calc_probs</a></code> and 
+		<code><a href='transition.html'>transition</a></code>.
+</li>
+</ol></p>
+  
+      <p></p>
+  
+    </div>
+
+    <div class="Note">
+      <h2>Note</h2>
+
+      <p>A previous version of the function allowed the simulation to run until
+multiple 'chains' reached a convergence criteria. This mode has been removed,
+but the code remains commented out in the function in case a future user wants
+to utilize it.</p>
+  
+    </div>
+      </div>
+  <div class="span4">
+    <!-- <ul>
+      <li>run_camm</li>
+    </ul>
+    <ul>
+      
+    </ul> -->
+      
+        
+  </div>
+</div>
+      
+      <footer>
+      <p class="pull-right"><a href="#">Back to top</a></p>
+<p>Built by <a href="https://github.com/hadley/staticdocs">staticdocs</a>. Styled with <a href="https://getbootstrap.com/2.0.4/">bootstrap</a>.</p>
+      </footer>
+    </div>
+  </body>
+</html>

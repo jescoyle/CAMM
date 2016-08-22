@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+<title>summarize_camm. CAMM 0.1.0</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="author" content="">
+
+<link href="css/bootstrap.css" rel="stylesheet">
+<link href="css/bootstrap-responsive.css" rel="stylesheet">
+<link href="css/highlight.css" rel="stylesheet">
+<link href="css/staticdocs.css" rel="stylesheet">
+
+<!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+<![endif]-->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+<script type="text/javascript"
+  src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+  </head>
+
+  <body>
+    <div class="navbar">
+  <div class="navbar-inner">
+    <div class="container">
+      <a class="brand" href="#">CAMM 0.1.0</a>
+      <div class="nav">
+        <ul class="nav">
+          <li><a href="index.html"><i class="icon-home icon-white"></i> Index</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+    <div class="container">
+      <header>
+        
+      </header>
+      
+      <h1>Summarize simulation results</h1>
+
+<div class="row">
+  <div class="span8">
+    <h2>Usage</h2>
+    <pre><div>summarize_camm(results, what, type&nbsp;=&nbsp;NA)</div></pre>
+    
+    <h2>Arguments</h2>
+    <dl>
+      <dt>results</dt>
+      <dd>(required) list of simulations results, as returned by
+<code>link{run_sim_N}</code></dd>
+      <dt>what</dt>
+      <dd>(required) character string indicating which community 
+descriptor to summarize (see details)</dd>
+      <dt>type</dt>
+      <dd>character string indicating which community to summarize
+(see details: required if <code>what</code> is <code>'S'</code>, <code>'N'</code>, or 
+<code>'cor'</code>)</dd>
+    </dl>
+    
+    <div class="Value">
+      <h2>Value</h2>
+
+      <p><dl>
+an array
+</dl></p>
+  
+    </div>
+
+    <div class="Description">
+      <h2>Description</h2>
+
+      <p>Summarizes multiple independent simulation runs</p>
+  
+    </div>
+
+    <div class="Details">
+      <h2>Details</h2>
+
+      <p>This function summarizes a given community descriptor across multiple
+independent simulations run on the same set of parameters. It extracts
+the requested descriptor for each simulation run in <code>results</code>
+and then calculates the mean, variance, median and 2.5th and 97.5th 
+quantiles across simulation runs.</p>
+  
+      <p>The following community descriptors can be requested 
+(using the paramter <code>what</code>):
+<dl>
+<dt>'S'</dt><dd>mean site species richness, total species richness, and 
+	beta diversity</dd></p>
+  
+      <p><dt>'N'</dt><dd>mean site abundance and total abundance</dd></p>
+  
+      <p><dt>'Cor_ab'</dt><dd>correlation between host and symbiont richness</dd></p>
+  
+      <p><dt>'cor'</dt><dd>community ~ environment correlations</dd></p>
+  
+      <p></dl></p>
+  
+      <p>The user must also indicate which community should be summarized
+useing <code>type</code>: established associations (<code>'species'</code>), 
+or host (<code>'a'</code>) or symbiont (<code>'b'</code>) species involved in
+established associations.</p>
+  
+    </div>
+      </div>
+  <div class="span4">
+    <!-- <ul>
+      <li>summarize_camm</li>
+    </ul>
+    <ul>
+      
+    </ul> -->
+      
+        
+  </div>
+</div>
+      
+      <footer>
+      <p class="pull-right"><a href="#">Back to top</a></p>
+<p>Built by <a href="https://github.com/hadley/staticdocs">staticdocs</a>. Styled with <a href="https://getbootstrap.com/2.0.4/">bootstrap</a>.</p>
+      </footer>
+    </div>
+  </body>
+</html>

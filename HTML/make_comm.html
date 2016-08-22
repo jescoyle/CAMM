@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+<title>make_comm. CAMM 0.1.0</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="author" content="">
+
+<link href="css/bootstrap.css" rel="stylesheet">
+<link href="css/bootstrap-responsive.css" rel="stylesheet">
+<link href="css/highlight.css" rel="stylesheet">
+<link href="css/staticdocs.css" rel="stylesheet">
+
+<!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+<![endif]-->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+<script type="text/javascript"
+  src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+  </head>
+
+  <body>
+    <div class="navbar">
+  <div class="navbar-inner">
+    <div class="container">
+      <a class="brand" href="#">CAMM 0.1.0</a>
+      <div class="nav">
+        <ul class="nav">
+          <li><a href="index.html"><i class="icon-home icon-white"></i> Index</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+    <div class="container">
+      <header>
+        
+      </header>
+      
+      <h1>Creation of metacommunity</h1>
+
+<div class="row">
+  <div class="span8">
+    <h2>Usage</h2>
+    <pre><div>make_comm(N_C, N, N_S&nbsp;=&nbsp;0, fill&nbsp;=&nbsp;"empty")</div></pre>
+    
+    <h2>Arguments</h2>
+    <dl>
+      <dt>N_C</dt>
+      <dd>(required) number of communities (sites)</dd>
+      <dt>N</dt>
+      <dd>(required) number of microsites (or individuals) in each community</dd>
+      <dt>N_S</dt>
+      <dd>number of species pairs</dd>
+      <dt>fill</dt>
+      <dd>character string indicating how communities should be filled.
+Defaults to <code>'empty'</code>. See details.</dd>
+    </dl>
+    
+    <div class="Description">
+      <h2>Description</h2>
+
+      <p>Create a set of <code>N_C</code> communities, each with <code>N</code> microsites
+or individuals.</p>
+  
+    </div>
+
+    <div class="Details">
+      <h2>Details</h2>
+
+      <p>A metacommunity is represented by a <code>N_C x N</code> matrix where rows give
+the host-symbiont pair present at each site. Integers in the matrix
+correspond to host-symbiont pairs named in the association network topology
+matrix. Currently implements two methods for starting a metacommunity which
+is specified by <code>fill</code>:
+<dl>
+<dt><code>'empty'</code></dt><dd>initial metacommunity has no species present</dd></p>
+  
+      <p><dt><code>'random'</code></dt><dd>initial metacommunity community populated by randomly 
+	sampling species pairs until it is full</dd></p>
+  
+      <p></dl></p>
+  
+      <p></p>
+  
+    </div>
+      </div>
+  <div class="span4">
+    <!-- <ul>
+      <li>make_comm</li>
+    </ul>
+    <ul>
+      
+    </ul> -->
+      
+        
+  </div>
+</div>
+      
+      <footer>
+      <p class="pull-right"><a href="#">Back to top</a></p>
+<p>Built by <a href="https://github.com/hadley/staticdocs">staticdocs</a>. Styled with <a href="https://getbootstrap.com/2.0.4/">bootstrap</a>.</p>
+      </footer>
+    </div>
+  </body>
+</html>

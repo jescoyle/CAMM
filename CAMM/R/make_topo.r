@@ -14,6 +14,8 @@
 #'		associates with one or more hosts}
 #'	\item{\code{'many2many'}}{each host associates with one or more symbionts and
 #'		each symbiont associates with one or more hosts}
+#' }
+#'
 #' The specified topology must be compatible with the number of species and 
 #' number of links (\code{N_L}) specified. E.g. for \code{'one2one'}, the 
 #' number of of host and symbiont species and links must be equal, whereas, for

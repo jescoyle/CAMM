@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+<title>disperse. CAMM 0.1.0</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="author" content="">
+
+<link href="css/bootstrap.css" rel="stylesheet">
+<link href="css/bootstrap-responsive.css" rel="stylesheet">
+<link href="css/highlight.css" rel="stylesheet">
+<link href="css/staticdocs.css" rel="stylesheet">
+
+<!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+<![endif]-->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+<script type="text/javascript"
+  src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+  </head>
+
+  <body>
+    <div class="navbar">
+  <div class="navbar-inner">
+    <div class="container">
+      <a class="brand" href="#">CAMM 0.1.0</a>
+      <div class="nav">
+        <ul class="nav">
+          <li><a href="index.html"><i class="icon-home icon-white"></i> Index</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+    <div class="container">
+      <header>
+        
+      </header>
+      
+      <h1>Dispersal</h1>
+
+<div class="row">
+  <div class="span8">
+    <h2>Usage</h2>
+    <pre><div>disperse(sites, niches, pool, gsad)</div></pre>
+    
+    <h2>Arguments</h2>
+    <dl>
+      <dt>sites</dt>
+      <dd>(required) a 2 column matrix giving environmental conditions
+at each site</dd>
+      <dt>niches</dt>
+      <dd>(required) array of niche optima and breadths for each species
+and each environmental axis (<code>[species, optima/breadth, environment]</code>)
+as returned by <code><a href='make_niches_gsad.html'>make_niches_gsad</a></code>.</dd>
+      <dt>pool</dt>
+      <dd>(required) binary site x species matrix indicating which species
+ are present in each site's species pool, but which are not necessarily
+established.</dd>
+      <dt>gsad</dt>
+      <dd>vector of integers giving the number of propagules for each species
+arriving at a site in a timestep</dd>
+    </dl>
+    
+    <div class="Value">
+      <h2>Value</h2>
+
+      <p><dl>
+binary site x species matrix indicating which species are now
+	in the species' pools at each site
+</dl></p>
+  
+    </div>
+
+    <div class="Description">
+      <h2>Description</h2>
+
+      <p>Stochastic dispersal of species into communities based on the 
+global species abundance distribution</p>
+  
+    </div>
+
+    <div class="Details">
+      <h2>Details</h2>
+
+      <p>The global species abundance distribution <code>gsad</code> gives
+the number of propagules of each species arriving at each site
+in one time step. The probability that a species establishes 
+is the probability that at least on propagule establishes, given
+a per-propagule establishment probability calculated by 
+<code><a href='niche_func.html'>niche_func</a></code> based on the match between species niches
+and environmental conditions in the site. The function assumes that 
+hosts and symbionts disperse independently (no co-dispersal), since it
+can only be applied to one or the other and not both concurrently.</p>
+  
+    </div>
+      </div>
+  <div class="span4">
+    <!-- <ul>
+      <li>disperse</li>
+    </ul>
+    <ul>
+      
+    </ul> -->
+      
+        
+  </div>
+</div>
+      
+      <footer>
+      <p class="pull-right"><a href="#">Back to top</a></p>
+<p>Built by <a href="https://github.com/hadley/staticdocs">staticdocs</a>. Styled with <a href="https://getbootstrap.com/2.0.4/">bootstrap</a>.</p>
+      </footer>
+    </div>
+  </body>
+</html>

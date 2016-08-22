@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+<title>calc_diss. CAMM 0.1.0</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="author" content="">
+
+<link href="css/bootstrap.css" rel="stylesheet">
+<link href="css/bootstrap-responsive.css" rel="stylesheet">
+<link href="css/highlight.css" rel="stylesheet">
+<link href="css/staticdocs.css" rel="stylesheet">
+
+<!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+<![endif]-->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+<script type="text/javascript"
+  src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+  </head>
+
+  <body>
+    <div class="navbar">
+  <div class="navbar-inner">
+    <div class="container">
+      <a class="brand" href="#">CAMM 0.1.0</a>
+      <div class="nav">
+        <ul class="nav">
+          <li><a href="index.html"><i class="icon-home icon-white"></i> Index</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+    <div class="container">
+      <header>
+        
+      </header>
+      
+      <h1>Calculate community dissimilarity</h1>
+
+<div class="row">
+  <div class="span8">
+    <h2>Usage</h2>
+    <pre><div>calc_diss(comm, topo_names, type, metric, binary&nbsp;=&nbsp;F, pool&nbsp;=&nbsp;NULL)</div></pre>
+    
+    <h2>Arguments</h2>
+    <dl>
+      <dt>comm</dt>
+      <dd>(required) site x microsite matrix with integers representing
+the associations present in each microsite</dd>
+      <dt>topo_names</dt>
+      <dd>(required) host x symbiont association matrix with 
+integers identifying each association (as returned by <code>name_topo</code>)</dd>
+      <dt>type</dt>
+      <dd>(required) character string indicating whether the function
+should do calculations on host species (<code>'a'</code>), symbiont
+species (<code>'b'</code>), or associations (<code>'species'</code>)</dd>
+      <dt>metric</dt>
+      <dd>(required) dissimilarity metric used for calculation
+(see <code><a href='http://www.inside-r.org/packages/cran/vegan/docs/vegdist'>vegdist</a></code></dd>
+      <dt>binary</dt>
+      <dd>logical indicating whether dissimilarties should be calculated
+from species abundances (<code>FALSE</code>, default) or presence/absence
+(<code>TRUE</code>)</dd>
+      <dt>pool</dt>
+      <dd>site x species matrix for the species pool present at each
+site (as returned by <code><a href='calc_pool.html'>calc_pool</a></code>). Must be supplied if 
+calculating for host or symbiont species.</dd>
+    </dl>
+    
+    <div class="Value">
+      <h2>Value</h2>
+
+      <p><dl>
+matrix of site dissimilarities, as returned by 
+	<code><a href='http://www.inside-r.org/packages/cran/vegan/docs/vegdist'>vegdist</a></code>
+</dl></p>
+  
+    </div>
+
+    <div class="Description">
+      <h2>Description</h2>
+
+      <p>Calculate dissimilarity in species composition among sites</p>
+  
+    </div>
+
+    <div class="Details">
+      <h2>Details</h2>
+
+      <p>This function uses <code><a href='http://www.inside-r.org/packages/cran/vegan/docs/vegdist'>vegdist</a></code> in the vegan package to
+calculate community dissimilarity among sites. Dissimilarity can be
+calculated for associations or for host or symbiont species present
+in established associations. Any metric implemented by 
+<code><a href='http://www.inside-r.org/packages/cran/vegan/docs/vegdist'>vegdist</a></code> can be used and dissimilarities can be 
+calculated based on abundances or based on presence/absence 
+(<code>binary=TRUE</code>).</p>
+  
+    </div>
+      </div>
+  <div class="span4">
+    <!-- <ul>
+      <li>calc_diss</li>
+    </ul>
+    <ul>
+      
+    </ul> -->
+      
+        
+  </div>
+</div>
+      
+      <footer>
+      <p class="pull-right"><a href="#">Back to top</a></p>
+<p>Built by <a href="https://github.com/hadley/staticdocs">staticdocs</a>. Styled with <a href="https://getbootstrap.com/2.0.4/">bootstrap</a>.</p>
+      </footer>
+    </div>
+  </body>
+</html>

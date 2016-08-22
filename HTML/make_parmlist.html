@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+<title>make_parmlist. CAMM 0.1.0</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="author" content="">
+
+<link href="css/bootstrap.css" rel="stylesheet">
+<link href="css/bootstrap-responsive.css" rel="stylesheet">
+<link href="css/highlight.css" rel="stylesheet">
+<link href="css/staticdocs.css" rel="stylesheet">
+
+<!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+<![endif]-->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+<script type="text/javascript"
+  src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+  </head>
+
+  <body>
+    <div class="navbar">
+  <div class="navbar-inner">
+    <div class="container">
+      <a class="brand" href="#">CAMM 0.1.0</a>
+      <div class="nav">
+        <ul class="nav">
+          <li><a href="index.html"><i class="icon-home icon-white"></i> Index</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+    <div class="container">
+      <header>
+        
+      </header>
+      
+      <h1>Create parameter list</h1>
+
+<div class="row">
+  <div class="span8">
+    <h2>Usage</h2>
+    <pre><div>make_parmlist(e&nbsp;=&nbsp;parent.frame())</div></pre>
+    
+    <h2>Arguments</h2>
+    <dl>
+      <dt>e</dt>
+      <dd>environment where parameters are located</dd>
+    </dl>
+    
+    <div class="Value">
+      <h2>Value</h2>
+
+      <p><dl>
+a named list of paramters
+</dl></p>
+  
+    </div>
+
+    <div class="Description">
+      <h2>Description</h2>
+
+      <p>Creates a list of simulation parameters</p>
+  
+    </div>
+
+    <div class="Details">
+      <h2>Details</h2>
+
+      <p>The function creastes a list of parameters required for running a 
+simulation. Parameters are taken by default from the environment where
+the function is called, or optionally from the environment provided
+by <code>e</code>. All parameters are <strong>required</strong> for simulation and <em>must be present
+in the environment or the function will fail</em>.</p>
+  
+      <p>Parameters for creating a metacommunity (see <code><a href='initialize_camm.html'>initialize_camm</a></code>):
+<ul>
+<li> <strong><code>runID</code></strong> : name of this simulation run
+</li>
+<li> <strong><code>S_a</code></strong> : number of host species
+</li>
+<li> <strong><code>S_b</code></strong> : number of symbiont species
+</li>
+<li> <strong><code>N_C</code></strong> : number of sites
+</li>
+<li> <strong><code>N</code></strong> : number of microsites / individuals
+</li>
+<li> <strong><code>rho_z</code></strong> : correlation between environmental axes
+	across sites 
+</li>
+<li> <strong><code>N_L</code></strong>: number of links in the association network 
+	between host and symbiont species
+</li>
+<li> <strong><code>topology</code></strong>: character string defining type of 
+	association network topology
+</li>
+<li> <strong><code>N_L</code></strong>: number of links in the association network 
+	between host and symbiont species
+</li>
+</ul></p>
+  
+      <p>Parameters for creating species niches (see <code><a href='make_niches_gsad.html'>make_niches_gsad</a></code>):
+<ul>
+<li> <strong><code>mu_a1</code></strong> and <strong><code>mu_a2</code></strong> : maximum niche
+	optima for host species along environmental axes 1 and 2
+</li>
+<li> <strong><code>mu_b1</code></strong> and <strong><code>mu_b2</code></strong> : maximum niche
+	optima for symbiont species along environmental axes 1 and 2
+</li>
+<li> <strong><code>rho_a</code></strong> and <strong><code>rho_b</code></strong>: correlation of niche
+	optima between environmental axes across host and symbiont species
+</li>
+<li> <strong><code>sigma_a1</code></strong> and <strong><code>sigma_a2</code></strong> : expected
+	niche breadth of host species along environmental axes 1 and 2
+</li>
+<li> <strong><code>sigma_b1</code></strong> and <strong><code>sigma_b2</code></strong> : expected
+	niche breadth of symbiont species along environmental axes 1 and 2
+</li>
+<li> <strong><code>alpha_a1</code></strong> and <strong><code>alpha_a2</code></strong> : shape
+	parameter of the gamma distribution from which host niche breadths
+	are drawn for environmental axes 1 and 2
+</li>
+<li> <strong><code>alpha_b1</code></strong> and <strong><code>alpha_b2</code></strong> : shape
+	parameter of the gamma distribution from which host niche breadths
+	are drawn for environmental axes 1 and 2
+</li>
+<li> <strong><code>r_a</code></strong> and <strong><code>r_b</code></strong>: correlation of niche
+	breadths between environmental axes across host and symbiont species
+</li>
+<li> <strong><code>gsad_dist_a</code></strong> and <strong><code>gsad_dist_b</code></strong>: list
+	of paramters describing the global species abundance distribution for
+	hosts ans symbionts
+</li>
+</ul></p>
+  
+      <p>Parameters for running the simulation:
+<ul>
+<li> <strong><code>omega</code></strong>: degree of mutualism: <code>0</code> = no 
+	facilitation, <code>1</code> = obligate mutualism 
+	(see <code><a href='calc_probs.html'>calc_probs</a></code>)
+</li>
+<li> <strong><code>assoc_prob_func</code></strong>: function that defines the
+	probability that a host and symbiont will form an association, given
+	that they have the capacity to. Should accept three arguments: 
+	<code>env</code> (vector of environmental conditions), <code>niche_a</code> 
+	(matrix defining the host's niche) and <code>niche_b</code> (matrix defining
+	the symbiont's niche).
+</li>
+<li> <strong><code>mort_rate</code></strong>: probability that an established association
+	dies in a timestep
+</li>
+<li> <strong><code>mort_rate_a</code></strong> and <strong><code>mort_rate_b</code></strong>: local
+	extinction rate of unassociated hosts and symbionts from a species pool
+	relative to the mortality rate of established associations (e.g., a
+	value of <code>10</code> will cause cause unassociated mutualists to be removed
+	from a species pool at <code>10x</code> the rate of associated mutualists)
+</li>
+</ul></p>
+  
+      <p></p>
+  
+    </div>
+      </div>
+  <div class="span4">
+    <!-- <ul>
+      <li>make_parmlist</li>
+    </ul>
+    <ul>
+      
+    </ul> -->
+      
+        
+  </div>
+</div>
+      
+      <footer>
+      <p class="pull-right"><a href="#">Back to top</a></p>
+<p>Built by <a href="https://github.com/hadley/staticdocs">staticdocs</a>. Styled with <a href="https://getbootstrap.com/2.0.4/">bootstrap</a>.</p>
+      </footer>
+    </div>
+  </body>
+</html>

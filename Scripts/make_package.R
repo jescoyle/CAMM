@@ -6,7 +6,9 @@ library(devtools)
 library(roxygen2)
 library(staticdocs)
 
-setwd('C:/Users/jrcoyle/Documents/Research/CAMM/GitHub/')
+setwd('C:/Users/jrcoyle/Documents/Research/CAMM/GitHub')
+
+#create('CAMM')
 
 current_code = as.package('CAMM')
 
@@ -17,30 +19,28 @@ load_all(current_code)
 document(current_code)
 
 # Add Imports and Suggests to DESCRIPTION
-setwd('./CTSim')
-use_package('abind')
-use_package('fdrtool')
-use_package('gstat')
-use_package('poweRlaw')
-use_package('raster')
-use_package('reshape2')
+# NOTE: NOT WORKING, added manually
+setwd('./CAMM')
+use_package('MASS')
 use_package('sads')
-use_package('sp')
-use_package('doParallel','Suggests')
-use_package('foreach','Suggests')
+use_package('vegan')
+use_package('parallel','Suggests')
+
+
+
 
 # Check the package
 setwd('../')
-check('CTSim')
+check('CAMM')
 
 # Build the package
-build('CTSim')
-#build_win('CTSim')
+build('CAMM')
+build_win('CAMM')
 
 
 # Check install
-install.packages('CTSim_0.1.3.zip', repos=NULL)
+install.packages('CAMM_0.1.0.zip', repos=NULL)
 library(CTSim)
 
 # Make static html documentation
-build_site('CTSim', 'HTML')
+build_site('CAMM', 'HTML')

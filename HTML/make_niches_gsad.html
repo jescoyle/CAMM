@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+<title>make_niches_gsad. CAMM 0.1.0</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="author" content="">
+
+<link href="css/bootstrap.css" rel="stylesheet">
+<link href="css/bootstrap-responsive.css" rel="stylesheet">
+<link href="css/highlight.css" rel="stylesheet">
+<link href="css/staticdocs.css" rel="stylesheet">
+
+<!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+<![endif]-->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+<script type="text/javascript"
+  src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+  </head>
+
+  <body>
+    <div class="navbar">
+  <div class="navbar-inner">
+    <div class="container">
+      <a class="brand" href="#">CAMM 0.1.0</a>
+      <div class="nav">
+        <ul class="nav">
+          <li><a href="index.html"><i class="icon-home icon-white"></i> Index</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+    <div class="container">
+      <header>
+        
+      </header>
+      
+      <h1>Creation of species niches and global abundances</h1>
+
+<div class="row">
+  <div class="span8">
+    <h2>Usage</h2>
+    <pre><div>make_niches_gsad(N_S, nicheparms, distribution)</div></pre>
+    
+    <h2>Arguments</h2>
+    <dl>
+      <dt>N_S</dt>
+      <dd>(required) number of species</dd>
+      <dt>nicheparms</dt>
+      <dd>(required) a named list decribing the distributions from 
+    which niche optima and breadths are sampled. Contains:
+<dl>
+    <dt>mu</dt><dd>vector of length 2 with the maximum niche optima for each 
+        environmental axis</dd>
+
+    <dt>rho</dt><dd>correlation between niche optima aross the two environmental
+        axes</dd>
+
+    <dt>sigma</dt><dd>vector of length 2 with the means of the gamma 
+        distributions from which niche breadths are sampled, corresponding
+        to the two environmental axes</dd>
+
+    <dt>alpha</dt><dd>vector of length 2 with the shape parameters of the gamma
+        distributions from which niche breadths are samples, corresponding
+        to the two environmental axes</dd>
+
+    <dt>r</dt><dd>correlation between niche breadth across the two environmental
+        axes</dd>
+
+</dl>
+</dd>
+      <dt>distribution</dt>
+      <dd>(required) named list of parameters describing the 
+form of the species abundance distribution. Contains:
+<dl>
+    <dt>type</dt><dd>character string indicating the form of the distribution.
+        See details.</dd>
+
+    <dt>maxN</dt><dd>maximum abundance. Used when other distribution parameters
+        are not supplied.</dd>
+
+    <dt>P_maxN</dt><dd>probability of sampling an abundance greater than 
+        <code>maxN</code>. Used in conjunction with <code>maxN</code> to define the
+        shape of the distribution when other parameters are not supplied.</dd>
+
+    <dt>p1</dt><dd>parameter controling the shape of the distribution. 
+        Interpretation depends on <code>type</code>. See details.</dd>
+
+    <dt>p2</dt><dd>parameter controling the shape of the distribution. 
+        Interpretation depends on <code>type</code>. See details.</dd>
+
+    <dt>corr</dt><dd>matrix containing correlations between global abundance and
+        niche means and breadths. See details.</dd>
+
+</dl>
+</dd>
+    </dl>
+    
+    <div class="Value">
+      <h2>Value</h2>
+
+      <p><dl>
+named list whose first element is an array with species' niche 
+	optima and breadths along each environmental axis and whose second element
+	is a vector of species relative global abundances
+</dl></p>
+  
+    </div>
+
+    <div class="Description">
+      <h2>Description</h2>
+
+      <p>Concurrently generates random 2-D gaussian niches and a species abundance
+distribution that is correlated with niche parameters.</p>
+  
+    </div>
+
+    <div class="Details">
+      <h2>Details</h2>
+
+      <p>This function randomly generates niche optima and breadths for <code>N_S</code> species
+along two envronmental axes as well as a global species abundance
+distribution. Niche optima and breadths may be correlated with global 
+abundance along one or both environmental axes. In additon, niche optima and 
+breadths may also be correlated across axes. These correlations are
+controlled by parameters in the named lists <code>nicheparmes</code> and 
+<code>distribution</code> and are accomplished through Gaussian copulas. This method
+samples five variables (niche optima on axes 1 and 2, niche breadths on axes
+1 and 2, and species global abundance) from a multivariate normal 
+distribution with covariance matrix defined by <code>r</code> (correlation between
+niche optima across environmental axes), <code>rho</code> (correlation between 
+niche breadths across environmental axes), and <code>corr</code> (correlation 
+between global abundance and each niche parameter, given as a 2x2 matrix 
+where columns refer to optima and breadths and rows refer to environmental 
+axes). Then, niche optima are transformed to a uniform distribution on the  
+interval <code>[-mu, mu]</code> for each environmental axis. Niche breadths
+are transformed to a gamma distribution with mean <code>sigma</code> and shape 
+parameter <code>alpha</code> for each environmental axis. Species abundances are 
+transformed to the distribution given in <code>type</code>. The following forms
+of global species abundance distributions are supported and are described 
+along with thie requried parameters.
+<dl>
+<dt><code>'same'</code></dt><dd>All species have the same abundance.</dd></p>
+  
+      <p><dt><code>'uniform'</code></dt><dd>Uniform distribution on <code>[1, maxN]</code>.
+	Can also specify endpoint with <code>p1</code>.</dd></p>
+  
+      <p><dt><code>'power'</code></dt><dd>Power-law distribution with power <code>p1</code>.
+	Can alternatively specify <code>maxN</code> and <code>P_maxN</code> to find  
+	<code>p1</code> corresponding to a distribution with a probability of  
+	<code>P_maxN</code> of exceeding <code>maxN</code>.</dd></p>
+  
+      <p><dt><code>'logseries'</code></dt><dd>Logseries distribution where <code>p1</code> is
+	Fisher's alpha and <code>p2</code> is N. Can alternatively specify 
+	<code>maxN</code> and <code>P_maxN</code> to find N corresponding to a distribution
+	with a probability of <code>P_maxN</code> of exceeding <code>maxN</code>.</dd></p>
+  
+      <p><dt><code>'lognormal'</code></dt><dd>Lognormal distribution with mean <code>p1</code>
+	and std dev <code>p2</code>. Can alternatively specify <code>maxN</code> and 
+	<code>P_maxN</code> to find the std dev corresponding to a distribution with 
+	mean  = 0 and a probability of codeP_maxN of exceeding <code>maxN</code>.</dd></p>
+  
+      <p><dt><code>'poisson'</code></dt><dd>Poisson distribution with rate (lambda) = 
+	<code>p1</code>. Can alternatively specify <code>maxN</code> and <code>P_maxN</code> to   
+	find <code>p1</code> corresponding to a distribution with a probability of  
+	<code>P_maxN</code> of exceeding <code>maxN</code>.</dd></p>
+  
+      <p></dl></p>
+  
+      <p>Note that is <code>maxN</code> is specified, it will be used instead of 
+<code>p1</code> or <code>p2</code>. In addition, continuous distributions are discretized
+so that abundances can be used as measures of propagule supply.</p>
+  
+    </div>
+
+    <div class="Note">
+      <h2>Note</h2>
+
+      <p>Users should take care when specifying correlations so that the 
+results covariance matrix for niche parameters and global abundance is
+positive definite. For example, if <code>r = 0.5</code> and global abundance is 
+correlated with niche optima along environmental axis 1, it must also be 
+correlated with niche optima along axis 2.</p>
+  
+    </div>
+      </div>
+  <div class="span4">
+    <!-- <ul>
+      <li>make_niches_gsad</li>
+    </ul>
+    <ul>
+      
+    </ul> -->
+      
+        
+  </div>
+</div>
+      
+      <footer>
+      <p class="pull-right"><a href="#">Back to top</a></p>
+<p>Built by <a href="https://github.com/hadley/staticdocs">staticdocs</a>. Styled with <a href="https://getbootstrap.com/2.0.4/">bootstrap</a>.</p>
+      </footer>
+    </div>
+  </body>
+</html>

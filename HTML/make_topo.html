@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+<title>make_topo. CAMM 0.1.0</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="author" content="">
+
+<link href="css/bootstrap.css" rel="stylesheet">
+<link href="css/bootstrap-responsive.css" rel="stylesheet">
+<link href="css/highlight.css" rel="stylesheet">
+<link href="css/staticdocs.css" rel="stylesheet">
+
+<!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+<![endif]-->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+<script type="text/javascript"
+  src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+  </head>
+
+  <body>
+    <div class="navbar">
+  <div class="navbar-inner">
+    <div class="container">
+      <a class="brand" href="#">CAMM 0.1.0</a>
+      <div class="nav">
+        <ul class="nav">
+          <li><a href="index.html"><i class="icon-home icon-white"></i> Index</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+    <div class="container">
+      <header>
+        
+      </header>
+      
+      <h1>Creation of an association network</h1>
+
+<div class="row">
+  <div class="span8">
+    <h2>Usage</h2>
+    <pre><div>make_topo(S_a, S_b, N_L, topology)</div></pre>
+    
+    <h2>Arguments</h2>
+    <dl>
+      <dt>S_a</dt>
+      <dd>(required) number of host species</dd>
+      <dt>S_b</dt>
+      <dd>(required) number of symbiont species</dd>
+      <dt>N_L</dt>
+      <dd>(required) number of edges (links) in the network</dd>
+      <dt>topology</dt>
+      <dd>(required) form of network topology. Can be 
+'one2one', 'one2many', 'many2many' (see details).</dd>
+    </dl>
+    
+    <div class="Value">
+      <h2>Value</h2>
+
+      <p><dl>
+a binary matrix with dimension <code>S_a x S_b</code> indicating links
+	between host and symbiont species
+</dl></p>
+  
+    </div>
+
+    <div class="Description">
+      <h2>Description</h2>
+
+      <p>Creates an association network between a given number of host and symbiont
+species with a defined network topology.</p>
+  
+    </div>
+
+    <div class="Details">
+      <h2>Details</h2>
+
+      <p>The function generates a random bipartite network between host and symbiont
+species which is returned as a matrix of 0s and 1s (indicating whether two 
+species can associate with one another). Users can specify the network topology
+as:
+<dl>
+<dt><code>'one2one'</code></dt><dd>each host associates with one symbiont and each symbiont
+	associates with one host</dd></p>
+  
+      <p><dt><code>'one2many'</code></dt><dd>each host associates with one symbiont and each symbiont
+	associates with one or more hosts</dd></p>
+  
+      <p><dt><code>'many2many'</code></dt><dd>each host associates with one or more symbionts and
+	each symbiont associates with one or more hosts</dd></p>
+  
+      <p></dl></p>
+  
+      <p>The specified topology must be compatible with the number of species and 
+number of links (<code>N_L</code>) specified. E.g. for <code>'one2one'</code>, the 
+number of of host and symbiont species and links must be equal, whereas, for
+<code>'one2many'</code> the number of links must be greater than the number of symbionts.</p>
+  
+    </div>
+      </div>
+  <div class="span4">
+    <!-- <ul>
+      <li>make_topo</li>
+    </ul>
+    <ul>
+      
+    </ul> -->
+      
+        
+  </div>
+</div>
+      
+      <footer>
+      <p class="pull-right"><a href="#">Back to top</a></p>
+<p>Built by <a href="https://github.com/hadley/staticdocs">staticdocs</a>. Styled with <a href="https://getbootstrap.com/2.0.4/">bootstrap</a>.</p>
+      </footer>
+    </div>
+  </body>
+</html>

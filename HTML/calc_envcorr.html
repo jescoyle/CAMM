@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+<title>calc_envcorr. CAMM 0.1.0</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="author" content="">
+
+<link href="css/bootstrap.css" rel="stylesheet">
+<link href="css/bootstrap-responsive.css" rel="stylesheet">
+<link href="css/highlight.css" rel="stylesheet">
+<link href="css/staticdocs.css" rel="stylesheet">
+
+<!--[if lt IE 9]>
+  <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+<![endif]-->
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      processEscapes: true
+    }
+  });
+</script>
+<script type="text/javascript"
+  src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+  </head>
+
+  <body>
+    <div class="navbar">
+  <div class="navbar-inner">
+    <div class="container">
+      <a class="brand" href="#">CAMM 0.1.0</a>
+      <div class="nav">
+        <ul class="nav">
+          <li><a href="index.html"><i class="icon-home icon-white"></i> Index</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+    <div class="container">
+      <header>
+        
+      </header>
+      
+      <h1>Community-environment correlations</h1>
+
+<div class="row">
+  <div class="span8">
+    <h2>Usage</h2>
+    <pre><div>calc_envcorr(comm, topo_names, env, metric&nbsp;=&nbsp;NULL, binary, pools&nbsp;=&nbsp;NULL)</div></pre>
+    
+    <h2>Arguments</h2>
+    <dl>
+      <dt>comm</dt>
+      <dd>(required) site x microsite matrix with integers representing the 
+associations present in each microsite</dd>
+      <dt>topo_names</dt>
+      <dd>(required) host x symbiont association matrix with integers
+identifying each association (as returned by <code>name_topo</code>)</dd>
+      <dt>env</dt>
+      <dd>(required) site x env matrix with environmental conditions at 
+each site</dd>
+      <dt>metric</dt>
+      <dd>vector of dissimilarity metric (see 
+<code><a href='http://www.inside-r.org/packages/cran/vegan/docs/vegdist'>vegdist</a></code> for options). Defaults to <code>NULL</code> for none.</dd>
+      <dt>binary</dt>
+      <dd>lvector of logicals indicating whether calculations should be
+performed on species abundances (<code>FALSE</code>, default) or presence/absence
+(<code>TRUE</code>) or both</dd>
+      <dt>pools</dt>
+      <dd>(required) named list of pools of hosts as symbionts present at
+each site. Pools are generated from the community matrix by 
+<code>calc_pool</code>. The host pool should be named <code>'a'</code> and the symbiont 
+pool named <code>'b'</code>.</dd>
+    </dl>
+    
+    <div class="Value">
+      <h2>Value</h2>
+
+      <p><dl>
+array with dimensions <code>[community type, environmental axis, 
+	measurement, abundances vs presence/absence]</code> (see details)
+</dl></p>
+  
+    </div>
+
+    <div class="Description">
+      <h2>Description</h2>
+
+      <p>Calculates multiple community-environment correlations</p>
+  
+    </div>
+
+    <div class="Details">
+      <h2>Details</h2>
+
+      <p>This summary function calculates the correlation between each
+environmental axis (provided in <code>env</code>) and species richness, abundance
+and community structure for established associations and host and symbiont
+species involved in established associations. For each environmental axis and 
+dissimilarity metric given in <code>metric</code> it calculates the correlation 
+between a community dissimilarity matrix (see <code>link{calc_diss}</code>) and
+the environmental distance matrix. Finally, the function conducts a 
+constrained ordination along each environmental axis (see  
+<code>link{calc_rda}</code>) and returns the adjusted $R^2$. These statistics
+are returned as a 4-dimensional array where the first dimension indicates 
+the community examined (associations: <code>'species'</code>, hosts: <code>'a'</code>, 
+symbionts: <code>'b'</code>), the second dimension indicates which environmental
+axis was used, the third dimension indicates the statistic (richness:
+<code>'S'</code>, abundance: <code>'N'</code>, RDA: <code>'rda'</code>, or correlation with
+community dissimilarity metric), and the fourth dimension indicates whether
+the calculations are based on abundances (<code>FALSE</code> or presence/absence
+(<code>TRUE</code>).</p>
+  
+    </div>
+      </div>
+  <div class="span4">
+    <!-- <ul>
+      <li>calc_envcorr</li>
+    </ul>
+    <ul>
+      
+    </ul> -->
+      
+        
+  </div>
+</div>
+      
+      <footer>
+      <p class="pull-right"><a href="#">Back to top</a></p>
+<p>Built by <a href="https://github.com/hadley/staticdocs">staticdocs</a>. Styled with <a href="https://getbootstrap.com/2.0.4/">bootstrap</a>.</p>
+      </footer>
+    </div>
+  </body>
+</html>

@@ -86,7 +86,13 @@
 #'		\item{p2}{parameter controling the shape of the distribution. 
 #'			Interpretation depends on \code{type}. See details.}
 #'		\item{corr}{matrix containing correlations between global abundance and
-#'			niche means and breadths. See details.
+#'			niche means and breadths. See details.}
+#'	}
+#' @return named list whose first element is an array with species' niche 
+#' 	optima and breadths along each environmental axis and whose second element
+#' 	is a vector of species relative global abundances
+#'
+#' @export
 
 make_niches_gsad = function(N_S, nicheparms, distribution){
 

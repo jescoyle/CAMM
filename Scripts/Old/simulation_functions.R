@@ -351,7 +351,7 @@ initialize_camm = function(parm_file=NA, save_start = F, runID=NA, save_dir='./'
 	topo = make_topo(S_a, S_b, N_L, topology) # S_a x S_b matrix of association probabilities
 	topo_names = name_topo(topo) # S_a x S_b matrix with integers labeling specific associations
 	sites = make_sites(N_C, rho_z) # N_C x 2 matrix of env values
-	comm = make_comm(N_C, N, N_L) # initial N_C x N matrix of integers indicating which association is present
+	comm = make_comm(N_C, N, N_L, fill='empty') # initial N_C x N matrix of integers indicating which association is present
 	poolA = calc_pool(comm, topo_names, 1) # N_C x S_a matrix of presence of mutualist a in communities based on associations present
 	poolB = calc_pool(comm, topo_names, 2) # N_C x S_b matrix of presence of mutualist b in communities based on associations present
 

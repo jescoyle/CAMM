@@ -8,12 +8,12 @@ a_name = 'myco' # The primary partner or host
 b_name = 'photo' # The secondary partner or symbiont
 
 ## Define number of taxa for mutualists a and b
-S_a = 30
-S_b = 10
+S_a = 10
+S_b = 3
 
 ## Define number and size of communities
-N_C = 20 # number of sampled communities
-N = 100 # number of individuals in a single community
+N_C = 6 # number of sampled communities
+N = 10 # number of individuals in a single community
 
 ## Parameters controling environmental variation
 rho_z = 0 # correlation of two environmental variables across sites

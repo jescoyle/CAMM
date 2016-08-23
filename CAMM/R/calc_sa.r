@@ -2,7 +2,7 @@
 #'
 #' Calculate species abundances from a community matrix
 #'
-#' Calculates the abundance of associations or host or symbiont
+#' Calculates the abundance of associations of host or symbiont
 #' species at each site. The function only counts species
 #' present in associations established at microsites and does
 #' not count species that are only present in a species' pools.

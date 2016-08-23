@@ -8,7 +8,7 @@
 #' an association probability matrix, a set of sites with environmental 
 #' conditions, and an empty metacommunity at those sites. Parameters for
 #' creating these objects are read from a file (\code{parm_file}) or from 
-#' the environmentwhere the function is called. Required parameters are:
+#' the environment where the function is called. Required parameters are:
 #' \describe{
 #'	\item{\code{S_a} and \code{S_b}}{number of host and symbiont species}
 #'	\item{\code{N_L}}{number of links in the association network} 
@@ -28,6 +28,22 @@
 #' \describe{
 #'	\item{comm_fill}{character string indicating how initial metacommunity
 #'		should be filled. Defaults to \code{'empty'}. See \code{link{make_comm}}.}
+#'	\item \strong{\code{topo_data}} : path to \code{csv} file with species
+#'		association matrix. File should contain a binary matrix without row or 
+#'		column names. If provided, overrides values for \code{S_a}, 
+#'		\code{S_b}, \code{N_L}, and \code{topology}.
+#'	\item \strong{\code{site_data}} : path to \code{csv} file with site
+#'		environmental data. File should contain two columns: one for each
+#'		environmental axis. If provided, overrides values for \code{N_C} and
+#'		\code{rho_z}.
+#'	\item \strong{\code{gsad_a_data}} : path to \code{txt} file with host
+#'		global species abundances. File should contain one line with species
+#'		abundances (as integers) separated by white space. If provided, overrides 
+#'		values for \code{gsad_dist_a} and will not be correlated with niches.
+#'	\item \strong{\code{gsad_b_data}} : path to \code{txt} file with symbiont
+#'		global species abundances. File should contain one line with species
+#'		abundances (as integers) separated by white space. If provided, overrides 
+#'		values for \code{gsad_dist_b} and will not be correlated with niches.
 #' }
 #'
 #' @param parm_file path to file with parameters
@@ -45,27 +61,68 @@
 #' @export
 
 initialize_camm = function(parm_file=NA, save_start = F, runID=NA, save_dir='./'){
+
 	# Read in parameter values
 	if(!is.na(parm_file)) source(parm_file)
-	
+
 	# Assign optional parameters if not present
-	if(!exists(comm_fill)) comm_fill='empty'
+	if(!exists('comm_fill', parent.frame())) comm_fill='empty'
 	
-	# Instantiate communities and mutualistic network
-	topo = make_topo(S_a, S_b, N_L, topology) # S_a x S_b matrix of association probabilities
+	## Instantiate communities and mutualistic network
+	
+	# If data for association network is provided, read it in, otherwise create a random network according to parameters
+	if(exists('topo_data', parent.frame())){
+		topo = tryCatch(read.csv(topo_data, header=F), error = function(e) stop(paste('Could not load network data from', topo_data)))
+		S_a = nrow(topo)
+		S_b = ncol(topo)
+		N_L = sum(topo>0)
+		topoA = ifelse(sum(rowSums(topo)>1)>0, 'many', 'one')
+		topoB = ifelse(sum(colSums(topo)>1)>0, 'many', 'one')
+		topology = paste0(topoA, '2', topoB)
+	} else {
+		topo = make_topo(S_a, S_b, N_L, topology) # S_a x S_b matrix of association probabilities
+	}
+	
+	# Create names for species associations
 	topo_names = name_topo(topo) # S_a x S_b matrix with integers labeling specific associations
-	sites = make_sites(N_C, rho_z) # N_C x 2 matrix of env values
+	
+	# If data for sites is provided, read it in, otherwise create random sites
+	if(exists('site_data', parent.frame())){
+		sites = tryCatch(read.csv(site_data), error = function(e) stop(paste('Could not load site data from', site_data)))
+		N_C = nrow(sites)
+		rho_z = cor(sites[,1], sites[,2])
+	} else {
+		sites = make_sites(N_C, rho_z) # N_C x 2 matrix of env values
+	}
+
+	
+	# Fill initial community
 	comm = make_comm(N_C, N, N_L, fill=comm_fill) # initial N_C x N matrix of integers indicating which association is present
 	poolA = calc_pool(comm, topo_names, 1) # N_C x S_a matrix of presence of mutualist a in communities based on associations present
 	poolB = calc_pool(comm, topo_names, 2) # N_C x S_b matrix of presence of mutualist b in communities based on associations present
 
+	
 	# Generate random niches for each mutualist
 	niche_gsad_a = make_niches_gsad(S_a, nicheparms_a, gsad_dist_a)
 	niche_gsad_b = make_niches_gsad(S_b, nicheparms_b, gsad_dist_b)
 	niches_a = niche_gsad_a$niches # array of S_a x 2 matrix of niche optima and niche breadths (mu and sigma of normal distribution)
 	niches_b = niche_gsad_b$niches # array of S_b x 2 matrix of niche optima and niche breadths (mu and sigma of normal distribution)
-	gsad_a = niche_gsad_a$gsad
-	gsad_b = niche_gsad_b$gsad
+
+	
+	# If data on gsads provided use this, otherwise use randomly generated gsads
+	if(exists('gsad_a_data', parent.frame())){
+		gsad_a = tryCatch(as.integer(read.table(gsad_a_data)), error = function(e) stop(paste('Could not read abundances from', gsad_a_data)))
+		if(length(gsad_a)!=S_a) stop(paste('Supplied GSAD does not have', S_a, 'species.'))
+	} else {
+		gsad_a = niche_gsad_a$gsad
+	}
+	if(exists('gsad_b_data', parent.frame())){
+		gsad_b = tryCatch(as.integer(read.table(gsad_b_data)), error = function(e) stop(paste('Could not read abundances from', gsad_b_data)))
+		if(length(gsad_a)!=S_b) stop(paste('Supplied GSAD does not have', S_b, 'species.'))
+	} else {
+		gsad_b = niche_gsad_b$gsad
+	}
+
 
 	# Calculate N_C x N_L matrix of association probabilities at each site
 	# These govern the probability that partner A will establish 

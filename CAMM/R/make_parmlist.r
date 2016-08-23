@@ -5,8 +5,9 @@
 #' The function creastes a list of parameters required for running a 
 #' simulation. Parameters are taken by default from the environment where
 #' the function is called, or optionally from the environment provided
-#' by \code{e}. All parameters are \strong{required} for simulation and \emph{must be present
-#' in the environment or the function will fail}.
+#' by \code{e}. Most parameters are \strong{required} for simulation and 
+#' \emph{must be present in the environment or the function will fail}. 
+#' Optional parameters are indicated.
 #' 
 #' Parameters for creating a metacommunity (see \code{\link{initialize_camm}}):
 #' \itemize{
@@ -23,6 +24,20 @@
 #'		association network topology
 #'	\item \strong{\code{N_L}}: number of links in the association network 
 #'		between host and symbiont species
+#'	\item \strong{\code{comm_fill}}: (optional) whether initial metacommunity 
+#'		should be \code{'empty'} or filled at \code{'random'}
+#' }
+#' Parameters for initializing a metacommunity with data 
+#'(see \code{\link{initialize_camm}}, all parameters are optional):
+#' \itemize{
+#'	\item \strong{\code{topo_data}} : path to \code{csv} file with species
+#'		association matrix
+#'	\item \strong{\code{site_data}} : path to \code{csv} file with site
+#'		environmental data
+#'	\item \strong{\code{gsad_a_data}} : path to \code{txt} file with host
+#'		global species abundances
+#'	\item \strong{\code{gsad_b_data}} : path to \code{txt} file with symbiont
+#'		global species abundances
 #' }
 #' Parameters for creating species niches (see \code{\link{make_niches_gsad}}):
 #' \itemize{
@@ -73,7 +88,7 @@
 #'
 #' @export
 make_parmlist = function(e=parent.frame()){
-	list(
+	parms = list(
 		runID = e$runID,
 #		a_name = e$a_name, 
 #		b_name = e$b_name,
@@ -108,4 +123,15 @@ make_parmlist = function(e=parent.frame()){
 		mort_rate_a = e$mort_rate_a,
 		mort_rate_b = e$mort_rate_b
 	)
+	
+	# Add optional parameters
+	if(exists('comm_fill', e)) parms = c(parmlist, comm_fill = e$comm_fill)
+	if(exists('topo_data', e)) parms = c(parmlist, topo_data = e$topo_data)
+	if(exists('site_data', e)) parms = c(parmlist, site_data = e$site_data)
+	if(exists('gsad_a_data', e)) parms = c(parmlist, gsad_a_data = e$gsad_a_data)
+	if(exists('gsad_b_data', e)) parms = c(parmlist, gsad_b_data = e$gsad_b_data)
+	
+	# Return list
+	parms
+	
 }

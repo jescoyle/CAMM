@@ -40,7 +40,7 @@ build_win('CAMM')
 
 # Check install
 install.packages('CAMM_0.1.0.zip', repos=NULL)
-library(CTSim)
+library(CAMM)
 
 # Make static html documentation
 build_site('CAMM', 'HTML')

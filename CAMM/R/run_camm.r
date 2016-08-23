@@ -56,12 +56,14 @@
 #' 	}
 #' @param reps (required) number of timesteps to run simulation
 #' @param save_steps vector indicating which timesteps to save. Defaults to all.
+#' @param envir environment where function should look for simulation parameters.
+#' 	Defaults to the parent environment of the function.
 #' @return a list containing objects describing states of the metacommunity 
 #' 	through time (see details)
 #'
 #' @export
 
-run_camm = function(metacomm=NULL, reps=NA, save_steps=NA){
+run_camm = function(metacomm=NULL, reps=NA, save_steps=NA, envir=parent.frame()){
 	# Previous versions included sim_mode as a parameter (see code commented out below)
 	# However, simulations were very slow to converge so the option has been removed and all
 	# simulations are performed in 'fixed' mode for a defined number of timesteps.
@@ -80,6 +82,20 @@ run_camm = function(metacomm=NULL, reps=NA, save_steps=NA){
 		topo = metacomm$topo
 		topo_names = metacomm$topo_names
 	}
+
+	# Define variables based on dimensions of metacommunity
+	N_C = nrow(comm)
+	N = ncol(comm)
+	S_a = nrow(topo)
+	S_b = ncol(topo)
+	N_L = sum(topo)
+	
+	# Define parameters from environment
+	print(envir)
+	mort_rate = get('mort_rate', envir=envir)
+	mort_rate_a = get('mort_rate_a', envir=envir)
+	mort_rate_b = get('mort_rate_b', envir=envir)
+	omega = get('omega', envir=envir)
 
 	if(sim_mode=='fixed'){
 	
@@ -104,6 +120,7 @@ run_camm = function(metacomm=NULL, reps=NA, save_steps=NA){
 
 	# Run simulation
 	for(step in 1:reps){
+
 		# Mutualist mortality: mutualists present as associations cannot die
 		poolA = die(comm, topo_names, poolA, mort_rate*mort_rate_a, 1)
 		poolB = die(comm, topo_names, poolB, mort_rate*mort_rate_b, 2)
@@ -111,7 +128,7 @@ run_camm = function(metacomm=NULL, reps=NA, save_steps=NA){
 		# Mutualists disperse into communities independently and with probability based on niche-based filtering	
 		poolA = disperse(sites, niches_a, poolA, gsad_a)
 		poolB = disperse(sites, niches_b, poolB, gsad_b)
-	
+
 		# Calculate transition matrices for each site
 		T_mat = calc_probs(sites, niches_a, niches_b, topo_names, poolA, poolB, mort_rate, assoc_probs, omega) # array of square matrices of transition probabilities from one association to another
 

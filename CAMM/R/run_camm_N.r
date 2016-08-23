@@ -61,6 +61,9 @@
 #' 	\code{'<runID>_metacomms.RData'} must be present in \code{save_dir}.
 #' 	Defaults to \code{FALSE}.
 #' @param sim_dir directory where CAMM is installed. Defaults to R's search path.
+#' @param dev logical flag indicating whether the function is being called in
+#' 	development mode, in which case the package is loaded using devtools from
+#' 	\code{sim_dir}
 #' @return a list of lists (one for each independent simulation run), each 
 #' 	containing two arrays summarizing diversity ('rich_stats') and 
 #' 	community-environment correlations ('corr_stats') across simulations run   
@@ -71,9 +74,9 @@
 #'
 #' @export
 
-run_camm_N = function(parm_file, nruns, nchains, nparallel=1, sim_parms, simID, save_start=F, save_sim=F, save_dir='./', restart=F, sim_dir=NULL){
+run_camm_N = function(parm_file, nruns, nchains, nparallel=1, sim_parms, simID, save_start=F, save_sim=F, save_dir='./', restart=F, sim_dir=NULL, dev=FALSE){
 	runs = paste(simID, 1:nruns, sep='_')
-	
+
 	# Make directory for saving results
 	if(!file.exists(save_dir)) dir.create(save_dir)
 	
@@ -82,27 +85,46 @@ run_camm_N = function(parm_file, nruns, nchains, nparallel=1, sim_parms, simID, 
 		# Attach functions in parallel
 		#library(parallel)
 
-		cluster = parallel::makeCluster(nparallel, outfile=file.path(save_dir, runID))	
+		cluster = parallel::makeCluster(nparallel, outfile=file.path(save_dir, paste0(simID, '.Rout')))	
 		
-		# Send required functions to each node
+		# Send required objects and functions to each node
 		parallel::clusterExport(cluster, c('runs','nchains','sim_dir','parm_file','sim_parms','simID','save_start','save_sim','save_dir','restart'), envir=environment())
-		parallel::clusterEvalQ(cluster, library(CAMM, lib.loc=sim_dir))
+
+		# During development, must load development version of package
+		# Otherwise, load package from sim_dir or default R search path
+		if(dev){
+			parallel::clusterEvalQ(cluster, {
+				library(devtools)
+				current_code = as.package(file.path(sim_dir,'CAMM'))
+				load_all(current_code)
+			})
+		} else {
+			parallel::clusterEvalQ(cluster, library(CAMM, lib.loc=sim_dir))
+		}
+
 		parallel::clusterEvalQ(cluster, source(parm_file))
-		
+
 		# Initialize CAMM or get previously saved initial metacommunities
 		if(restart){
 			# Get pre-existing metacomm_N object
 			load(file.path(save_dir, paste0(simID, '_metacomms.RData')))
 		} else {
+			#print('starting runs')
 			metacomm_N = parallel::parLapply(cluster, 1:nruns, function(j) initialize_camm(parm_file, save_start, runID=runs[j], save_dir))
 		}
 		parallel::clusterExport(cluster, 'metacomm_N', envir=environment())
 
 		if(save_start&(!restart)) save(metacomm_N, file=file.path(save_dir, paste0(simID, '_metacomms.RData')))
-		
+
 		# Run and Summarize CAMM
 		sim_results = parallel::parLapply(cluster, 1:nruns, function(j){
+		
+			# Load parameters into this environment
+			#source(parm_file)
+			
 			print(paste('start', runs[j]))
+			print(environment())
+			print(parent.frame())
 			metacomm = metacomm_N[[j]]
 			reps = sim_parms$reps
 
@@ -121,7 +143,14 @@ run_camm_N = function(parm_file, nruns, nchains, nparallel=1, sim_parms, simID, 
 			if(restart & file.exists(this_file)){
 				load(this_file)
 			} else {
+				
 				end_metacomms = sapply(1:nchains, function(i){
+					print(paste('starting chain',i))
+					print(environment())
+					print(parent.frame())
+					print(parent.frame(2))
+					print(parent.frame(3))
+					
 					# Run CAMM
 					this_run = run_camm(metacomm=metacomm, reps=sim_parms$reps[length(sim_parms$reps)], save_steps=save_steps)
 

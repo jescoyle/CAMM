@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8">
-<title>initialize_camm. CAMM 0.1.0</title>
+<title>initialize_camm. CAMM 0.2.0</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="author" content="">
 
@@ -32,7 +32,7 @@
     <div class="navbar">
   <div class="navbar-inner">
     <div class="container">
-      <a class="brand" href="#">CAMM 0.1.0</a>
+      <a class="brand" href="#">CAMM 0.2.0</a>
       <div class="nav">
         <ul class="nav">
           <li><a href="index.html"><i class="icon-home icon-white"></i> Index</a></li>
@@ -93,7 +93,7 @@ abundance distributions (gsad), an association network (and named links),
 an association probability matrix, a set of sites with environmental 
 conditions, and an empty metacommunity at those sites. Parameters for
 creating these objects are read from a file (<code>parm_file</code>) or from 
-the environmentwhere the function is called. Required parameters are:
+the environment where the function is called. Required parameters are:
 <dl>
 <dt><code>S_a</code> and <code>S_b</code></dt><dd>number of host and symbiont species</dd></p>
   
@@ -123,6 +123,30 @@ the environmentwhere the function is called. Required parameters are:
 <dt>comm_fill</dt><dd>character string indicating how initial metacommunity
 	should be filled. Defaults to <code>'empty'</code>. See <code>link{make_comm}</code>.</dd></p>
   
+      <p><dt><code>topo_data</code></dt><dd>path to <code>csv</code> file with species
+	association matrix. Path should be relative to the location of 
+	<code>parm_file</code>, if provided. File should contain a binary matrix  
+	without row or column names. If provided, overrides values for  
+	<code>S_a</code>, <code>S_b</code>, <code>N_L</code>, and <code>topology</code>.</dd></p>
+  
+      <p><dt><code>site_data</code></dt><dd>path to <code>csv</code> file with site
+	environmental data. Path should be relative to the location of 
+	<code>parm_file</code>, if provided. File should contain two columns: one 
+	for each environmental axis. If provided, overrides values for 
+	<code>N_C</code> and <code>rho_z</code>.</dd></p>
+  
+      <p><dt><code>gsad_a_data</code></dt><dd>path to <code>txt</code> file with host
+	global species abundances. Path should be relative to the location of 
+	<code>parm_file</code>, if provided. File should contain one line with species
+	abundances (as integers) separated by white space. If provided, overrides 
+	values for <code>gsad_dist_a</code> and will not be correlated with niches.</dd></p>
+  
+      <p><dt><code>gsad_b_data</code></dt><dd>path to <code>txt</code> file with symbiont
+	global species abundances. Path should be relative to the location of 
+	<code>parm_file</code>, if provided. File should contain one line with species
+	abundances (as integers) separated by white space. If provided, overrides 
+	values for <code>gsad_dist_b</code> and will not be correlated with niches.</dd></p>
+  
       <p></dl></p>
   
       <p></p>
@@ -139,8 +163,8 @@ the environmentwhere the function is called. Required parameters are:
       
     <h2>See also</h2>
     
-<code>link{make_topo}</code>, <code>link{make_niches_gsad}</code>, 
-	<code>link{make_comm}</code>, <code><a href='make_sites.html'>make_sites</a></code>
+<code><a href='make_topo.html'>make_topo</a></code>, <code><a href='make_niches_gsad.html'>make_niches_gsad</a></code>, 
+	<code><a href='make_comm.html'>make_comm</a></code>, <code><a href='make_sites.html'>make_sites</a></code>
 
         
   </div>

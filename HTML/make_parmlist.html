@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8">
-<title>make_parmlist. CAMM 0.1.0</title>
+<title>make_parmlist. CAMM 0.2.0</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="author" content="">
 
@@ -32,7 +32,7 @@
     <div class="navbar">
   <div class="navbar-inner">
     <div class="container">
-      <a class="brand" href="#">CAMM 0.1.0</a>
+      <a class="brand" href="#">CAMM 0.2.0</a>
       <div class="nav">
         <ul class="nav">
           <li><a href="index.html"><i class="icon-home icon-white"></i> Index</a></li>
@@ -82,8 +82,9 @@ a named list of paramters
       <p>The function creastes a list of parameters required for running a 
 simulation. Parameters are taken by default from the environment where
 the function is called, or optionally from the environment provided
-by <code>e</code>. All parameters are <strong>required</strong> for simulation and <em>must be present
-in the environment or the function will fail</em>.</p>
+by <code>e</code>. Most parameters are <strong>required</strong> for simulation and 
+<em>must be present in the environment or the function will fail</em>. 
+Optional parameters are indicated.</p>
   
       <p>Parameters for creating a metacommunity (see <code><a href='initialize_camm.html'>initialize_camm</a></code>):
 <ul>
@@ -108,6 +109,26 @@ in the environment or the function will fail</em>.</p>
 </li>
 <li> <strong><code>N_L</code></strong>: number of links in the association network 
 	between host and symbiont species
+</li>
+<li> <strong><code>comm_fill</code></strong>: (optional) whether initial metacommunity 
+	should be <code>'empty'</code> or filled at <code>'random'</code>
+</li>
+</ul></p>
+  
+      <p>Parameters for initializing a metacommunity with data 
+(see <code><a href='initialize_camm.html'>initialize_camm</a></code>, all parameters are optional):
+<ul>
+<li> <strong><code>topo_data</code></strong> : path to <code>csv</code> file with species
+	association matrix
+</li>
+<li> <strong><code>site_data</code></strong> : path to <code>csv</code> file with site
+	environmental data
+</li>
+<li> <strong><code>gsad_a_data</code></strong> : path to <code>txt</code> file with host
+	global species abundances
+</li>
+<li> <strong><code>gsad_b_data</code></strong> : path to <code>txt</code> file with symbiont
+	global species abundances
 </li>
 </ul></p>
   

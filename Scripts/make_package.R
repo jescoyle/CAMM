@@ -27,8 +27,6 @@ use_package('vegan')
 use_package('parallel','Suggests')
 
 
-
-
 # Check the package
 setwd('../')
 check('CAMM')
@@ -39,7 +37,7 @@ build_win('CAMM')
 
 
 # Check install
-install.packages('CAMM_0.1.0.zip', repos=NULL)
+install.packages('CAMM_0.2.0.zip', repos=NULL)
 library(CAMM)
 
 # Make static html documentation

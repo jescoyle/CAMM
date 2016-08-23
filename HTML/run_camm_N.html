@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8">
-<title>run_camm_N. CAMM 0.1.0</title>
+<title>run_camm_N. CAMM 0.2.0</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="author" content="">
 
@@ -32,7 +32,7 @@
     <div class="navbar">
   <div class="navbar-inner">
     <div class="container">
-      <a class="brand" href="#">CAMM 0.1.0</a>
+      <a class="brand" href="#">CAMM 0.2.0</a>
       <div class="nav">
         <ul class="nav">
           <li><a href="index.html"><i class="icon-home icon-white"></i> Index</a></li>
@@ -52,7 +52,7 @@
 <div class="row">
   <div class="span8">
     <h2>Usage</h2>
-    <pre><div>run_camm_N(parm_file, nruns, nchains, nparallel&nbsp;=&nbsp;1, sim_parms, simID, save_start&nbsp;=&nbsp;F, save_sim&nbsp;=&nbsp;F, save_dir&nbsp;=&nbsp;"./", restart&nbsp;=&nbsp;F, sim_dir&nbsp;=&nbsp;NULL)</div></pre>
+    <pre><div>run_camm_N(parm_file, nruns, nchains, nparallel&nbsp;=&nbsp;1, sim_parms, simID, save_start&nbsp;=&nbsp;F, save_sim&nbsp;=&nbsp;F, save_dir&nbsp;=&nbsp;"./", restart&nbsp;=&nbsp;F, sim_dir&nbsp;=&nbsp;NULL, dev&nbsp;=&nbsp;FALSE)</div></pre>
     
     <h2>Arguments</h2>
     <dl>
@@ -100,6 +100,10 @@ simulation. If <code>FALSE</code>, existing files will be overwritten. If
 Defaults to <code>FALSE</code>.</dd>
       <dt>sim_dir</dt>
       <dd>directory where CAMM is installed. Defaults to R's search path.</dd>
+      <dt>dev</dt>
+      <dd>logical flag indicating whether the function is being called in
+development mode, in which case the package is loaded using devtools from
+<code>sim_dir</code></dd>
     </dl>
     
     <div class="Value">

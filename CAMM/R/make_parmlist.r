@@ -125,11 +125,11 @@ make_parmlist = function(e=parent.frame()){
 	)
 	
 	# Add optional parameters
-	if(exists('comm_fill', e)) parms = c(parmlist, comm_fill = e$comm_fill)
-	if(exists('topo_data', e)) parms = c(parmlist, topo_data = e$topo_data)
-	if(exists('site_data', e)) parms = c(parmlist, site_data = e$site_data)
-	if(exists('gsad_a_data', e)) parms = c(parmlist, gsad_a_data = e$gsad_a_data)
-	if(exists('gsad_b_data', e)) parms = c(parmlist, gsad_b_data = e$gsad_b_data)
+	if(exists('comm_fill', e)) parms = c(parms, comm_fill = e$comm_fill)
+	if(exists('topo_data', e)) parms = c(parms, topo_data = e$topo_data)
+	if(exists('site_data', e)) parms = c(parms, site_data = e$site_data)
+	if(exists('gsad_a_data', e)) parms = c(parms, gsad_a_data = e$gsad_a_data)
+	if(exists('gsad_b_data', e)) parms = c(parms, gsad_b_data = e$gsad_b_data)
 	
 	# Return list
 	parms

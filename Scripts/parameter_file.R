@@ -3,10 +3,6 @@
 ## Name simulation run
 runID = 'base'
 
-## Define mutualist names
-a_name = 'myco' # The primary partner or host
-b_name = 'photo' # The secondary partner or symbiont
-
 ## Define number of taxa for mutualists a and b
 S_a = 10
 S_b = 3

@@ -4,7 +4,8 @@
 \alias{run_camm}
 \title{Run a simulation}
 \usage{
-run_camm(metacomm = NULL, reps = NA, save_steps = NA)
+run_camm(metacomm = NULL, reps = NA, save_steps = NA,
+  envir = parent.frame())
 }
 \arguments{
 \item{metacomm}{list containing objects describing the metacommunity, 
@@ -28,6 +29,9 @@ environment must contain the following:
 \item{reps}{(required) number of timesteps to run simulation}
 
 \item{save_steps}{vector indicating which timesteps to save. Defaults to all.}
+
+\item{envir}{environment where function should look for simulation parameters.
+Defaults to the parent environment of the function.}
 }
 \value{
 a list containing objects describing states of the metacommunity 

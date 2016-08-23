@@ -20,6 +20,11 @@ save_dir = 'Sandbox'
 
 # Set simulation parameter file
 parmfile = 'Sandbox/parameter_file.R'
+parmfile = 'Sandbox/MP/NL-90_envfilt-none/parameter_file.R'
+
+# Check initialize camm
+mc = initialize_camm(parmfile, save_start = F, runID='test', save_dir='Sandbox')
+
 
 # Set simulation controls
 nruns = 4

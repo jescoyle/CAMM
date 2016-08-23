@@ -31,7 +31,7 @@ abundance distributions (gsad), an association network (and named links),
 an association probability matrix, a set of sites with environmental 
 conditions, and an empty metacommunity at those sites. Parameters for
 creating these objects are read from a file (\code{parm_file}) or from 
-the environmentwhere the function is called. Required parameters are:
+the environment where the function is called. Required parameters are:
 \describe{
 \item{\code{S_a} and \code{S_b}}{number of host and symbiont species}
 \item{\code{N_L}}{number of links in the association network} 
@@ -51,10 +51,30 @@ Optional parameters are:
 \describe{
 \item{comm_fill}{character string indicating how initial metacommunity
 	should be filled. Defaults to \code{'empty'}. See \code{link{make_comm}}.}
+\item{\code{topo_data}}{path to \code{csv} file with species
+	association matrix. Path should be relative to the location of 
+	\code{parm_file}, if provided. File should contain a binary matrix  
+	without row or column names. If provided, overrides values for  
+	\code{S_a}, \code{S_b}, \code{N_L}, and \code{topology}.}
+\item{\code{site_data}}{path to \code{csv} file with site
+	environmental data. Path should be relative to the location of 
+	\code{parm_file}, if provided. File should contain two columns: one 
+	for each environmental axis. If provided, overrides values for 
+	\code{N_C} and \code{rho_z}.}
+\item{\code{gsad_a_data}}{path to \code{txt} file with host
+	global species abundances. Path should be relative to the location of 
+	\code{parm_file}, if provided. File should contain one line with species
+	abundances (as integers) separated by white space. If provided, overrides 
+	values for \code{gsad_dist_a} and will not be correlated with niches.}
+\item{\code{gsad_b_data}}{path to \code{txt} file with symbiont
+	global species abundances. Path should be relative to the location of 
+	\code{parm_file}, if provided. File should contain one line with species
+	abundances (as integers) separated by white space. If provided, overrides 
+	values for \code{gsad_dist_b} and will not be correlated with niches.}
 }
 }
 \seealso{
-\code{link{make_topo}}, \code{link{make_niches_gsad}}, 
-	\code{link{make_comm}}, \code{\link{make_sites}}
+\code{\link{make_topo}}, \code{\link{make_niches_gsad}}, 
+	\code{\link{make_comm}}, \code{\link{make_sites}}
 }
 

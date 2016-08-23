@@ -6,7 +6,7 @@
 \usage{
 run_camm_N(parm_file, nruns, nchains, nparallel = 1, sim_parms, simID,
   save_start = F, save_sim = F, save_dir = "./", restart = F,
-  sim_dir = NULL)
+  sim_dir = NULL, dev = FALSE)
 }
 \arguments{
 \item{parm_file}{(required) path to file where parameters are stored. 
@@ -49,6 +49,10 @@ simulation. If \code{FALSE}, existing files will be overwritten. If
 Defaults to \code{FALSE}.}
 
 \item{sim_dir}{directory where CAMM is installed. Defaults to R's search path.}
+
+\item{dev}{logical flag indicating whether the function is being called in
+development mode, in which case the package is loaded using devtools from
+\code{sim_dir}}
 }
 \value{
 a list of lists (one for each independent simulation run), each 

@@ -28,22 +28,26 @@
 #' \describe{
 #'	\item{comm_fill}{character string indicating how initial metacommunity
 #'		should be filled. Defaults to \code{'empty'}. See \code{link{make_comm}}.}
-#'	\item \strong{\code{topo_data}} : path to \code{csv} file with species
-#'		association matrix. File should contain a binary matrix without row or 
-#'		column names. If provided, overrides values for \code{S_a}, 
-#'		\code{S_b}, \code{N_L}, and \code{topology}.
-#'	\item \strong{\code{site_data}} : path to \code{csv} file with site
-#'		environmental data. File should contain two columns: one for each
-#'		environmental axis. If provided, overrides values for \code{N_C} and
-#'		\code{rho_z}.
-#'	\item \strong{\code{gsad_a_data}} : path to \code{txt} file with host
-#'		global species abundances. File should contain one line with species
+#'	\item{\code{topo_data}}{path to \code{csv} file with species
+#'		association matrix. Path should be relative to the location of 
+#'		\code{parm_file}, if provided. File should contain a binary matrix  
+#'		without row or column names. If provided, overrides values for  
+#'		\code{S_a}, \code{S_b}, \code{N_L}, and \code{topology}.}
+#'	\item{\code{site_data}}{path to \code{csv} file with site
+#'		environmental data. Path should be relative to the location of 
+#'		\code{parm_file}, if provided. File should contain two columns: one 
+#'		for each environmental axis. If provided, overrides values for 
+#'		\code{N_C} and \code{rho_z}.}
+#'	\item{\code{gsad_a_data}}{path to \code{txt} file with host
+#'		global species abundances. Path should be relative to the location of 
+#'		\code{parm_file}, if provided. File should contain one line with species
 #'		abundances (as integers) separated by white space. If provided, overrides 
-#'		values for \code{gsad_dist_a} and will not be correlated with niches.
-#'	\item \strong{\code{gsad_b_data}} : path to \code{txt} file with symbiont
-#'		global species abundances. File should contain one line with species
+#'		values for \code{gsad_dist_a} and will not be correlated with niches.}
+#'	\item{\code{gsad_b_data}}{path to \code{txt} file with symbiont
+#'		global species abundances. Path should be relative to the location of 
+#'		\code{parm_file}, if provided. File should contain one line with species
 #'		abundances (as integers) separated by white space. If provided, overrides 
-#'		values for \code{gsad_dist_b} and will not be correlated with niches.
+#'		values for \code{gsad_dist_b} and will not be correlated with niches.}
 #' }
 #'
 #' @param parm_file path to file with parameters
@@ -55,8 +59,8 @@
 #' 	to current directory.
 #' @return a named list containing all objects needed to run a simulation
 #'
-#' @seealso \code{link{make_topo}}, \code{link{make_niches_gsad}}, 
-#' 	\code{link{make_comm}}, \code{\link{make_sites}}
+#' @seealso \code{\link{make_topo}}, \code{\link{make_niches_gsad}}, 
+#' 	\code{\link{make_comm}}, \code{\link{make_sites}}
 #'
 #' @export
 
@@ -64,6 +68,10 @@ initialize_camm = function(parm_file=NA, save_start = F, runID=NA, save_dir='./'
 
 	# Read in parameter values
 	if(!is.na(parm_file)) source(parm_file)
+	
+	# Get directory name of parameter file
+	parm_dir = ifelse(!is.na(parm_file), dirname(parm_file), getwd())
+	print(parm_dir)
 
 	# Assign optional parameters if not present
 	if(!exists('comm_fill', parent.frame())) comm_fill='empty'
@@ -72,7 +80,14 @@ initialize_camm = function(parm_file=NA, save_start = F, runID=NA, save_dir='./'
 	
 	# If data for association network is provided, read it in, otherwise create a random network according to parameters
 	if(exists('topo_data', parent.frame())){
-		topo = tryCatch(read.csv(topo_data, header=F), error = function(e) stop(paste('Could not load network data from', topo_data)))
+		# location of TOPO data is relative to the location of the parameter file
+		oldwd = getwd()
+		setwd(parm_dir)
+		topo = tryCatch(read.csv(topo_data, header=F), error = function(e){
+			setwd(oldwd)
+			stop(paste('Could not load network data from', topo_data))
+		})
+		setwd(oldwd)
 		S_a = nrow(topo)
 		S_b = ncol(topo)
 		N_L = sum(topo>0)
@@ -88,7 +103,15 @@ initialize_camm = function(parm_file=NA, save_start = F, runID=NA, save_dir='./'
 	
 	# If data for sites is provided, read it in, otherwise create random sites
 	if(exists('site_data', parent.frame())){
-		sites = tryCatch(read.csv(site_data), error = function(e) stop(paste('Could not load site data from', site_data)))
+		# location of site data is relative to the location of the parameter file
+		oldwd = getwd()
+		setwd(parm_dir)
+		print(getwd())
+		sites = tryCatch(read.csv(site_data), error = function(e){
+				setwd(oldwd)
+				stop(paste('Could not load site data from', site_data))
+		})
+		setwd(oldwd)
 		N_C = nrow(sites)
 		rho_z = cor(sites[,1], sites[,2])
 	} else {
@@ -111,13 +134,27 @@ initialize_camm = function(parm_file=NA, save_start = F, runID=NA, save_dir='./'
 	
 	# If data on gsads provided use this, otherwise use randomly generated gsads
 	if(exists('gsad_a_data', parent.frame())){
-		gsad_a = tryCatch(as.integer(read.table(gsad_a_data)), error = function(e) stop(paste('Could not read abundances from', gsad_a_data)))
+		# location of gsad data is relative to the location of the parameter file
+		oldwd = getwd()
+		setwd(parm_dir)
+		gsad_a = tryCatch(as.integer(read.table(gsad_a_data)), error = function(e){
+			setwd(oldwd)
+			stop(paste('Could not read abundances from', gsad_a_data))
+		})
+		setwd(oldwd)
 		if(length(gsad_a)!=S_a) stop(paste('Supplied GSAD does not have', S_a, 'species.'))
 	} else {
 		gsad_a = niche_gsad_a$gsad
 	}
 	if(exists('gsad_b_data', parent.frame())){
-		gsad_b = tryCatch(as.integer(read.table(gsad_b_data)), error = function(e) stop(paste('Could not read abundances from', gsad_b_data)))
+		# location of gsad data is relative to the location of the parameter file
+		oldwd = getwd()
+		setwd(parm_dir)
+		gsad_b = tryCatch(as.integer(read.table(gsad_b_data)), error = function(e){
+			setwd(oldwd)
+			stop(paste('Could not read abundances from', gsad_b_data))
+		})
+		setwd(oldwd)
 		if(length(gsad_a)!=S_b) stop(paste('Supplied GSAD does not have', S_b, 'species.'))
 	} else {
 		gsad_b = niche_gsad_b$gsad

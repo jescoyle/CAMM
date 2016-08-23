@@ -1,22 +1,34 @@
 ## This script makes sets of parameter values for CAMM to be run on the cluster
 
 options(stringsAsFactors=F)
-setwd('./Research/CAMM')
+setwd('C:/Users/jrcoyle/Documents/Research/CAMM/')
+
+# Load package
+library(CAMM)
 
 # Set directories
-sim_dir = './GitHub/CAMM/R/'
-parm_dir = './Parms/Parms_3B/'
+sim_dir = './GitHub/Scripts/'
+
 
 dir.create(parm_dir)
 
 # Read in base parameter file
-source(paste0(sim_dir, 'parameter_file.R'))
+source(file.path(sim_dir, 'parameter_file.R'))
 
-# Read in functions
-source(paste0(sim_dir, 'control_functions.R'))
+# Set baseline parameters that differ from example parameter file
+S_a = 30
+S_b = 10
+N_C = 20
+N = 100
+
+################################################################
+### Simulation Experiments
+
 
 
 ## RUN 1 ##
+parm_dir = './Parms/Parms_1'
+
 # Define parameter sets
 omega_vec = seq(0, 1, .1)
 mort_rate_a_vec = c(1, 10, 20)
@@ -42,6 +54,7 @@ for(o in omega_vec){
 
 
 ## RUN 2 ##
+parm_dir = './Parms/Parms_2'
 
 # Define parameter sets
 omega_vec = c(0, .5, .9, 1)
@@ -114,6 +127,8 @@ for(o in omega_vec){
 
 
 ## RUN 3 & 3B ##
+parm_dir = './Parms/Parms_3'
+parm_dir = './Parms/Parms_3B'
 
 # For 3B
 omega = 0
@@ -200,6 +215,8 @@ for(i in breadth_vec){
 
 
 ### RUN 4 : run time ###
+parm_dir = './Parms/Parms_4'
+
 topo_vec = c('one2one','one2many','many2many')
 filter_vec = c('opposite','same','none','all')
 combos = expand.grid(topo_vec, filter_vec)
@@ -264,6 +281,7 @@ for(envfilt in filter_vec){
 
 
 ### RUN 5: species richness ###
+parm_dir = './Parms/Parms_5'
 
 topo_vec = c('one2many','many2many')
 filter_vec = c('opposite','same')
@@ -318,6 +336,7 @@ for(envfilt in filter_vec){
 
 
 ### RUN 6: uneven species abundances that are correlated with env niches ###
+parm_dir = './Parms/Parms_6'
 
 maxN_vec = 2^(1:5)
 r_vec = c(0.5, 0.9)
@@ -427,6 +446,8 @@ for(maxN in maxN_vec){
 
 
 ### RUN 7 ###
+parm_dir = './Parms/Parms_7'
+
 ## Effect of changing community size
 
 topo_vec = c('one2many','many2many')
@@ -473,6 +494,155 @@ for(topology in topo_vec){
 		write_parms(parm_list, paste0('p_', runID), this_dir)
 	}
 }}
+
+
+##################################################################
+### Empirical Runs
+
+parm_dir = './Parms/MP'
+setwd(parm_dir)
+
+
+### Myco-Photo TRFLP ###
+
+# Set mycobiont richness
+S_a = 57
+
+# Set number of samples
+N_C = 54
+
+# Define community size
+# Assumes 9 x 15 cm area, where an individual takes up 4 cm2
+N = 34
+
+# Define number of photobionts
+# Based on observed number of taxa in TRFLP community data matrices under different abdance criteria
+# see 'Analysis/Derived_Data/compare_strain_richness.csv'
+Sb_vec = c(15, 20, 25, 30, 35, 40, 45, 60, 70, 75, 80, 85, 90, 95, 105)
+
+# Define topology
+topology = 'many2many'
+
+# Define factor for determining number of links
+NL_vec = c(57, 86, 114) # x 1, 1.5, 2
+
+# Define environmental variables
+data_dir = 'C:/Users/jrcoyle/Documents/UNC/Projects/Mycobiont - Photobiont/Analysis/Data/'
+samples = read.csv(file.path(data_dir, 'samples.csv'))
+env = read.csv(file.path(data_dir, 'loggerdata.csv'))
+samples = merge(samples, env)
+use_env = samples[samples$SampID %in% 19:72, c('Light_mean','Vpd_daysatfreq')] # based on response of communities and correlation structure of env data
+std_env = scale(use_env, center=T, scale=T)
+
+# Define filtering
+# Hyp: mycos filter on VPD (env2) while photos filter on light (env1)
+filt_vec = c('none', 'myco', 'photo', 'light', 'vpd', 'opposite', 'all')
+
+# Define filtering strength
+sig = 0.5
+
+
+
+# Define niche parameters to match observed data
+# Assumes that observed env gradient is small relative to species potential range in niche optima
+mu_a1 = 3
+mu_a2 = 3
+mu_b1 = 3
+mu_b2 = 3
+
+prcomp(use_env, center=T, scale=T)
+
+# Make parameter files
+
+for(NLfact in NL_vec){
+	
+	N_L = S_a*NLfact
+	
+	for(envfilt in envfilt_vec){
+
+		mkdir(paste0('NL-',S_b))
+
+	
+
+		if(envfilt=='photo'){
+			sigma_a1 = 10
+			sigma_a2 = 10
+			sigma_b1 = sig
+			sigma_b2 = 10
+		}
+		
+		if(envfilt=='myco'){
+			sigma_a1 = 10
+			sigma_a2 = sig
+			sigma_b1 = 10
+			sigma_b2 = 10
+		}
+
+		if(envfilt=='opposite'){
+			sigma_a1 = 10
+			sigma_a2 = sig
+			sigma_b1 = sig
+			sigma_b2 = 10
+		}
+
+		if(envfilt=='light'){
+			sigma_a1 = 0.5
+			sigma_a2 = 10
+			sigma_b1 = 0.5
+			sigma_b2 = 10
+		}
+
+		if(envfilt=='vpd'){
+			sigma_a1 = 10
+			sigma_a2 = 0.5
+			sigma_b1 = 10
+			sigma_b2 = 0.5
+		}
+
+		if(envfilt=='none'){
+			sigma_a1 = 10
+			sigma_a2 = 10
+			sigma_b1 = 10
+			sigma_b2 = 10
+		}
+
+		if(envfilt=='all'){
+			sigma_a1 = 0.5
+			sigma_a2 = 0.5
+			sigma_b1 = 0.5
+			sigma_b2 = 0.5
+		}
+
+		
+			
+		for(S_b in Sb_vec){
+			
+
+					runID = paste0('topo-',topology,'_envfilt-',envfilt,'_N-',N,'_NC-',N_C)
+		parm_list = make_parmlist()
+		write_parms(parm_list, paste0('p_', runID), this_dir)
+			
+
+
+
+		}
+	
+
+
+
+
+
+
+
+
+
+}
+
+
+
+
+
+
 
 
 

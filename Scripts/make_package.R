@@ -37,7 +37,7 @@ build_win('CAMM')
 
 
 # Check install
-install.packages('CAMM_0.2.0.zip', repos=NULL)
+install.packages('CAMM_0.2.1.zip', repos=NULL)
 library(CAMM)
 
 # Make static html documentation

@@ -71,7 +71,7 @@ initialize_camm = function(parm_file=NA, save_start = F, runID=NA, save_dir='./'
 	
 	# Get directory name of parameter file
 	parm_dir = ifelse(!is.na(parm_file), dirname(parm_file), getwd())
-	print(parm_dir)
+	#print(parm_dir)
 
 	# Assign optional parameters if not present
 	if(!exists('comm_fill', parent.frame())) comm_fill='empty'
@@ -177,7 +177,7 @@ initialize_camm = function(parm_file=NA, save_start = F, runID=NA, save_dir='./'
 	}}
 
 	# Save community parameters
-	if(save_start) save(topo, topo_names, sites, niches_a, niches_b, gsad_a, gsad_b, assoc_probs, file=paste0(save_dir, runID, '_simobject.RData'))
+	if(save_start) save(topo, topo_names, sites, niches_a, niches_b, gsad_a, gsad_b, assoc_probs, file=file.path(save_dir, paste0(runID, '_simobject.RData')))
 	
 	# Return initial metacommunity
 	metacomm = list(topo=topo, topo_names=topo_names, niches_a=niches_a, niches_b=niches_b, 

@@ -123,8 +123,7 @@ run_camm_N = function(parm_file, nruns, nchains, nparallel=1, sim_parms, simID, 
 			#source(parm_file)
 			
 			print(paste('start', runs[j]))
-			print(environment())
-			print(parent.frame())
+
 			metacomm = metacomm_N[[j]]
 			reps = sim_parms$reps
 
@@ -145,11 +144,6 @@ run_camm_N = function(parm_file, nruns, nchains, nparallel=1, sim_parms, simID, 
 			} else {
 				
 				end_metacomms = sapply(1:nchains, function(i){
-					print(paste('starting chain',i))
-					print(environment())
-					print(parent.frame())
-					print(parent.frame(2))
-					print(parent.frame(3))
 					
 					# Run CAMM
 					this_run = run_camm(metacomm=metacomm, reps=sim_parms$reps[length(sim_parms$reps)], save_steps=save_steps)

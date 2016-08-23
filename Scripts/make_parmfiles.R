@@ -10,8 +10,6 @@ library(CAMM)
 sim_dir = './GitHub/Scripts/'
 
 
-dir.create(parm_dir)
-
 # Read in base parameter file
 source(file.path(sim_dir, 'parameter_file.R'))
 
@@ -523,7 +521,7 @@ Sb_vec = c(15, 20, 25, 30, 35, 40, 45, 60, 70, 75, 80, 85, 90, 95, 105)
 # Define topology
 topology = 'many2many'
 
-# Define factor for determining number of links
+# Define number of links
 NL_vec = c(57, 86, 114) # x 1, 1.5, 2
 
 # Define environmental variables
@@ -533,15 +531,17 @@ env = read.csv(file.path(data_dir, 'loggerdata.csv'))
 samples = merge(samples, env)
 use_env = samples[samples$SampID %in% 19:72, c('Light_mean','Vpd_daysatfreq')] # based on response of communities and correlation structure of env data
 std_env = scale(use_env, center=T, scale=T)
+write.csv(std_env, 'MP_envdata.csv', row.names=F)
+
+# Define location of site data
+site_data = '../MP_envdata.csv'
 
 # Define filtering
 # Hyp: mycos filter on VPD (env2) while photos filter on light (env1)
-filt_vec = c('none', 'myco', 'photo', 'light', 'vpd', 'opposite', 'all')
+envfilt_vec = c('none', 'myco', 'photo', 'light', 'vpd', 'opposite', 'all')
 
 # Define filtering strength
 sig = 0.5
-
-
 
 # Define niche parameters to match observed data
 # Assumes that observed env gradient is small relative to species potential range in niche optima
@@ -550,19 +550,18 @@ mu_a2 = 3
 mu_b1 = 3
 mu_b2 = 3
 
-prcomp(use_env, center=T, scale=T)
+# Define mortality rates so that the simulation proceeds quickly
+mort_rate = 0.25
+mort_rate_a = 2
+mort_rate_b = 2
 
 # Make parameter files
 
-for(NLfact in NL_vec){
-	
-	N_L = S_a*NLfact
-	
+for(N_L in NL_vec){
 	for(envfilt in envfilt_vec){
 
-		mkdir(paste0('NL-',S_b))
-
-	
+		this_dir = paste0('NL-',N_L,'_envfilt-',envfilt)
+		dir.create(this_dir)
 
 		if(envfilt=='photo'){
 			sigma_a1 = 10
@@ -613,29 +612,16 @@ for(NLfact in NL_vec){
 			sigma_b2 = 0.5
 		}
 
+		for(S_b in Sb_vec[Sb_vec<=N_L]){
+
+			topology = ifelse(S_a==N_L, 'one2many', 'many2many')
 		
+			runID = paste0('Sb-',S_b, '_NL-',N_L,'_envfilt-',envfilt)
+			parm_list = make_parmlist()
+			write_parms(parm_list, paste0('p_', runID, '.txt'), this_dir)
 			
-		for(S_b in Sb_vec){
-			
-
-					runID = paste0('topo-',topology,'_envfilt-',envfilt,'_N-',N,'_NC-',N_C)
-		parm_list = make_parmlist()
-		write_parms(parm_list, paste0('p_', runID), this_dir)
-			
-
-
-
 		}
-	
-
-
-
-
-
-
-
-
-
+	}
 }
 
 

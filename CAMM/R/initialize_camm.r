@@ -71,7 +71,6 @@ initialize_camm = function(parm_file=NA, save_start = F, runID=NA, save_dir='./'
 	
 	# Get directory name of parameter file
 	parm_dir = ifelse(!is.na(parm_file), dirname(parm_file), getwd())
-	#print(parm_dir)
 
 	# Assign optional parameters if not present
 	if(!exists('comm_fill', parent.frame())) comm_fill='empty'
@@ -106,7 +105,6 @@ initialize_camm = function(parm_file=NA, save_start = F, runID=NA, save_dir='./'
 		# location of site data is relative to the location of the parameter file
 		oldwd = getwd()
 		setwd(parm_dir)
-		print(getwd())
 		sites = tryCatch(read.csv(site_data), error = function(e){
 				setwd(oldwd)
 				stop(paste('Could not load site data from', site_data))

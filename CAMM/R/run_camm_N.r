@@ -82,8 +82,6 @@ run_camm_N = function(parm_file, nruns, nchains, nparallel=1, sim_parms, simID, 
 	
 	# Attempt to run simulations in parallel
 	if((nparallel > 1) & requireNamespace('parallel', quietly=TRUE)){
-		# Attach functions in parallel
-		#library(parallel)
 
 		cluster = parallel::makeCluster(nparallel, outfile=file.path(save_dir, paste0(simID, '.Rout')))	
 		
@@ -108,9 +106,18 @@ run_camm_N = function(parm_file, nruns, nchains, nparallel=1, sim_parms, simID, 
 		if(restart){
 			# Get pre-existing metacomm_N object
 			load(file.path(save_dir, paste0(simID, '_metacomms.RData')))
+			
+			# Record event
+			print(paste('Loaded existing metacommunities from', file.path(save_dir, paste0(simID, '_metacomms.RData')), 'at', Sys.time()))
+
 		} else {
-			#print('starting runs')
+			# Record event
+			print(paste('Started initializing metacommunities at', Sys.time()))
+			
 			metacomm_N = parallel::parLapply(cluster, 1:nruns, function(j) initialize_camm(parm_file, save_start, runID=runs[j], save_dir))
+			
+			# Record event
+			print(paste('Finished initializing metacommunities at', Sys.time()))
 		}
 		parallel::clusterExport(cluster, 'metacomm_N', envir=environment())
 
@@ -118,11 +125,6 @@ run_camm_N = function(parm_file, nruns, nchains, nparallel=1, sim_parms, simID, 
 
 		# Run and Summarize CAMM
 		sim_results = parallel::parLapply(cluster, 1:nruns, function(j){
-		
-			# Load parameters into this environment
-			#source(parm_file)
-			
-			print(paste('start', runs[j]))
 
 			metacomm = metacomm_N[[j]]
 			reps = sim_parms$reps
@@ -141,7 +143,12 @@ run_camm_N = function(parm_file, nruns, nchains, nparallel=1, sim_parms, simID, 
 			this_file = file.path(save_dir, paste0(runs[j], '_metacomms-end.RData'))
 			if(restart & file.exists(this_file)){
 				load(this_file)
+				
+				# Record event
+				print(paste('Loaded', runs[j],'at',Sys.time()))
 			} else {
+				# Record event
+				print(paste('Started', runs[j],'at',Sys.time()))
 				
 				end_metacomms = sapply(1:nchains, function(i){
 					
@@ -155,13 +162,22 @@ run_camm_N = function(parm_file, nruns, nchains, nparallel=1, sim_parms, simID, 
 						poolB=this_run$poolB[,,reps_i])
 				})
 				if(save_sim) save(end_metacomms, file=this_file)
+				
+				# Record event
+				print(paste('Finished', runs[j],'at',Sys.time()))
 			}
 
 			# Check whether summary exists load summary if it does and this is a restart
 			this_file = file.path(save_dir, paste0(runs[j], '_results.RData'))
 			if(restart & file.exists(this_file)){
 				load(this_file)
+				
+				# Record event
+				print(paste('Loaded', runs[j],'summary at',Sys.time()))
 			} else {
+				# Record event
+				print(paste('Started', runs[j],'summary at',Sys.time()))
+			
 				# Define objects
 				topo_names = metacomm$topo_names
 				sites = metacomm$sites
@@ -205,9 +221,11 @@ run_camm_N = function(parm_file, nruns, nchains, nparallel=1, sim_parms, simID, 
 					dimnames(corr_stats)[[6]] = paste0('T',sim_parms$reps)
 				}
 
-				print(paste('summarized', runs[j]))
 				# Save output
 				if(save_sim) save(rich_stats, corr_stats, metacomm, end_metacomms, parm_file, sim_parms, nruns, nchains, file=this_file)
+
+				# Record event
+				print(paste('Finished', runs[j],'summary at',Sys.time()))
 			}
 			
 			list(rich_stats, corr_stats)
@@ -223,8 +241,17 @@ run_camm_N = function(parm_file, nruns, nchains, nparallel=1, sim_parms, simID, 
 		if(restart){
 			# Get pre-existing metacomm_N object
 			load(file.path(save_dir, paste0(simID, '_metacomms.RData')))
+
+			# Record event
+			print(paste('Loaded metacommunities from', file.path(save_dir, paste0(simID, '_metacomms.RData')),'at',Sys.time()))
 		} else {
+			# Record event
+			print(paste('Started initializing metacomunities at',Sys.time()))
+
 			metacomm_N = lapply(runs, function(x) initialize_camm(parm_file, save_start, runID=x, save_dir))
+
+			# Record event
+			print(paste('Finished initializing metacomunities at',Sys.time()))
 		}
 		
 		if(save_start&(!restart)) save(metacomm_N, file=file.path(save_dir, paste0(simID, '_metacomms.RData')))
@@ -248,7 +275,13 @@ run_camm_N = function(parm_file, nruns, nchains, nparallel=1, sim_parms, simID, 
 			this_file = file.path(save_dir, paste0(runs[j], '_metacomms-end.RData'))
 			if(restart & file.exists(this_file)){
 				load(this_file)
+				
+				# Record event
+				print(paste('Loaded', runs[j],'at',Sys.time()))
 			} else {
+				# Record event
+				print(paste('Started', runs[j],'at',Sys.time()))
+				
 				end_metacomms = sapply(1:nchains, function(i){
 					# Run CAMM
 					this_run = run_camm(metacomm=metacomm, sim_mode=sim_parms$sim_mode, reps=sim_parms$reps[length(sim_parms$reps)], 
@@ -262,14 +295,22 @@ run_camm_N = function(parm_file, nruns, nchains, nparallel=1, sim_parms, simID, 
 		
 				})
 				if(save_sim) save(end_metacomms, file=this_file)
+
+				# Record event
+				print(paste('Finished', runs[j],'at',Sys.time()))
 			}
 
 			# Check whether summary exists load summary if it does and this is a restart
 			this_file = file.path(save_dir, paste0(runs[j], '_results.RData'))
 			if(restart & file.exists(this_file)){
 				load(this_file)
+				
+				# Record event
+				print(paste('Loaded', runs[j],'summary at',Sys.time()))
 			} else {
-
+				# Record event
+				print(paste('Started', runs[j],'summary at',Sys.time()))
+				
 				# Define objects
 				topo_names = metacomm$topo_names
 				sites = metacomm$sites
@@ -312,6 +353,9 @@ run_camm_N = function(parm_file, nruns, nchains, nparallel=1, sim_parms, simID, 
 				
 				# Save output
 				if(save_sim) save(rich_stats, corr_stats, metacomm, end_metacomms, parm_file, sim_parms, nruns, nchains, file=this_file)
+				
+				# Record event
+				print(paste('Finished', runs[j],'summary at',Sys.time()))
 			}
 
 			list(rich_stats, corr_stats)

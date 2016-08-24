@@ -19,6 +19,9 @@ results_dir = ifelse(is.na(args[4]), './Results/', args[4])
 # Load CAMM, possibly from local library
 tryCatch(library(CAMM), error = function(e){library(CAMM, lib.loc=sim_dir)})
 
+# Print version that is running
+print(paste('Running CAMM v.', packageVersion('CAMM')))
+
 # Read in parameter files
 # Parameter files are designated by starting with 'p_'
 file_list = list.files(parm_dir, '^p_')
@@ -31,7 +34,7 @@ nruns = 100 # 1000 # Number of distinct starts
 nchains = 10 # 100 # Number of replicate simulations starting from the same initial metacommunity
 sim_mode = 'fixed' # Stopping rule: stop after nreps timesteps
 reps = 1000 #1000 #c(1000,2000,4000,8000) # 5000 # Number of timesteps until stop
-sim_parms = list(sim_mode=sim_mode, reps=reps, save_steps=reps)
+sim_parms = list(reps=reps, save_steps=reps)
 
 # Run set of simulations on each parameter
 for(f in file_list){
@@ -40,8 +43,11 @@ for(f in file_list){
 	parm_file = file.path(parm_dir, f)
 	source(parm_file)
 
+	# Make directory for saving the results
+	save_dir = file.path(results_dir, runID)
+
 	# Run CAMM
-	model_out = run_camm_N(parm_file, nruns, nchains, ncores, sim_parms, simID=runID, save_start=T, save_sim=T, save_dir=results_dir, sim_dir=sim_dir) 
+	model_out = run_camm_N(parm_file, nruns, nchains, ncores, sim_parms, simID=runID, save_start=T, save_sim=T, save_dir=save_dir, sim_dir=sim_dir) 
 
 	# Analyze results
 	S_a = melt(summarize_camm(model_out, 'S', 'a'))

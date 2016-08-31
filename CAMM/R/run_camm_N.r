@@ -103,12 +103,13 @@ run_camm_N = function(parm_file, nruns, nchains, nparallel=1, sim_parms, simID, 
 		parallel::clusterEvalQ(cluster, source(parm_file))
 
 		# Initialize CAMM or get previously saved initial metacommunities
-		if(restart){
+		this_file = file.path(save_dir, paste0(simID, '_metacomms.RData'))
+		if(restart & file.exists(this_file)){
 			# Get pre-existing metacomm_N object
-			load(file.path(save_dir, paste0(simID, '_metacomms.RData')))
+			load(this_file)
 			
 			# Record event
-			print(paste('Loaded existing metacommunities from', file.path(save_dir, paste0(simID, '_metacomms.RData')), 'at', Sys.time()))
+			print(paste('Loaded existing metacommunities from', this_file, 'at', Sys.time()))
 
 		} else {
 			# Record event
@@ -116,12 +117,12 @@ run_camm_N = function(parm_file, nruns, nchains, nparallel=1, sim_parms, simID, 
 			
 			metacomm_N = parallel::parLapply(cluster, 1:nruns, function(j) initialize_camm(parm_file, save_start, runID=runs[j], save_dir))
 			
+			if(save_start) save(metacomm_N, file=this_file)
+			
 			# Record event
 			print(paste('Finished initializing metacommunities at', Sys.time()))
 		}
 		parallel::clusterExport(cluster, 'metacomm_N', envir=environment())
-
-		if(save_start&(!restart)) save(metacomm_N, file=file.path(save_dir, paste0(simID, '_metacomms.RData')))
 
 		# Run and Summarize CAMM
 		sim_results = parallel::parLapply(cluster, 1:nruns, function(j){

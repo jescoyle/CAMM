@@ -1,6 +1,6 @@
 Package: CAMM
 Title: Community Assembly of Mutualists Model Simulation
-Version: 0.2.2
+Version: 0.2.3
 Authors@R: person("Jessica", "Coyle", , "jes.r.coyle@gmail.com", role = c("aut", "cre"))
 Description: The Community Assembly of Mutualists Model (CAMM) is a general
     simulation model of community assembly for multiple host and symbiont species.
